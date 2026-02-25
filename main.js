@@ -260,7 +260,7 @@ function initIntro() {
   }
 
   // auto-dismiss after 2 seconds
-  const autoDismiss = setTimeout(() => dismissIntro(), 2000);
+  const autoDismiss = setTimeout(() => dismissIntro(), 4000);
 
   // skip button
   if (skipBtn) {

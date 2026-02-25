@@ -1,7 +1,7 @@
-# Batuhan D. — Creative Developer Portfolio
+# BATUHD Portfolio
 
 <div align="center">
-  <img src="media/yuvarlaklogobeyaz.png" alt="Logo" width="100"/>
+  <img src="media/logobeyaz.png" alt="Logo" width="200"/>
   <br>
   <p>A highly interactive, terminal-inspired, and secure portfolio website built with vanilla web technologies, Firebase, and Vercel Serverless Functions.</p>
 </div>
