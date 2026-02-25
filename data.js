@@ -4,7 +4,7 @@ const SITE_DATA = {
 
   // profile
   profile: {
-    name: "BATUHD",
+    name: "Batuhan DEDE",
     role: "Developer",
     field: "Web / Software / Design",
     heroTitle: "HELLO WORLD",
@@ -25,7 +25,7 @@ const SITE_DATA = {
 
   // welcome card
   welcomeCard: {
-    name: "batuhd",
+    name: "Batuhan Dede",
     role: "Developer",
     field: "Web / Software / Design",
     location: "Turkey"
@@ -89,5 +89,28 @@ const SITE_DATA = {
   // social links
   links: [
     { label: "GitHub", url: "https://github.com/batuhd", icon: "github" }
-  ]
+  ],
+
+  // contact form (Formspree)
+  contact: {
+    email: "batuhan@example.com",
+    formspreeEndpoint: "https://formspree.io/f/YOUR_FORM_ID"
+  },
+
+  // firebase config (replace with your own)
+  firebase: {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  },
+
+  // admin email (for Firebase Auth login)
+  adminEmail: "batuhan@example.com",
+
+  // resume PDF URL
+  resumeURL: "https://github.com/batuhd/cv-olustur"
 };

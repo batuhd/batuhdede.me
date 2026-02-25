@@ -1,25 +1,64 @@
 document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
   initIntro();
   initSmoothScroll();
   initNavigation();
+  initHeroButtons();
   initHeroGlitch();
   initBackgroundVideo();
   renderAbout();
   renderWorks();
+  renderBlog();
   renderContact();
+  initContactForm();
   initScrollAnimations();
 });
+
+// hero buttons
+
+function initHeroButtons() {
+  const resumeBtn = document.getElementById('resume-link');
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (SITE_DATA.resumeURL) {
+        window.open(SITE_DATA.resumeURL, '_blank');
+      }
+    });
+  }
+}
+
+// firebase
+
+let firebaseDB = null;
+
+function initFirebase() {
+  try {
+    const app = firebase.initializeApp(SITE_DATA.firebase);
+    firebaseDB = firebase.database();
+  } catch (e) {
+    console.warn('Firebase init failed:', e.message);
+  }
+}
 
 // youtube
 
 let ytPlayer = null;
-let videoOn = true;
+let isMobile = window.innerWidth <= 900;
+let videoOn = !isMobile;
 let soundOn = false;
 
 function initBackgroundVideo() {
   const videoToggle = document.getElementById('video-toggle');
   const soundToggle = document.getElementById('sound-toggle');
   const container = document.getElementById('bg-video-container');
+
+  // mobile: start with video off
+  if (isMobile) {
+    videoToggle.textContent = 'Video: Off';
+    videoToggle.classList.remove('active');
+    container.classList.add('hidden');
+  }
 
   const tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
@@ -31,7 +70,7 @@ function initBackgroundVideo() {
       height: '100%',
       videoId: 'sAkVnhthpMI',
       playerVars: {
-        autoplay: 1,
+        autoplay: isMobile ? 0 : 1,
         controls: 0,
         mute: 1,
         loop: 1,
@@ -50,7 +89,9 @@ function initBackgroundVideo() {
         onReady: function(event) {
           event.target.setPlaybackQuality('hd720');
           event.target.seekTo(757, true);
-          event.target.playVideo();
+          if (!isMobile) {
+            event.target.playVideo();
+          }
         }
       }
     });
@@ -193,78 +234,42 @@ function initSmoothScroll() {
 function initIntro() {
   const overlay = document.getElementById('intro-overlay');
   const skipBtn = document.getElementById('skip-intro');
-  const bootContainer = document.getElementById('boot-lines');
-  const progressContainer = document.getElementById('progress-container');
-  const progressFill = document.getElementById('progress-fill');
-  const progressPercent = document.getElementById('progress-percent');
-  const welcomeCard = document.getElementById('welcome-card');
-  const transitionLine = document.getElementById('transition-line');
   const video = document.getElementById('intro-video');
 
-  // play video
+  if (!overlay) return;
+
+  // play intro video
   if (video) {
     video.play().catch(() => {});
   }
 
-  // typewriter boot lines
-  const bootLines = SITE_DATA.bootLines;
-  bootLines.forEach((line, i) => {
-    const el = document.createElement('div');
-    el.className = 'boot-line';
-    
-    if (i === bootLines.length - 1) {
-      el.classList.add('success');
-    }
-
-    bootContainer.appendChild(el);
-
-    setTimeout(() => {
-      typeWriter(el, line.text, 25, () => {
-        if (i === bootLines.length - 1) {
-          el.innerHTML += ' <span class="cursor-blink">_</span>';
-        }
-      });
-      el.classList.add('visible');
-    }, line.delay);
-  });
-
-  // show progress bar
-  const lastDelay = bootLines[bootLines.length - 1].delay;
-  setTimeout(() => {
-    progressContainer.classList.add('visible');
-    animateProgress(progressFill, progressPercent, 0, 100, 1500, () => {
-      // show welcome card
-      setTimeout(() => {
-        renderWelcomeCard(welcomeCard);
-        welcomeCard.classList.add('visible');
-
-        // show transition line
-        setTimeout(() => {
-          transitionLine.classList.add('visible');
-          setTimeout(() => {
-            dismissIntro();
-          }, 2000);
-        }, 800);
-      }, 300);
-    });
-  }, lastDelay + 600);
+  // auto-dismiss after 2 seconds
+  const autoDismiss = setTimeout(() => dismissIntro(), 2000);
 
   // skip button
-  skipBtn.addEventListener('click', dismissIntro);
+  if (skipBtn) {
+    skipBtn.addEventListener('click', () => {
+      clearTimeout(autoDismiss);
+      dismissIntro();
+    });
+  }
 
   function dismissIntro() {
     overlay.classList.add('hidden');
-    skipBtn.style.opacity = '0';
-    skipBtn.style.pointerEvents = 'none';
-    
+    if (skipBtn) {
+      skipBtn.style.opacity = '0';
+      skipBtn.style.pointerEvents = 'none';
+    }
+
     setTimeout(() => {
       document.getElementById('main-site').classList.add('visible');
       triggerHeroAnimations();
-      if (skipBtn.parentNode) skipBtn.remove();
+      if (skipBtn && skipBtn.parentNode) skipBtn.remove();
     }, 300);
 
     setTimeout(() => {
       if (overlay.parentNode) overlay.remove();
+      if (video) { video.pause(); video.src = ''; }
     }, 1000);
   }
 }
@@ -365,9 +370,20 @@ function initNavigation() {
 
   navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+
+      // page links (*.html) — let browser navigate normally
+      if (href.endsWith('.html')) return;
+
+      // scroll links (#section) — prevent default and scroll
       e.preventDefault();
-      const targetId = link.getAttribute('href').substring(1);
+      const targetId = href.substring(1);
       const target = document.getElementById(targetId);
+
+      // update active nav
+      navLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+
       if (target) {
         const y = target.getBoundingClientRect().top + window.scrollY;
         if (window.innerWidth > 900 && SmoothScroller.running !== undefined) {
@@ -399,7 +415,10 @@ function initNavigation() {
       if (entry.isIntersecting) {
         const id = entry.target.id;
         navLinks.forEach(link => {
-          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+          const href = link.getAttribute('href');
+          if (href.startsWith('#')) {
+            link.classList.toggle('active', href === '#' + id);
+          }
         });
       }
     });
@@ -447,7 +466,29 @@ function renderWorks() {
   const container = document.getElementById('works-grid');
   if (!container) return;
 
-  SITE_DATA.projects.forEach((project, i) => {
+  // try Firebase first, fallback to data.js
+  if (firebaseDB) {
+    const projectsRef = firebaseDB.ref('projects');
+    projectsRef.orderByChild('timestamp').on('value', (snapshot) => {
+      const fbProjects = [];
+      snapshot.forEach(child => {
+        fbProjects.push(child.val());
+      });
+      fbProjects.reverse();
+
+      // combine: Firebase projects first, then data.js projects
+      const allProjects = [...fbProjects, ...SITE_DATA.projects];
+      renderProjectCards(container, allProjects);
+    });
+  } else {
+    renderProjectCards(container, SITE_DATA.projects);
+  }
+}
+
+function renderProjectCards(container, projects) {
+  container.innerHTML = '';
+
+  projects.forEach((project, i) => {
     const card = document.createElement('div');
     card.className = 'work-card fade-in';
     
@@ -462,11 +503,11 @@ function renderWorks() {
       <div class="work-card-info">
         <div>
           <div class="work-card-meta">
-            <span>${project.year}</span>
-            <span>${project.category}</span>
+            <span>${project.year || ''}</span>
+            <span>${project.category || ''}</span>
           </div>
           <div class="work-card-title">${project.title}</div>
-          <div class="work-card-desc">${project.description}</div>
+          <div class="work-card-desc">${project.description || ''}</div>
         </div>
         <div class="work-card-arrow">→</div>
       </div>
@@ -478,6 +519,8 @@ function renderWorks() {
 
     container.appendChild(card);
   });
+
+  initScrollAnimations();
 }
 
 // render contact
@@ -497,5 +540,136 @@ function renderContact() {
       <span class="contact-link-arrow">→</span>
     `;
     container.appendChild(el);
+  });
+}
+
+// contact form
+
+function initContactForm() {
+  const form = document.getElementById('contact-form');
+  const status = document.getElementById('form-status');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('.contact-submit');
+    btn.textContent = '[ SENDING... ]';
+    btn.disabled = true;
+    status.textContent = '';
+    status.className = 'form-status';
+
+    try {
+      const res = await fetch(SITE_DATA.contact.formspreeEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          name: form.name.value,
+          email: form.email.value,
+          message: form.message.value
+        })
+      });
+
+      if (res.ok) {
+        status.textContent = '> Message sent successfully.';
+        status.classList.add('success');
+        form.reset();
+      } else {
+        throw new Error('Failed');
+      }
+    } catch (err) {
+      status.textContent = '> Error sending message. Try again.';
+      status.classList.add('error');
+    }
+
+    btn.textContent = '[ SEND ]';
+    btn.disabled = false;
+  });
+}
+
+// blog (firebase)
+
+function renderBlog() {
+  const container = document.getElementById('blog-grid');
+  if (!container || !firebaseDB) {
+    if (container) {
+      container.innerHTML = '<div class="blog-empty">No posts yet.</div>';
+    }
+    return;
+  }
+
+  const postsRef = firebaseDB.ref('posts');
+  postsRef.orderByChild('timestamp').on('value', (snapshot) => {
+    container.innerHTML = '';
+    const posts = [];
+
+    snapshot.forEach((child) => {
+      posts.push({ id: child.key, ...child.val() });
+    });
+
+    // newest first
+    posts.reverse();
+
+    if (posts.length === 0) {
+      container.innerHTML = '<div class="blog-empty">No posts yet.</div>';
+      return;
+    }
+
+    posts.forEach((post) => {
+      const card = document.createElement('div');
+      card.className = 'blog-card fade-in';
+
+      const date = new Date(post.timestamp).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+
+      const tags = post.tags ? post.tags.map(t => `<span class="blog-tag">${t}</span>`).join('') : '';
+
+      card.innerHTML = `
+        <div class="blog-card-date">${date}</div>
+        <div class="blog-card-title">${post.title}</div>
+        <div class="blog-card-summary">${post.summary || ''}</div>
+        <div class="blog-card-tags">${tags}</div>
+        <div class="blog-card-read">READ MORE →</div>
+      `;
+
+      card.addEventListener('click', () => openBlogModal(post, date));
+      container.appendChild(card);
+    });
+
+    // re-observe new fade-in elements
+    initScrollAnimations();
+  });
+}
+
+function openBlogModal(post, dateStr) {
+  const modal = document.getElementById('blog-modal');
+  const title = document.getElementById('blog-modal-title');
+  const meta = document.getElementById('blog-modal-meta');
+  const body = document.getElementById('blog-modal-body');
+
+  title.textContent = post.title;
+  meta.textContent = dateStr + (post.tags ? ' — ' + post.tags.join(', ') : '');
+  body.innerHTML = post.content ? post.content.replace(/\n/g, '<br>') : '';
+
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // close handlers
+  const closeBtn = modal.querySelector('.blog-modal-close');
+  const closeModal = () => {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  };
+
+  closeBtn.onclick = closeModal;
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', esc);
+    }
   });
 }

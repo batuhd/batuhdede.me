@@ -1,140 +1,136 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Batuhan D. — Creative Developer & Designer Portfolio">
-  <title>Batuhan D. — Portfolio</title>
-  <link rel="icon" type="image/png" href="media/yuvarlaklogobeyaz.png">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Batuhan D. — Creative Developer & Designer Portfolio"
+    />
+    <title>Batuhan D. — Portfolio</title>
+    <link rel="icon" type="image/png" href="media/yuvarlaklogobeyaz.png" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- intro overlay -->
+    <div id="intro-overlay">
+      <video id="intro-video" muted loop playsinline>
+        <source src="media/intro.mp4" type="video/mp4">
+      </video>
+    </div>
 
-  <!-- intro overlay -->
-  <div id="intro-overlay">
-    <video id="intro-video" muted loop playsinline>
-      <source src="media/intro.mp4" type="video/mp4">
-    </video>
+    <!-- skip intro button -->
+    <button id="skip-intro">[ SKIP ]</button>
 
-    <div id="intro-content">
-      <!-- terminal window -->
-      <div class="terminal-header">
-        <span class="terminal-dot red"></span>
-        <span class="terminal-dot yellow"></span>
-        <span class="terminal-dot green"></span>
-        <span class="terminal-title">system — boot</span>
-      </div>
-      <div class="terminal-body">
-        <div id="boot-lines"></div>
+    <!-- youtube background video -->
+    <div id="bg-video-container" class="bg-video-container">
+      <div id="bg-video-player"></div>
+    </div>
 
-        <!-- progress bar -->
-        <div id="progress-container" class="progress-container">
-          <div class="progress-label">LOADING ASSETS</div>
-          <div class="progress-bar-track">
-            <div id="progress-fill" class="progress-bar-fill"></div>
-          </div>
-          <div id="progress-percent" class="progress-percent">0%</div>
+    <!-- overlays (always visible, on top of video) -->
+    <div class="grain-overlay"></div>
+    <div class="scanline-overlay"></div>
+
+    <!-- main site -->
+    <div id="main-site">
+      <!-- mobile nav toggle -->
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- sidebar navigation -->
+      <nav class="sidebar-nav">
+        <a href="#home">
+          <img src="media/yuvarlaklogobeyaz.png" alt="Logo" class="nav-logo" />
+        </a>
+        <ul class="nav-links">
+          <li><a href="#home" class="active">HOME</a></li>
+          <li><a href="#about">ABOUT</a></li>
+          <li><a href="#contact">CONTACT</a></li>
+        </ul>
+        <div class="nav-divider"></div>
+        <ul class="nav-links nav-pages">
+          <li><a href="works.html">WORKS</a></li>
+          <li><a href="blog.html">BLOG</a></li>
+          <li><a href="#" id="resume-link">RESUME</a></li>
+        </ul>
+        <div class="sidebar-bottom">
+          <button class="sidebar-toggle active" id="video-toggle">
+            Video: On
+          </button>
+          <button class="sidebar-toggle" id="sound-toggle">Sound: Off</button>
         </div>
+      </nav>
 
-        <!-- welcome card -->
-        <div id="welcome-card" class="welcome-card">
-          <div class="welcome-separator">—————— WELCOME ——————</div>
-          <div class="welcome-rows"></div>
-        </div>
+      <!-- corner barcode -->
+      <img src="media/logobeyaz.png" alt="barcode" class="corner-barcode" />
 
-        <!-- transition line -->
-        <div id="transition-line" class="transition-line">
-          Transitioning to scene... <span class="cursor-blink">_</span>
-        </div>
+      <!-- copyright -->
+      <div class="copyright" id="copyright"></div>
+
+      <!-- content area -->
+      <div class="content-area">
+
+        <!-- hero -->
+        <section class="section-hero" id="home">
+          <h1 class="hero-title" id="hero-title"></h1>
+          <div class="hero-name" id="hero-name"></div>
+          <div class="hero-subtitle" id="hero-subtitle"></div>
+          <div class="hero-scroll-hint">SCROLL</div>
+        </section>
+
+        <!-- about -->
+        <section class="section section-about" id="about">
+          <div class="section-label fade-in">[ ABOUT ]</div>
+          <div id="about-blocks"></div>
+        </section>
+
+
+        <!-- contact -->
+        <section class="section section-contact" id="contact">
+          <div class="section-label fade-in">[ CONTACT ]</div>
+          <h2 class="contact-title fade-in">GET IN TOUCH</h2>
+
+          <form id="contact-form" class="contact-form fade-in">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">NAME</label>
+                <input type="text" name="name" class="contact-input" required autocomplete="name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">EMAIL</label>
+                <input type="email" name="email" class="contact-input" required autocomplete="email">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">MESSAGE</label>
+              <textarea name="message" class="contact-textarea" rows="5" required></textarea>
+            </div>
+            <button type="submit" class="contact-submit">[ SEND ]</button>
+            <div id="form-status" class="form-status"></div>
+          </form>
+
+          <div class="contact-divider"></div>
+          <div class="section-label fade-in" style="margin-top:40px;">[ LINKS ]</div>
+          <div id="contact-links" class="contact-links fade-in"></div>
+        </section>
+
       </div>
     </div>
-  </div>
 
-  <!-- skip intro button -->
-  <button id="skip-intro">[ SKIP ]</button>
-
-  <!-- youtube background video -->
-  <div id="bg-video-container" class="bg-video-container">
-    <div id="bg-video-player"></div>
-  </div>
-
-  <!-- overlays (always visible, on top of video) -->
-  <div class="grain-overlay"></div>
-  <div class="scanline-overlay"></div>
-
-  <!-- main site -->
-  <div id="main-site">
-
-    <!-- mobile nav toggle -->
-    <button class="mobile-nav-toggle" aria-label="Toggle navigation">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-
-    <!-- sidebar navigation -->
-    <nav class="sidebar-nav">
-      <a href="#home">
-        <img src="media/yuvarlaklogobeyaz.png" alt="Logo" class="nav-logo">
-      </a>
-      <ul class="nav-links">
-        <li><a href="#home" class="active">HOME</a></li>
-        <li><a href="#about">ABOUT</a></li>
-        <li><a href="#works">WORKS</a></li>
-        <li><a href="#contact">CONTACT</a></li>
-      </ul>
-      <div class="sidebar-bottom">
-        <button class="sidebar-toggle active" id="video-toggle">Video: On</button>
-        <button class="sidebar-toggle" id="sound-toggle">Sound: Off</button>
-      </div>
-    </nav>
-
-    <!-- corner barcode -->
-    <img src="media/logobeyaz.png" alt="barcode" class="corner-barcode">
-
-    <!-- copyright -->
-    <div class="copyright" id="copyright"></div>
-
-    <!-- content area -->
-    <div class="content-area">
-
-      <!-- hero -->
-      <section class="section-hero" id="home">
-        <h1 class="hero-title" id="hero-title"></h1>
-        <div class="hero-name" id="hero-name"></div>
-        <div class="hero-subtitle" id="hero-subtitle"></div>
-        <div class="hero-scroll-hint">SCROLL</div>
-      </section>
-
-      <!-- about -->
-      <section class="section section-about" id="about">
-        <div class="section-label fade-in">[ ABOUT ]</div>
-        <div id="about-blocks"></div>
-      </section>
-
-      <!-- works -->
-      <section class="section section-works" id="works">
-        <div class="section-label fade-in">[ WORKS ]</div>
-        <div id="works-grid" class="works-grid"></div>
-      </section>
-
-      <!-- contact -->
-      <section class="section section-contact" id="contact">
-        <div class="section-label fade-in">[ LINKS ]</div>
-        <h2 class="contact-title fade-in">GET IN TOUCH</h2>
-        <div id="contact-links" class="contact-links fade-in"></div>
-      </section>
-
-    </div>
-  </div>
-
-  <!-- scripts -->
-  <script src="data.js"></script>
-  <script src="main.js"></script>
-  <script>
-    document.getElementById('hero-name').textContent = SITE_DATA.profile.name;
-    document.getElementById('hero-subtitle').textContent = SITE_DATA.profile.heroSubtitle;
-    document.getElementById('copyright').textContent = SITE_DATA.profile.copyright;
-  </script>
-</body>
+    <!-- scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+    <script>
+      document.getElementById("hero-name").textContent = SITE_DATA.profile.name;
+      document.getElementById("hero-subtitle").textContent =
+        SITE_DATA.profile.heroSubtitle;
+      document.getElementById("copyright").textContent =
+        SITE_DATA.profile.copyright;
+    </script>
+  </body>
 </html>

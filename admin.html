@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin — Panel</title>
+  <link rel="icon" type="image/png" href="media/yuvarlaklogobeyaz.png">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+    :root {
+      --bg: #000; --text: #fff; --text-dim: #888; --text-muted: #555;
+      --accent: #00d4ff; --accent-glow: rgba(0,212,255,0.3);
+      --border: rgba(255,255,255,0.08);
+      --font-mono: 'Space Mono', monospace; --font-body: 'Inter', sans-serif;
+      --transition: 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:var(--font-body); background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+
+    /* login */
+    #login-screen { text-align:center; width:360px; max-width:90vw; }
+    #login-screen h1 { font-family:var(--font-mono); font-size:14px; letter-spacing:4px; color:var(--accent); margin-bottom:30px; }
+    .login-input { font-family:var(--font-mono); font-size:13px; color:var(--text); background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:4px; padding:12px 20px; width:100%; outline:none; transition:var(--transition); text-align:center; letter-spacing:2px; margin-bottom:12px; display:block; }
+    .login-input:focus { border-color:var(--accent); box-shadow:0 0 15px rgba(0,212,255,0.1); }
+    .login-btn { display:block; width:100%; margin-top:8px; font-family:var(--font-mono); font-size:11px; letter-spacing:3px; color:var(--bg); background:var(--accent); border:none; border-radius:4px; padding:12px; cursor:pointer; transition:var(--transition); }
+    .login-btn:hover { box-shadow:0 0 25px var(--accent-glow); }
+    .login-btn:disabled { opacity:0.4; cursor:not-allowed; }
+    .login-error { font-family:var(--font-mono); font-size:11px; color:#ff5f57; margin-top:12px; min-height:16px; }
+    .login-lockout { font-family:var(--font-mono); font-size:11px; color:#febc2e; margin-top:8px; min-height:16px; }
+
+    /* captcha */
+    .captcha-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .captcha-display { font-family:var(--font-mono); font-size:20px; letter-spacing:8px; color:var(--accent); background:rgba(0,212,255,0.05); border:1px solid var(--border); border-radius:4px; padding:10px 20px; user-select:none; text-decoration:line-through; font-style:italic; min-width:140px; text-align:center; }
+    .captcha-refresh { font-size:18px; color:var(--text-muted); background:none; border:1px solid var(--border); border-radius:4px; padding:8px 12px; cursor:pointer; transition:var(--transition); }
+    .captcha-refresh:hover { color:var(--accent); border-color:var(--accent); }
+    .captcha-input { flex:1; }
+
+    /* admin panel */
+    #admin-panel { display:none; width:100%; max-width:900px; padding:40px; }
+    .admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; padding-bottom:20px; border-bottom:1px solid var(--border); }
+    .admin-header h1 { font-family:var(--font-mono); font-size:14px; letter-spacing:4px; color:var(--accent); }
+    .admin-logout { font-family:var(--font-mono); font-size:10px; letter-spacing:2px; color:var(--text-muted); background:none; border:1px solid var(--border); padding:8px 16px; cursor:pointer; border-radius:4px; transition:var(--transition); }
+    .admin-logout:hover { color:#ff5f57; border-color:#ff5f57; }
+
+    /* tabs */
+    .admin-tabs { display:flex; gap:4px; margin-bottom:30px; }
+    .admin-tab { font-family:var(--font-mono); font-size:11px; letter-spacing:2px; color:var(--text-muted); background:none; border:1px solid var(--border); border-bottom:none; padding:10px 20px; cursor:pointer; transition:var(--transition); border-radius:4px 4px 0 0; }
+    .admin-tab.active { color:var(--accent); border-color:rgba(0,212,255,0.3); background:rgba(0,212,255,0.05); }
+    .admin-tab:hover { color:var(--text); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+
+    /* form elements */
+    .admin-section h2 { font-family:var(--font-mono); font-size:12px; letter-spacing:3px; color:var(--text-dim); margin-bottom:24px; }
+    .admin-input, .admin-textarea { display:block; width:100%; font-family:var(--font-mono); font-size:13px; color:var(--text); background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:4px; padding:12px 16px; margin-bottom:16px; outline:none; transition:var(--transition); }
+    .admin-input:focus, .admin-textarea:focus { border-color:var(--accent); box-shadow:0 0 15px rgba(0,212,255,0.1); }
+    .admin-textarea { resize:vertical; min-height:200px; font-family:var(--font-body); line-height:1.8; }
+    .admin-textarea.summary { min-height:80px; }
+    .admin-hint { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-top:-10px; margin-bottom:16px; letter-spacing:1px; }
+    .admin-publish { font-family:var(--font-mono); font-size:12px; letter-spacing:3px; color:var(--bg); background:var(--accent); border:none; border-radius:4px; padding:14px 32px; cursor:pointer; transition:var(--transition); }
+    .admin-publish:hover { box-shadow:0 0 25px var(--accent-glow); transform:translateY(-1px); }
+    .admin-status { font-family:var(--font-mono); font-size:11px; margin-top:12px; min-height:16px; letter-spacing:1px; }
+    .admin-status.success { color:#28c840; }
+    .admin-status.error { color:#ff5f57; }
+
+    /* item list */
+    .item-list { margin-top:30px; }
+    .item-entry { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border:1px solid var(--border); border-radius:4px; margin-bottom:12px; transition:var(--transition); }
+    .item-entry:hover { border-color:rgba(0,212,255,0.2); }
+    .item-entry-info { flex:1; }
+    .item-entry-title { font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .item-entry-meta { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:2px; }
+    .item-delete { font-family:var(--font-mono); font-size:10px; letter-spacing:2px; color:var(--text-muted); background:none; border:1px solid var(--border); padding:6px 14px; cursor:pointer; border-radius:4px; transition:var(--transition); }
+    .item-delete:hover { color:#ff5f57; border-color:#ff5f57; }
+    .empty-msg { font-family:var(--font-mono); font-size:12px; color:var(--text-muted); letter-spacing:1px; }
+
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-row .admin-input { margin-bottom:0; }
+
+    @media (max-width:600px) {
+      #admin-panel { padding:20px; }
+      .item-entry { flex-direction:column; align-items:flex-start; gap:10px; }
+      .form-row { grid-template-columns:1fr; gap:0; }
+      .form-row .admin-input { margin-bottom:16px; }
+      .admin-tabs { flex-wrap:wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- login -->
+  <div id="login-screen">
+    <h1>[ ADMIN LOGIN ]</h1>
+    <input type="email" class="login-input" id="login-email" placeholder="Email" autocomplete="email">
+    <input type="password" class="login-input" id="login-password" placeholder="Password" autocomplete="current-password">
+    <div class="captcha-row">
+      <div class="captcha-display" id="captcha-display"></div>
+      <button class="captcha-refresh" id="captcha-refresh" title="New captcha">↻</button>
+      <input type="text" class="login-input captcha-input" id="captcha-input" placeholder="Captcha" style="margin-bottom:0;">
+    </div>
+    <button class="login-btn" id="login-btn">[ LOGIN ]</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-lockout" id="login-lockout"></div>
+  </div>
+
+  <!-- admin panel -->
+  <div id="admin-panel">
+    <div class="admin-header">
+      <h1>[ ADMIN PANEL ]</h1>
+      <button class="admin-logout" id="logout-btn">LOGOUT</button>
+    </div>
+
+    <!-- tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="posts">BLOG</button>
+      <button class="admin-tab" data-tab="projects">PROJECTS</button>
+    </div>
+
+    <!-- BLOG TAB -->
+    <div class="tab-content active" id="tab-posts">
+      <div class="admin-section">
+        <h2>[ NEW POST ]</h2>
+        <input type="text" class="admin-input" id="post-title" placeholder="Post title">
+        <textarea class="admin-textarea summary" id="post-summary" placeholder="Summary (shown on card)"></textarea>
+        <textarea class="admin-textarea" id="post-content" placeholder="Full content"></textarea>
+        <input type="text" class="admin-input" id="post-tags" placeholder="Tags (comma separated)">
+        <button class="admin-publish" id="publish-post-btn">[ PUBLISH ]</button>
+        <div class="admin-status" id="post-status"></div>
+      </div>
+      <div class="item-list" id="posts-list"></div>
+    </div>
+
+    <!-- PROJECTS TAB -->
+    <div class="tab-content" id="tab-projects">
+      <div class="admin-section">
+        <h2>[ NEW PROJECT ]</h2>
+        <input type="text" class="admin-input" id="proj-title" placeholder="Project title">
+        <div class="form-row" style="margin-bottom:16px;">
+          <input type="text" class="admin-input" id="proj-year" placeholder="Year (e.g. 2026)">
+          <input type="text" class="admin-input" id="proj-category" placeholder="Category (e.g. Web Application)">
+        </div>
+        <textarea class="admin-textarea summary" id="proj-desc" placeholder="Description"></textarea>
+        <input type="text" class="admin-input" id="proj-image" placeholder="Image URL">
+        <input type="text" class="admin-input" id="proj-link" placeholder="Project link">
+        <button class="admin-publish" id="publish-proj-btn">[ ADD PROJECT ]</button>
+        <div class="admin-status" id="proj-status"></div>
+      </div>
+      <div class="item-list" id="projects-list"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="data.js"></script>
+  <script>
+    // firebase init
+    let db, auth;
+    try {
+      firebase.initializeApp(SITE_DATA.firebase);
+      db = firebase.database();
+      auth = firebase.auth();
+    } catch (e) { console.error('Firebase init failed:', e); }
+
+    // elements
+    const loginScreen = document.getElementById('login-screen');
+    const adminPanel = document.getElementById('admin-panel');
+    const loginBtn = document.getElementById('login-btn');
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const loginError = document.getElementById('login-error');
+    const lockoutMsg = document.getElementById('login-lockout');
+    const captchaDisplay = document.getElementById('captcha-display');
+    const captchaInput = document.getElementById('captcha-input');
+    const captchaRefresh = document.getElementById('captcha-refresh');
+
+    // ========== CAPTCHA ==========
+    let captchaCode = '';
+    function generateCaptcha() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      captchaCode = '';
+      for (let i = 0; i < 6; i++) captchaCode += chars[Math.floor(Math.random() * chars.length)];
+      captchaDisplay.textContent = captchaCode;
+    }
+    generateCaptcha();
+    captchaRefresh.addEventListener('click', generateCaptcha);
+
+    // ========== RATE LIMITING ==========
+    let failedAttempts = 0;
+    let lockoutUntil = 0;
+    const MAX_ATTEMPTS = 3;
+    const LOCKOUT_SECONDS = 60;
+
+    function checkLockout() {
+      if (Date.now() < lockoutUntil) {
+        const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+        lockoutMsg.textContent = `> Locked out. Try again in ${remaining}s.`;
+        loginBtn.disabled = true;
+        return true;
+      }
+      lockoutMsg.textContent = '';
+      loginBtn.disabled = false;
+      return false;
+    }
+
+    setInterval(checkLockout, 1000);
+
+    // ========== LOGIN (Firebase Auth) ==========
+    loginBtn.addEventListener('click', doLogin);
+    loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+    captchaInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+    async function doLogin() {
+      if (checkLockout()) return;
+
+      const email = loginEmail.value.trim();
+      const pw = loginPassword.value;
+      const captcha = captchaInput.value.trim().toUpperCase();
+
+      if (!email || !pw) {
+        loginError.textContent = '> Email and password required.';
+        return;
+      }
+
+      if (captcha !== captchaCode) {
+        loginError.textContent = '> Invalid captcha.';
+        generateCaptcha();
+        captchaInput.value = '';
+        failedAttempts++;
+        if (failedAttempts >= MAX_ATTEMPTS) {
+          lockoutUntil = Date.now() + LOCKOUT_SECONDS * 1000;
+          failedAttempts = 0;
+        }
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '[ LOGGING IN... ]';
+      loginError.textContent = '';
+
+      try {
+        await auth.signInWithEmailAndPassword(email, pw);
+        failedAttempts = 0;
+        showAdmin();
+      } catch (err) {
+        loginError.textContent = '> Invalid credentials.';
+        generateCaptcha();
+        captchaInput.value = '';
+        failedAttempts++;
+        if (failedAttempts >= MAX_ATTEMPTS) {
+          lockoutUntil = Date.now() + LOCKOUT_SECONDS * 1000;
+          failedAttempts = 0;
+        }
+      }
+
+      loginBtn.textContent = '[ LOGIN ]';
+      loginBtn.disabled = false;
+    }
+
+    // check existing auth
+    auth.onAuthStateChanged((user) => {
+      if (user) showAdmin();
+    });
+
+    function showAdmin() {
+      loginScreen.style.display = 'none';
+      adminPanel.style.display = 'block';
+      document.body.style.alignItems = 'flex-start';
+      loadPosts();
+      loadProjects();
+    }
+
+    // logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      auth.signOut();
+      location.reload();
+    });
+
+    // ========== TABS ==========
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // ========== BLOG CRUD ==========
+    document.getElementById('publish-post-btn').addEventListener('click', async () => {
+      const title = document.getElementById('post-title').value.trim();
+      const summary = document.getElementById('post-summary').value.trim();
+      const content = document.getElementById('post-content').value.trim();
+      const tagsStr = document.getElementById('post-tags').value.trim();
+      const status = document.getElementById('post-status');
+
+      if (!title || !content) {
+        status.textContent = '> Title and content required.';
+        status.className = 'admin-status error';
+        return;
+      }
+
+      const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+
+      try {
+        await db.ref('posts').push().set({ title, summary, content, tags, timestamp: Date.now() });
+        status.textContent = '> Published.';
+        status.className = 'admin-status success';
+        document.getElementById('post-title').value = '';
+        document.getElementById('post-summary').value = '';
+        document.getElementById('post-content').value = '';
+        document.getElementById('post-tags').value = '';
+      } catch (err) {
+        status.textContent = '> Error: ' + err.message;
+        status.className = 'admin-status error';
+      }
+    });
+
+    function loadPosts() {
+      if (!db) return;
+      const list = document.getElementById('posts-list');
+      db.ref('posts').orderByChild('timestamp').on('value', (snap) => {
+        list.innerHTML = '';
+        const items = [];
+        snap.forEach(c => items.push({ id: c.key, ...c.val() }));
+        items.reverse();
+        if (!items.length) { list.innerHTML = '<div class="empty-msg">No posts.</div>'; return; }
+        items.forEach(p => {
+          const date = new Date(p.timestamp).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+          const el = document.createElement('div');
+          el.className = 'item-entry';
+          el.innerHTML = `<div class="item-entry-info"><div class="item-entry-title">${p.title}</div><div class="item-entry-meta">${date}</div></div><button class="item-delete" data-id="${p.id}">DELETE</button>`;
+          el.querySelector('.item-delete').addEventListener('click', () => { if (confirm('Delete "' + p.title + '"?')) db.ref('posts/' + p.id).remove(); });
+          list.appendChild(el);
+        });
+      });
+    }
+
+    // ========== PROJECTS CRUD ==========
+    document.getElementById('publish-proj-btn').addEventListener('click', async () => {
+      const title = document.getElementById('proj-title').value.trim();
+      const year = document.getElementById('proj-year').value.trim();
+      const category = document.getElementById('proj-category').value.trim();
+      const description = document.getElementById('proj-desc').value.trim();
+      const image = document.getElementById('proj-image').value.trim();
+      const link = document.getElementById('proj-link').value.trim();
+      const status = document.getElementById('proj-status');
+
+      if (!title) {
+        status.textContent = '> Title required.';
+        status.className = 'admin-status error';
+        return;
+      }
+
+      try {
+        await db.ref('projects').push().set({ title, year, category, description, image, link, timestamp: Date.now() });
+        status.textContent = '> Project added.';
+        status.className = 'admin-status success';
+        ['proj-title','proj-year','proj-category','proj-desc','proj-image','proj-link'].forEach(id => document.getElementById(id).value = '');
+      } catch (err) {
+        status.textContent = '> Error: ' + err.message;
+        status.className = 'admin-status error';
+      }
+    });
+
+    function loadProjects() {
+      if (!db) return;
+      const list = document.getElementById('projects-list');
+      db.ref('projects').orderByChild('timestamp').on('value', (snap) => {
+        list.innerHTML = '';
+        const items = [];
+        snap.forEach(c => items.push({ id: c.key, ...c.val() }));
+        items.reverse();
+        if (!items.length) { list.innerHTML = '<div class="empty-msg">No projects.</div>'; return; }
+        items.forEach(p => {
+          const el = document.createElement('div');
+          el.className = 'item-entry';
+          el.innerHTML = `<div class="item-entry-info"><div class="item-entry-title">${p.title}</div><div class="item-entry-meta">${p.year || ''} — ${p.category || ''}</div></div><button class="item-delete" data-id="${p.id}">DELETE</button>`;
+          el.querySelector('.item-delete').addEventListener('click', () => { if (confirm('Delete "' + p.title + '"?')) db.ref('projects/' + p.id).remove(); });
+          list.appendChild(el);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
