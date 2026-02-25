@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Batuhan Dede — Credits">
+  <title>Credits — Batuhan Dede</title>
+  <link rel="icon" type="image/png" href="media/yuvarlaklogobeyaz.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- intro overlay -->
+  <div id="intro-overlay">
+    <video id="intro-video" muted loop playsinline>
+      <source src="media/intro.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <!-- skip intro button -->
+  <button id="skip-intro">[ SKIP ]</button>
+
+  <!-- youtube background video -->
+  <div id="bg-video-container" class="bg-video-container">
+    <div id="bg-video-player"></div>
+  </div>
+
+  <!-- overlays -->
+  <div class="grain-overlay"></div>
+  <div class="scanline-overlay"></div>
+
+  <!-- main site -->
+  <div id="main-site">
+
+    <!-- mobile nav toggle -->
+    <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+
+    <!-- sidebar -->
+    <nav class="sidebar-nav">
+      <a href="index.html">
+        <img src="media/yuvarlaklogobeyaz.png" alt="Logo" class="nav-logo">
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">HOME</a></li>
+        <li><a href="works.html">WORKS</a></li>
+        <li><a href="blog.html">BLOG</a></li>
+      </ul>
+      <div class="nav-divider"></div>
+      <ul class="nav-links nav-pages">
+        <li><a href="#" id="resume-link">RESUME</a></li>
+      </ul>
+      <div class="nav-divider"></div>
+      <ul class="nav-links nav-pages">
+        <li><a href="credits.html" class="active">CREDITS</a></li>
+      </ul>
+      <div class="sidebar-bottom">
+        <button class="sidebar-toggle active" id="video-toggle">Video: On</button>
+        <button class="sidebar-toggle" id="sound-toggle">Sound: Off</button>
+      </div>
+    </nav>
+
+    <!-- corner barcode -->
+    <img src="media/logobeyaz.png" alt="barcode" class="corner-barcode">
+
+    <!-- copyright -->
+    <div class="copyright" id="copyright"></div>
+
+    <!-- content -->
+    <div class="content-area">
+      <section class="section section-credits" id="credits">
+        <a href="index.html" class="back-link fade-in">← BACK</a>
+        <div class="section-label fade-in">[ CREDITS ]</div>
+
+        <div class="credits-grid fade-in">
+
+          <!-- source code -->
+          <div class="credits-card">
+            <div class="credits-card-label">SOURCE CODE</div>
+            <div class="credits-card-body">
+              <p>The source code of this website is open-source and available on GitHub.</p>
+              <a href="https://github.com/batuhd/batuhd.github.io" target="_blank" class="credits-link">
+                github.com/batuhd/batuhd.github.io →
+              </a>
+            </div>
+          </div>
+
+          <!-- tech stack -->
+          <div class="credits-card">
+            <div class="credits-card-label">TECH STACK</div>
+            <div class="credits-card-body">
+              <ul class="credits-list">
+                <li><span class="credits-tag">Frontend</span> Vanilla HTML, CSS, JavaScript</li>
+                <li><span class="credits-tag">Database</span> Firebase Realtime Database</li>
+                <li><span class="credits-tag">Auth</span> Firebase Authentication</li>
+                <li><span class="credits-tag">Hosting</span> Vercel</li>
+                <li><span class="credits-tag">Forms</span> Formspree</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- background video -->
+          <div class="credits-card">
+            <div class="credits-card-label">BACKGROUND VIDEO</div>
+            <div class="credits-card-body">
+              <p>Background ambient video used throughout the site.</p>
+              <a href="https://www.youtube.com/watch?v=iL0Aal3J6Ks" target="_blank" class="credits-link">
+                YouTube — Ambient Background →
+              </a>
+            </div>
+          </div>
+
+          <!-- intro video -->
+          <div class="credits-card">
+            <div class="credits-card-label">INTRO VIDEO</div>
+            <div class="credits-card-body">
+              <p>The intro sequence video displayed on page load.</p>
+              <a href="#" class="credits-link credits-link-muted">
+                Custom / Self-produced
+              </a>
+              <p style="margin-top:12px; font-size:11px; color:var(--text-muted); font-family:var(--font-mono); letter-spacing:1px;">
+                The font used in the intro video is <strong>Epetri</strong> by A Typography. It is not used for any commercial purpose.
+              </p>
+              <a href="https://www.atypography.com/product-page/epetri" target="_blank" class="credits-link">
+                atypography.com — Epetri →
+              </a>
+            </div>
+          </div>
+
+          <!-- fonts -->
+          <div class="credits-card">
+            <div class="credits-card-label">TYPOGRAPHY</div>
+            <div class="credits-card-body">
+              <ul class="credits-list">
+                <li><span class="credits-tag">Mono</span> Space Mono — Google Fonts</li>
+                <li><span class="credits-tag">Body</span> Inter — Google Fonts</li>
+                <li><span class="credits-tag">Logo</span> Epetri — A Typography</li>
+              </ul>
+              <a href="https://www.atypography.com/product-page/epetri" target="_blank" class="credits-link">
+                atypography.com — Epetri →
+              </a>
+            </div>
+          </div>
+
+          <!-- design -->
+          <div class="credits-card">
+            <div class="credits-card-label">DESIGN & CODE</div>
+            <div class="credits-card-body">
+              <p>Designed and developed by <strong>Batuhan Dede</strong>, built using <strong>Antigravity IDE</strong> powered by <strong>Claude Opus 4.6</strong>.</p>
+              <p class="credits-location">Made in Sinop with ❤️</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- footer -->
+        <footer class="site-footer fade-in">
+          <p>Made in Sinop with ❤️</p>
+          <p class="footer-copy" id="footer-copy"></p>
+        </footer>
+
+      </section>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="data.js"></script>
+  <script src="main.js"></script>
+  <script>
+    document.getElementById('copyright').textContent = SITE_DATA.profile.copyright;
+    document.getElementById('footer-copy').textContent = SITE_DATA.profile.copyright;
+  </script>
+</body>
+</html>

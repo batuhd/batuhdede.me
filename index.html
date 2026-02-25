@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Batuhan D. — Creative Developer & Designer Portfolio"
+      content="Batuhan Dede — Portfolio"
     />
-    <title>Batuhan D. — Portfolio</title>
+    <title>Batuhan Dede</title>
     <link rel="icon" type="image/png" href="media/yuvarlaklogobeyaz.png" />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -55,6 +55,10 @@
           <li><a href="works.html">WORKS</a></li>
           <li><a href="blog.html">BLOG</a></li>
           <li><a href="#" id="resume-link">RESUME</a></li>
+        </ul>
+        <div class="nav-divider"></div>
+        <ul class="nav-links nav-pages">
+          <li><a href="credits.html">CREDITS</a></li>
         </ul>
         <div class="sidebar-bottom">
           <button class="sidebar-toggle active" id="video-toggle">
@@ -117,6 +121,12 @@
           <div id="contact-links" class="contact-links fade-in"></div>
         </section>
 
+        <!-- footer -->
+        <footer class="site-footer fade-in">
+          <p>Made in Sinop with ❤️</p>
+          <p class="footer-copy" id="footer-copy"></p>
+        </footer>
+
       </div>
     </div>
 
@@ -130,6 +140,8 @@
       document.getElementById("hero-subtitle").textContent =
         SITE_DATA.profile.heroSubtitle;
       document.getElementById("copyright").textContent =
+        SITE_DATA.profile.copyright;
+      document.getElementById("footer-copy").textContent =
         SITE_DATA.profile.copyright;
     </script>
   </body>

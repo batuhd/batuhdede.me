@@ -90,7 +90,7 @@ function initBackgroundVideo() {
         controls: 0,
         mute: 1,
         loop: 1,
-        start: 757,
+        start: 6057,
         playlist: 'sAkVnhthpMI',
         showinfo: 0,
         rel: 0,
@@ -104,7 +104,7 @@ function initBackgroundVideo() {
       events: {
         onReady: function(event) {
           event.target.setPlaybackQuality('hd720');
-          event.target.seekTo(757, true);
+          event.target.seekTo(6057, true);
           if (!isMobile) {
             event.target.playVideo();
           }
