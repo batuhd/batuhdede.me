@@ -1,300 +1,140 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>batuhd projects</title>
-    <meta name="description" content="Batuhan'ın kişisel portföy sitesi - Projeler ve sosyal medya bağlantıları">
-    <link rel="stylesheet" href="https://unpkg.com/tuicss/dist/tuicss.min.css" />
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Batuhan D. — Creative Developer & Designer Portfolio">
+  <title>Batuhan D. — Portfolio</title>
+  <link rel="icon" type="image/png" href="media/yuvarlaklogobeyaz.png">
+  <link rel="stylesheet" href="style.css">
 </head>
+<body>
 
-<body class="tui-bg-blue-black">
+  <!-- intro overlay -->
+  <div id="intro-overlay">
+    <video id="intro-video" muted loop playsinline>
+      <source src="media/intro.mp4" type="video/mp4">
+    </video>
 
-    <!-- boot -->
-    <div class="boot-overlay" id="bootOverlay">
-        <div class="boot-line green-255-text" data-text="BIOS v2.4.1 - Portfolio System">BIOS v2.4.1 - Portfolio System
+    <div id="intro-content">
+      <!-- terminal window -->
+      <div class="terminal-header">
+        <span class="terminal-dot red"></span>
+        <span class="terminal-dot yellow"></span>
+        <span class="terminal-dot green"></span>
+        <span class="terminal-title">system — boot</span>
+      </div>
+      <div class="terminal-body">
+        <div id="boot-lines"></div>
+
+        <!-- progress bar -->
+        <div id="progress-container" class="progress-container">
+          <div class="progress-label">LOADING ASSETS</div>
+          <div class="progress-bar-track">
+            <div id="progress-fill" class="progress-bar-fill"></div>
+          </div>
+          <div id="progress-percent" class="progress-percent">0%</div>
         </div>
-        <div class="boot-line white-255-text" data-text="Bellek testi... OK">Bellek testi... <span
-                class="green-255-text">OK</span></div>
-        <div class="boot-line white-255-text" data-text="Proje veritabanı yükleniyor... OK">Proje veritabanı
-            yükleniyor... <span class="green-255-text">OK</span></div>
-        <div class="boot-line white-255-text" data-text="Sosyal bağlantılar kontrol ediliyor... OK">Sosyal bağlantılar
-            kontrol ediliyor... <span class="green-255-text">OK</span></div>
-        <div class="boot-line white-255-text" data-text="Yetenekler modülü başlatılıyor... OK">Yetenekler modülü
-            başlatılıyor... <span class="green-255-text">OK</span></div>
-        <div class="boot-line white-255-text" data-text="Terminal hazırlanıyor... OK">Terminal hazırlanıyor... <span
-                class="green-255-text">OK</span></div>
-        <div class="boot-line yellow-255-text" data-text="Sistem hazır. Hoş geldiniz!">Sistem hazır. Hoş geldiniz!</div>
-    </div>
 
-
-
-    <div class="main-content">
-        <div class="container">
-
-            <div class="hero-ascii green-255-text">
-                <pre>
- ██████╗  █████╗ ████████╗██╗   ██╗
- ██╔══██╗██╔══██╗╚══██╔══╝██║   ██║
- ██████╔╝███████║   ██║   ██║   ██║
- ██╔══██╗██╔══██║   ██║   ██║   ██║
- ██████╔╝██║  ██║   ██║   ╚██████╔╝
- ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝
-</pre>
-            </div>
-
-            <p class="center white-255-text" style="margin-top: 0;">
-                <span class="blink-cursor">57</span>
-            </p>
-
-            <div id="projects" class="section-gap">
-                <div class="tui-window" style="width: 100%;">
-                    <fieldset class="tui-fieldset">
-                        <legend class="center">[ Projelerim ]</legend>
-
-                        <p class="cyan-255-text" style="margin-bottom: 12px;">C:\Users\Batuhan\Projects&gt; <span
-                                class="white-255-text">dir /b</span></p>
-
-                        <!-- Project Row 1 -->
-                        <div class="row">
-                            <div class="col s12 m6 l6">
-                                <div class="project-card">
-                                    <div class="tui-window">
-                                        <fieldset class="tui-fieldset">
-                                            <legend class="green-255-text">📁 CV Oluşturucu</legend>
-                                            <div>
-                                                <p>CV oluşturmak için geliştirilmiş web tabanlı bir uygulama.
-                                                    Kullanıcılar bilgilerini girerek profesyonel CV'ler oluşturabilir ve
-                                                    PDF olarak indirebilir.</p>
-                                                <div class="project-tech">
-                                                    <span class="tui-button cyan-168"
-                                                        style="font-size: 11px; padding: 0 4px;">HTML</span>
-                                                    <span class="tui-button green-168"
-                                                        style="font-size: 11px; padding: 0 4px;">CSS</span>
-                                                    <span class="tui-button yellow-168"
-                                                        style="font-size: 11px; padding: 0 4px;">JavaScript</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <br>
-                                                <a href="https://github.com/batuhd/cv-olustur" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► GitHub'da Görüntüle
-                                                </a>
-                                                <a href="https://batuhd.github.io/cv-olustur/" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► Siteyi Ziyaret Et
-                                                </a>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col s12 m6 l6">
-                                <div class="project-card">
-                                    <div class="tui-window">
-                                        <fieldset class="tui-fieldset">
-                                            <legend class="green-255-text">📁 Projeler</legend>
-                                            <div>
-                                                <p>TuiCss kullanılarak yapılmış retro terminal tarzında kişisel portföy
-                                                    sitesi.
-                                                    MS-DOS estetiğiyle modern web deneyimi sunar.</p>
-                                                <div class="project-tech">
-                                                    <span class="tui-button cyan-168"
-                                                        style="font-size: 11px; padding: 0 4px;">HTML</span>
-                                                    <span class="tui-button purple-168"
-                                                        style="font-size: 11px; padding: 0 4px;">TuiCss</span>
-                                                    <span class="tui-button yellow-168"
-                                                        style="font-size: 11px; padding: 0 4px;">JavaScript</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <br>
-                                                <a href="https://github.com/batuhd/batuhd.github.io" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► GitHub'da Görüntüle
-                                                </a>
-                                                <a href="https://batuhd.github.io/" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► Siteyi Ziyaret Et
-                                                </a>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Project Row 2 -->
-                        <div class="row">
-                            <div class="col s12 m6 l6">
-                                <div class="project-card">
-                                    <div class="tui-window">
-                                        <fieldset class="tui-fieldset">
-                                            <legend class="green-255-text">📁 Sinop Private Share</legend>
-                                            <div>
-                                                <p>Özel bir mikro blog aracı olarak
-                                                    tasarlanmıştır. Notları hızlı bir şekilde eklemenizi, bağlantıları
-                                                    kaydetmenizi ve bunları herhangi bir cihazdan gerçek zamanlı bir
-                                                    akışta görüntülemenizi sağlar.
-                                                </p>
-                                                <div class="project-tech">
-                                                    <span class="tui-button cyan-168"
-                                                        style="font-size: 11px; padding: 0 4px;">HTML</span>
-                                                    <span class="tui-button görüntülemenizi"
-                                                        style="font-size: 11px; padding: 0 4px;">Css</span>
-                                                    <span class="tui-button yellow-168"
-                                                        style="font-size: 11px; padding: 0 4px;">JavaScript</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <br>
-                                                <a href="https://github.com/batuhd/SPS" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► GitHub'da Görüntüle
-                                                </a>
-                                                <a href="https://batuhd.github.io/SPS/" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► Siteyi Ziyaret Et
-                                                </a>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col s12 m6 l6">
-                                <div class="project-card">
-                                    <div class="tui-window">
-                                        <fieldset class="tui-fieldset">
-                                            <legend class="green-255-text">📁 MotiUi</legend>
-                                            <div>
-                                                <p>Türkic motifleri modern bir arayüzle sunan, Vite + TypeScript ile geliştirilmiş, tamamen can sıkıntısından vibecodelanarak yapılmış interaktif bir dijital arşiv. 🇹🇷</p>
-                                                <div class="project-tech">
-                                                    <span class="tui-button cyan-168"
-                                                        style="font-size: 11px; padding: 0 4px;">HTML</span>
-                                                    <span class="tui-button görüntülemenizi"
-                                                        style="font-size: 11px; padding: 0 4px;">Css</span>
-                                                    <span class="tui-button yellow-168"
-                                                        style="font-size: 11px; padding: 0 4px;">JavaScript</span>
-                                                    <span class="tui-button red-168"
-                                                        style="font-size: 11px; padding: 0 4px;">TypeScript</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <br>
-                                                <a href="https://github.com/batuhd/motiui" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► GitHub'da Görüntüle
-                                                </a>
-                                                <a href="https://batuhd.github.io/motiui/" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► Siteyi Ziyaret Et
-                                                </a>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!--Project Row 3-->
-
-                        <div class="row">
-                            <div class="col s12 m6 l6">
-                                <div class="project-card">
-                                    <div class="tui-window">
-                                        <fieldset class="tui-fieldset">
-                                            <legend class="green-255-text">📁 Discord Package Viewer</legend>
-                                            <div>
-                                                <p>A modern, user-friendly web interface for exploring your exported
-                                                    Discord data. Built with Flask (backend) and Discord.py (bot
-                                                    integration).
-                                                </p>
-                                                <div class="project-tech">
-                                                    <span class="tui-button cyan-168"
-                                                        style="font-size: 11px; padding: 0 4px;">HTML</span>
-                                                    <span class="tui-button görüntülemenizi"
-                                                        style="font-size: 11px; padding: 0 4px;">Css</span>
-                                                    <span class="tui-button purple-168"
-                                                        style="font-size: 11px; padding: 0 4px;">Python</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <br>
-                                                <a href="https://github.com/batuhd/DPaV" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► GitHub'da Görüntüle
-                                                </a>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col s12 m6 l6">
-                                <div class="project-card">
-                                    <div class="tui-window">
-                                        <fieldset class="tui-fieldset">
-                                            <legend class="green-255-text">📁 Spotify Toolbox</legend>
-                                            <div>
-                                                <p>A web-based application built with Python (Flask & Spotipy) to manage
-                                                    and organize your Spotify playlists.</p>
-                                                <div class="project-tech">
-                                                    <span class="tui-button cyan-168"
-                                                        style="font-size: 11px; padding: 0 4px;">HTML</span>
-                                                    <span class="tui-button görüntülemenizi"
-                                                        style="font-size: 11px; padding: 0 4px;">Css</span>
-                                                    <span class="tui-button purple-168"
-                                                        style="font-size: 11px; padding: 0 4px;">Python</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <br>
-                                                <a href="https://github.com/batuhd/Spotify-Toolbox" target="_blank"
-                                                    class="tui-button project-link-btn">
-                                                    ► GitHub'da Görüntüle
-                                                </a>
-                                            </div>
-                                        </fieldset>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-
-                    </fieldset>
-                </div>
-            </div>
-
-
-
+        <!-- welcome card -->
+        <div id="welcome-card" class="welcome-card">
+          <div class="welcome-separator">—————— WELCOME ——————</div>
+          <div class="welcome-rows"></div>
         </div>
+
+        <!-- transition line -->
+        <div id="transition-line" class="transition-line">
+          Transitioning to scene... <span class="cursor-blink">_</span>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="tui-statusbar">
-        <ul>
-            <li><a href="https://github.com/batuhd" target="_blank"><span class="red-168-text">F1</span> GitHub</a>
-            </li>
-            <span class="tui-statusbar-divider"></span>
-            <li><a href="" target="_blank"><span class="red-168-text">F2</span>
-                    LinkedIn</a></li>
-            <span class="tui-statusbar-divider"></span>
-            <li><a href="" target="_blank"><span class="red-168-text">F3</span> Twitter /
-                    X</a></li>
-            <span class="tui-statusbar-divider"></span>
-            <li><a href="mailto:"><span class="red-168-text">F4</span> E-posta</a></li>
-            <span class="tui-statusbar-divider"></span>
-            <li><a href="" target="_blank"><span class="red-168-text">F5</span>
-                    Instagram</a></li>
-        </ul>
+  <!-- skip intro button -->
+  <button id="skip-intro">[ SKIP ]</button>
+
+  <!-- youtube background video -->
+  <div id="bg-video-container" class="bg-video-container">
+    <div id="bg-video-player"></div>
+  </div>
+
+  <!-- overlays (always visible, on top of video) -->
+  <div class="grain-overlay"></div>
+  <div class="scanline-overlay"></div>
+
+  <!-- main site -->
+  <div id="main-site">
+
+    <!-- mobile nav toggle -->
+    <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- sidebar navigation -->
+    <nav class="sidebar-nav">
+      <a href="#home">
+        <img src="media/yuvarlaklogobeyaz.png" alt="Logo" class="nav-logo">
+      </a>
+      <ul class="nav-links">
+        <li><a href="#home" class="active">HOME</a></li>
+        <li><a href="#about">ABOUT</a></li>
+        <li><a href="#works">WORKS</a></li>
+        <li><a href="#contact">CONTACT</a></li>
+      </ul>
+      <div class="sidebar-bottom">
+        <button class="sidebar-toggle active" id="video-toggle">Video: On</button>
+        <button class="sidebar-toggle" id="sound-toggle">Sound: Off</button>
+      </div>
+    </nav>
+
+    <!-- corner barcode -->
+    <img src="media/logobeyaz.png" alt="barcode" class="corner-barcode">
+
+    <!-- copyright -->
+    <div class="copyright" id="copyright"></div>
+
+    <!-- content area -->
+    <div class="content-area">
+
+      <!-- hero -->
+      <section class="section-hero" id="home">
+        <h1 class="hero-title" id="hero-title"></h1>
+        <div class="hero-name" id="hero-name"></div>
+        <div class="hero-subtitle" id="hero-subtitle"></div>
+        <div class="hero-scroll-hint">SCROLL</div>
+      </section>
+
+      <!-- about -->
+      <section class="section section-about" id="about">
+        <div class="section-label fade-in">[ ABOUT ]</div>
+        <div id="about-blocks"></div>
+      </section>
+
+      <!-- works -->
+      <section class="section section-works" id="works">
+        <div class="section-label fade-in">[ WORKS ]</div>
+        <div id="works-grid" class="works-grid"></div>
+      </section>
+
+      <!-- contact -->
+      <section class="section section-contact" id="contact">
+        <div class="section-label fade-in">[ LINKS ]</div>
+        <h2 class="contact-title fade-in">GET IN TOUCH</h2>
+        <div id="contact-links" class="contact-links fade-in"></div>
+      </section>
+
     </div>
+  </div>
 
-    <script src="https://unpkg.com/tuicss/dist/tuicss.min.js"></script>
-
-    <script src="script.js"></script>
-
+  <!-- scripts -->
+  <script src="data.js"></script>
+  <script src="main.js"></script>
+  <script>
+    document.getElementById('hero-name').textContent = SITE_DATA.profile.name;
+    document.getElementById('hero-subtitle').textContent = SITE_DATA.profile.heroSubtitle;
+    document.getElementById('copyright').textContent = SITE_DATA.profile.copyright;
+  </script>
 </body>
-
 </html>
