@@ -1,7 +1,7 @@
 # BATUHD Portfolio
 
 <div align="center">
-  <img src="media/logobeyaz.png" alt="Logo" width="200"/>
+  <video src="media/intro.mp4" autoplay loop muted playsinline width="400"></video>
   <br>
   <p>A highly interactive, terminal-inspired, and secure portfolio website built with vanilla web technologies, Firebase, and Vercel Serverless Functions.</p>
 </div>
@@ -15,8 +15,9 @@
 - **Secure Admin Panel**: A built-in, fully authenticated admin dashboard for CRUD operations on blog posts and portfolio projects.
 - **Formspree Contact Form**: Serverless contact form handling.
 - **Responsive Architecture**: Fluid typographies using `clamp()`, adaptable grid layouts, and mobile-specific navigations.
-- **Custom Aesthetic**: Glitch effects, scanline & grain overlays, custom cursors, and glowing terminal interfaces.
+- **Custom Aesthetic**: Glitch effects, scanline & grain overlays, custom cursors, glowing terminal interfaces.
 - **Client-Side Routing & Smooth Scroll**: Seamless transitions between sections with a custom `requestAnimationFrame` smooth scroller.
+- **Comprehensive Credits Center**: A dedicated CREDITS page acknowledging tools, typography (Epetri & Google Fonts), AI assistants, and open-source materials.
 
 ## 🛠️ Tech Stack
 
@@ -63,6 +64,7 @@ The database rules check the authenticated user's email against a hardcoded whit
 ├── index.html       # Main landing page (Hero, About, Contact)
 ├── works.html       # Projects page (Firebase powered)
 ├── blog.html        # Blog page (Firebase powered)
+├── credits.html     # Credits, tech stack, and attributions
 ├── admin.html       # Secure admin dashboard
 ├── style.css        # Global stylesheet & design system
 ├── main.js          # Core application logic & UI interactions
