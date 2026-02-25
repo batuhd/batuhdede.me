@@ -1,5 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
-  initFirebase();
+document.addEventListener('DOMContentLoaded', async () => {
+  await initFirebase();
   initIntro();
   initSmoothScroll();
   initNavigation();
@@ -32,9 +32,25 @@ function initHeroButtons() {
 
 let firebaseDB = null;
 
-function initFirebase() {
+async function initFirebase() {
+  let config = null;
+
+  // try loading from Vercel serverless function
   try {
-    const app = firebase.initializeApp(SITE_DATA.firebase);
+    const res = await fetch('/api/config');
+    if (res.ok) config = await res.json();
+  } catch (e) { /* /api/config not available (local dev) */ }
+
+  // fallback to data.js (for local development)
+  if (!config && SITE_DATA.firebase) config = SITE_DATA.firebase;
+
+  if (!config || !config.apiKey) {
+    console.warn('Firebase config not available');
+    return;
+  }
+
+  try {
+    firebase.initializeApp(config);
     firebaseDB = firebase.database();
   } catch (e) {
     console.warn('Firebase init failed:', e.message);

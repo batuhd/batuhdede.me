@@ -93,23 +93,16 @@ const SITE_DATA = {
 
   // contact form (Formspree)
   contact: {
-    email: "batuhan@example.com",
-    formspreeEndpoint: "https://formspree.io/f/YOUR_FORM_ID"
+    email: "batuhdede@gmail.com",
+    formspreeEndpoint: "https://formspree.io/f/xdalyqan"
   },
 
-  // firebase config (replace with your own)
-  firebase: {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  },
+  // firebase config — loaded from /api/config (Vercel env variables)
+  // DO NOT put API keys here — they go in Vercel Dashboard → Settings → Environment Variables
+  firebase: null,
 
   // admin email (for Firebase Auth login)
-  adminEmail: "batuhan@example.com",
+  adminEmail: "batuhdede@gmail.com",
 
   // resume PDF URL
   resumeURL: "https://github.com/batuhd/cv-olustur"

@@ -155,13 +155,30 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="data.js"></script>
   <script>
-    // firebase init
+    // firebase init (fetch from Vercel env or fallback to data.js)
     let db, auth;
-    try {
-      firebase.initializeApp(SITE_DATA.firebase);
+
+    async function initAdminFirebase() {
+      let config = null;
+      try {
+        const res = await fetch('/api/config');
+        if (res.ok) config = await res.json();
+      } catch (e) {}
+      if (!config && SITE_DATA.firebase) config = SITE_DATA.firebase;
+      if (!config || !config.apiKey) {
+        loginError.textContent = '> Firebase not configured.';
+        return;
+      }
+      firebase.initializeApp(config);
       db = firebase.database();
       auth = firebase.auth();
-    } catch (e) { console.error('Firebase init failed:', e); }
+
+      // check existing auth
+      auth.onAuthStateChanged((user) => {
+        if (user) showAdmin();
+      });
+    }
+    initAdminFirebase();
 
     // elements
     const loginScreen = document.getElementById('login-screen');
@@ -258,10 +275,6 @@
       loginBtn.disabled = false;
     }
 
-    // check existing auth
-    auth.onAuthStateChanged((user) => {
-      if (user) showAdmin();
-    });
 
     function showAdmin() {
       loginScreen.style.display = 'none';
