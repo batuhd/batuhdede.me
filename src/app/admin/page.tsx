@@ -1,0 +1,606 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FadeIn } from "@/components/motion/fade-in";
+import {
+  LayoutDashboard,
+  Settings,
+  LogOut,
+  FolderKanban,
+  PenTool,
+  Loader2,
+  Plus,
+  Trash2,
+  Pencil,
+  X,
+  Globe,
+} from "lucide-react";
+import { auth, db } from "@/lib/firebase";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { ref, push, set, remove, onValue, update } from "firebase/database";
+import { cn } from "@/lib/utils";
+
+type Tab = "works" | "blog" | "settings";
+type LangTab = "default" | "tr" | "de" | "ja";
+
+const LANG_TABS: { key: LangTab; label: string }[] = [
+  { key: "default", label: "EN (Default)" },
+  { key: "tr", label: "TR" },
+  { key: "de", label: "DE" },
+  { key: "ja", label: "JA" },
+];
+
+export default function AdminDashboardPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>("works");
+
+  const [works, setWorks] = useState<any[]>([]);
+  const [blogs, setBlogs] = useState<any[]>([]);
+
+  // Add Work
+  const [isAddingWork, setIsAddingWork] = useState(false);
+  const [workLangTab, setWorkLangTab] = useState<LangTab>("default");
+  const [workForm, setWorkForm] = useState({
+    title: "", description: "", link: "", github: "", image: "", tags: "",
+    title_tr: "", description_tr: "",
+    title_de: "", description_de: "",
+    title_ja: "", description_ja: "",
+  });
+
+  // Edit Work
+  const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
+  const [editWorkLangTab, setEditWorkLangTab] = useState<LangTab>("default");
+  const [editWorkForm, setEditWorkForm] = useState({
+    title: "", description: "", link: "", github: "", image: "", tags: "",
+    title_tr: "", description_tr: "",
+    title_de: "", description_de: "",
+    title_ja: "", description_ja: "",
+  });
+
+  // Add Blog
+  const [isAddingBlog, setIsAddingBlog] = useState(false);
+  const [blogLangTab, setBlogLangTab] = useState<LangTab>("default");
+  const [blogForm, setBlogForm] = useState({
+    title: "", excerpt: "", content: "", date: "", readTime: "",
+    title_tr: "", excerpt_tr: "", content_tr: "",
+    title_de: "", excerpt_de: "", content_de: "",
+    title_ja: "", excerpt_ja: "", content_ja: "",
+  });
+
+  // Edit Blog
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
+  const [editBlogLangTab, setEditBlogLangTab] = useState<LangTab>("default");
+  const [editBlogForm, setEditBlogForm] = useState({
+    title: "", excerpt: "", content: "", date: "", readTime: "",
+    title_tr: "", excerpt_tr: "", content_tr: "",
+    title_de: "", excerpt_de: "", content_de: "",
+    title_ja: "", excerpt_ja: "", content_ja: "",
+  });
+
+  useEffect(() => {
+    if (!auth) { router.push("/admin/login"); return; }
+    const unsub = onAuthStateChanged(auth, (u) => {
+      if (!u) router.push("/admin/login");
+      else { setUser(u); setLoading(false); }
+    });
+    return () => unsub();
+  }, [router]);
+
+  useEffect(() => {
+    if (!db) return;
+    const uW = onValue(ref(db, "projects"), (s) => {
+      const d = s.val();
+      setWorks(d ? Object.keys(d).map((k) => ({ id: k, ...d[k] })) : []);
+    });
+    const uB = onValue(ref(db, "blog"), (s) => {
+      const d = s.val();
+      setBlogs(d ? Object.keys(d).map((k) => ({ id: k, ...d[k] })) : []);
+    });
+    return () => { uW(); uB(); };
+  }, []);
+
+  const handleSignOut = async () => {
+    if (auth) { await signOut(auth); router.push("/admin/login"); }
+  };
+
+  // ── Helpers ──
+  const cleanObj = (obj: Record<string, any>) => {
+    const cleaned: Record<string, any> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (typeof v === "string" && v.trim() === "") continue;
+      cleaned[k] = v;
+    }
+    return cleaned;
+  };
+
+  const inputClass =
+    "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
+
+  // ── Works CRUD ──
+  const handleAddWork = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!db) return;
+    const { link, github, image, tags, ...rest } = workForm;
+    const data = cleanObj({
+      ...rest,
+      link, github, image,
+      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+    });
+    await set(push(ref(db, "projects")), data);
+    setWorkForm({ title: "", description: "", link: "", github: "", image: "", tags: "", title_tr: "", description_tr: "", title_de: "", description_de: "", title_ja: "", description_ja: "" });
+    setIsAddingWork(false);
+    setWorkLangTab("default");
+  };
+
+  const handleEditWork = (work: any) => {
+    setEditingWorkId(work.id);
+    setEditWorkForm({
+      title: work.title || "", description: work.description || "",
+      link: work.link || "", github: work.github || "",
+      image: work.image || "",
+      tags: Array.isArray(work.tags) ? work.tags.join(", ") : work.tags || "",
+      title_tr: work.title_tr || "", description_tr: work.description_tr || "",
+      title_de: work.title_de || "", description_de: work.description_de || "",
+      title_ja: work.title_ja || "", description_ja: work.description_ja || "",
+    });
+    setEditWorkLangTab("default");
+    setIsAddingWork(false);
+  };
+
+  const handleSaveEditWork = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!db || !editingWorkId) return;
+    const { link, github, image, tags, ...rest } = editWorkForm;
+    const data = cleanObj({
+      ...rest,
+      link, github, image,
+      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+    });
+    await update(ref(db, `projects/${editingWorkId}`), data);
+    setEditingWorkId(null);
+  };
+
+  const handleDeleteWork = async (id: string) => {
+    if (!db || !confirm("Delete this project?")) return;
+    await remove(ref(db, `projects/${id}`));
+    if (editingWorkId === id) setEditingWorkId(null);
+  };
+
+  // ── Blog CRUD ──
+  const handleAddBlog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!db) return;
+    const date = blogForm.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+    const data = cleanObj({ ...blogForm, date });
+    await set(push(ref(db, "blog")), data);
+    setBlogForm({ title: "", excerpt: "", content: "", date: "", readTime: "", title_tr: "", excerpt_tr: "", content_tr: "", title_de: "", excerpt_de: "", content_de: "", title_ja: "", excerpt_ja: "", content_ja: "" });
+    setIsAddingBlog(false);
+    setBlogLangTab("default");
+  };
+
+  const handleEditBlog = (blog: any) => {
+    setEditingBlogId(blog.id);
+    setEditBlogForm({
+      title: blog.title || "", excerpt: blog.excerpt || "",
+      content: blog.content || "", date: blog.date || "",
+      readTime: blog.readTime || "",
+      title_tr: blog.title_tr || "", excerpt_tr: blog.excerpt_tr || "", content_tr: blog.content_tr || "",
+      title_de: blog.title_de || "", excerpt_de: blog.excerpt_de || "", content_de: blog.content_de || "",
+      title_ja: blog.title_ja || "", excerpt_ja: blog.excerpt_ja || "", content_ja: blog.content_ja || "",
+    });
+    setEditBlogLangTab("default");
+    setIsAddingBlog(false);
+  };
+
+  const handleSaveEditBlog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!db || !editingBlogId) return;
+    const data = cleanObj(editBlogForm);
+    await update(ref(db, `blog/${editingBlogId}`), data);
+    setEditingBlogId(null);
+  };
+
+  const handleDeleteBlog = async (id: string) => {
+    if (!db || !confirm("Delete this post?")) return;
+    await remove(ref(db, `blog/${id}`));
+    if (editingBlogId === id) setEditingBlogId(null);
+  };
+
+  // ── Language Tab Bar ──
+  function LangTabBar({ active, onChange }: { active: LangTab; onChange: (t: LangTab) => void }) {
+    return (
+      <div className="flex gap-1 rounded-lg bg-muted p-1 mb-4">
+        {LANG_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => onChange(tab.key)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+              active === tab.key
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {tab.key !== "default" && <Globe className="h-3 w-3" />}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Verifying session...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 sm:space-y-12">
+      <FadeIn>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
+              <LayoutDashboard className="h-8 w-8 text-primary" />
+              Dashboard
+            </h1>
+            <p className="text-lg text-muted-foreground">Welcome back, {user?.email}</p>
+          </div>
+          <button onClick={handleSignOut} className="flex w-fit items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground">
+            <LogOut className="h-4 w-4" /> Sign Out
+          </button>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={0.1}>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Sidebar */}
+          <div className="space-y-2 md:col-span-1 border-r border-border pr-4">
+            {([
+              { key: "works", icon: FolderKanban, label: "Manage Works" },
+              { key: "blog", icon: PenTool, label: "Manage Blog" },
+              { key: "settings", icon: Settings, label: "Settings" },
+            ] as const).map((tab) => (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.key ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"}`}>
+                <tab.icon className="h-4 w-4" /> {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Main Content */}
+          <div className="md:col-span-3">
+            <div className="rounded-2xl border bg-card p-6 shadow-sm min-h-[400px]">
+
+              {/* ───── WORKS TAB ───── */}
+              {activeTab === "works" && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b pb-4">
+                    <h2 className="text-xl font-semibold">Works Overview</h2>
+                    <button onClick={() => { setIsAddingWork(!isAddingWork); setEditingWorkId(null); }}
+                      className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+                      <Plus className={`h-4 w-4 transition-transform ${isAddingWork ? "rotate-45" : ""}`} />
+                      {isAddingWork ? "Cancel" : "Add Project"}
+                    </button>
+                  </div>
+
+                  {/* Add Work Form */}
+                  {isAddingWork && (
+                    <form onSubmit={handleAddWork} className="space-y-4 rounded-xl border bg-muted/30 p-4">
+                      <LangTabBar active={workLangTab} onChange={setWorkLangTab} />
+
+                      {workLangTab === "default" ? (
+                        <>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Title *</label>
+                              <input required value={workForm.title} onChange={(e) => setWorkForm({ ...workForm, title: e.target.value })} className={inputClass} placeholder="Project Title" />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Image URL</label>
+                              <input value={workForm.image} onChange={(e) => setWorkForm({ ...workForm, image: e.target.value })} className={inputClass} placeholder="https://..." />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Live Link</label>
+                              <input value={workForm.link} onChange={(e) => setWorkForm({ ...workForm, link: e.target.value })} className={inputClass} placeholder="https://..." />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">GitHub Link</label>
+                              <input value={workForm.github} onChange={(e) => setWorkForm({ ...workForm, github: e.target.value })} className={inputClass} placeholder="https://github.com/..." />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Tags (comma separated)</label>
+                            <input value={workForm.tags} onChange={(e) => setWorkForm({ ...workForm, tags: e.target.value })} className={inputClass} placeholder="React, Tailwind" />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Description *</label>
+                            <textarea required value={workForm.description} onChange={(e) => setWorkForm({ ...workForm, description: e.target.value })} className={`${inputClass} min-h-[80px]`} placeholder="Brief description" />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-xs text-muted-foreground">Optional — leave empty to use default (EN).</p>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Title ({workLangTab.toUpperCase()})</label>
+                            <input value={(workForm as any)[`title_${workLangTab}`]} onChange={(e) => setWorkForm({ ...workForm, [`title_${workLangTab}`]: e.target.value })} className={inputClass} placeholder={workForm.title || "Translation..."} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Description ({workLangTab.toUpperCase()})</label>
+                            <textarea value={(workForm as any)[`description_${workLangTab}`]} onChange={(e) => setWorkForm({ ...workForm, [`description_${workLangTab}`]: e.target.value })} className={`${inputClass} min-h-[80px]`} placeholder={workForm.description || "Translation..."} />
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-end">
+                        <button type="submit" className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:bg-foreground/90">Save Project</button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* Edit Work Form */}
+                  {editingWorkId && (
+                    <form onSubmit={handleSaveEditWork} className="space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-primary">Editing Project</h3>
+                        <button type="button" onClick={() => setEditingWorkId(null)} className="rounded-md p-1 hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
+                      </div>
+                      <LangTabBar active={editWorkLangTab} onChange={setEditWorkLangTab} />
+
+                      {editWorkLangTab === "default" ? (
+                        <>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Title *</label>
+                              <input required value={editWorkForm.title} onChange={(e) => setEditWorkForm({ ...editWorkForm, title: e.target.value })} className={inputClass} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Image URL</label>
+                              <input value={editWorkForm.image} onChange={(e) => setEditWorkForm({ ...editWorkForm, image: e.target.value })} className={inputClass} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Live Link</label>
+                              <input value={editWorkForm.link} onChange={(e) => setEditWorkForm({ ...editWorkForm, link: e.target.value })} className={inputClass} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">GitHub Link</label>
+                              <input value={editWorkForm.github} onChange={(e) => setEditWorkForm({ ...editWorkForm, github: e.target.value })} className={inputClass} />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Tags</label>
+                            <input value={editWorkForm.tags} onChange={(e) => setEditWorkForm({ ...editWorkForm, tags: e.target.value })} className={inputClass} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Description *</label>
+                            <textarea required value={editWorkForm.description} onChange={(e) => setEditWorkForm({ ...editWorkForm, description: e.target.value })} className={`${inputClass} min-h-[80px]`} />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-xs text-muted-foreground">Optional — leave empty to use default (EN).</p>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Title ({editWorkLangTab.toUpperCase()})</label>
+                            <input value={(editWorkForm as any)[`title_${editWorkLangTab}`]} onChange={(e) => setEditWorkForm({ ...editWorkForm, [`title_${editWorkLangTab}`]: e.target.value })} className={inputClass} placeholder={editWorkForm.title || "Translation..."} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Description ({editWorkLangTab.toUpperCase()})</label>
+                            <textarea value={(editWorkForm as any)[`description_${editWorkLangTab}`]} onChange={(e) => setEditWorkForm({ ...editWorkForm, [`description_${editWorkLangTab}`]: e.target.value })} className={`${inputClass} min-h-[80px]`} placeholder={editWorkForm.description || "Translation..."} />
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => setEditingWorkId(null)} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
+                        <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">Update Project</button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* Work Items */}
+                  <div className="space-y-3">
+                    {works.length === 0 && !isAddingWork ? (
+                      <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground">
+                        <FolderKanban className="h-8 w-8 opacity-50" />
+                        <p className="text-sm">No projects found.</p>
+                      </div>
+                    ) : works.map((work) => (
+                      <div key={work.id} className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${editingWorkId === work.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30"}`}>
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <h3 className="font-medium">{work.title}</h3>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{work.description}</p>
+                          {(work.title_tr || work.title_de || work.title_ja) && (
+                            <div className="flex gap-1 mt-1">
+                              {work.title_tr && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">TR</span>}
+                              {work.title_de && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">DE</span>}
+                              {work.title_ja && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">JA</span>}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                          <button onClick={() => handleEditWork(work)} className="rounded-md p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors" title="Edit"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={() => handleDeleteWork(work.id)} className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ───── BLOG TAB ───── */}
+              {activeTab === "blog" && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between border-b pb-4">
+                    <h2 className="text-xl font-semibold">Blog Posts</h2>
+                    <button onClick={() => { setIsAddingBlog(!isAddingBlog); setEditingBlogId(null); }}
+                      className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+                      <Plus className={`h-4 w-4 transition-transform ${isAddingBlog ? "rotate-45" : ""}`} />
+                      {isAddingBlog ? "Cancel" : "New Post"}
+                    </button>
+                  </div>
+
+                  {/* Add Blog Form */}
+                  {isAddingBlog && (
+                    <form onSubmit={handleAddBlog} className="space-y-4 rounded-xl border bg-muted/30 p-4">
+                      <LangTabBar active={blogLangTab} onChange={setBlogLangTab} />
+
+                      {blogLangTab === "default" ? (
+                        <>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Title *</label>
+                              <input required value={blogForm.title} onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })} className={inputClass} placeholder="Post Title" />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Read Time</label>
+                              <input value={blogForm.readTime} onChange={(e) => setBlogForm({ ...blogForm, readTime: e.target.value })} className={inputClass} placeholder="5 min read" />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Excerpt *</label>
+                            <input required value={blogForm.excerpt} onChange={(e) => setBlogForm({ ...blogForm, excerpt: e.target.value })} className={inputClass} placeholder="Short summary" />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Content *</label>
+                            <textarea required value={blogForm.content} onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })} className={`${inputClass} min-h-[150px]`} placeholder="Full blog post content..." />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-xs text-muted-foreground">Optional — leave empty to use default (EN).</p>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Title ({blogLangTab.toUpperCase()})</label>
+                            <input value={(blogForm as any)[`title_${blogLangTab}`]} onChange={(e) => setBlogForm({ ...blogForm, [`title_${blogLangTab}`]: e.target.value })} className={inputClass} placeholder={blogForm.title || "Translation..."} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Excerpt ({blogLangTab.toUpperCase()})</label>
+                            <input value={(blogForm as any)[`excerpt_${blogLangTab}`]} onChange={(e) => setBlogForm({ ...blogForm, [`excerpt_${blogLangTab}`]: e.target.value })} className={inputClass} placeholder={blogForm.excerpt || "Translation..."} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Content ({blogLangTab.toUpperCase()})</label>
+                            <textarea value={(blogForm as any)[`content_${blogLangTab}`]} onChange={(e) => setBlogForm({ ...blogForm, [`content_${blogLangTab}`]: e.target.value })} className={`${inputClass} min-h-[150px]`} placeholder={blogForm.content || "Translation..."} />
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-end">
+                        <button type="submit" className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:bg-foreground/90">Save Post</button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* Edit Blog Form */}
+                  {editingBlogId && (
+                    <form onSubmit={handleSaveEditBlog} className="space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-primary">Editing Post</h3>
+                        <button type="button" onClick={() => setEditingBlogId(null)} className="rounded-md p-1 hover:bg-muted transition-colors"><X className="h-4 w-4" /></button>
+                      </div>
+                      <LangTabBar active={editBlogLangTab} onChange={setEditBlogLangTab} />
+
+                      {editBlogLangTab === "default" ? (
+                        <>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Title *</label>
+                              <input required value={editBlogForm.title} onChange={(e) => setEditBlogForm({ ...editBlogForm, title: e.target.value })} className={inputClass} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Read Time</label>
+                              <input value={editBlogForm.readTime} onChange={(e) => setEditBlogForm({ ...editBlogForm, readTime: e.target.value })} className={inputClass} />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Date</label>
+                            <input value={editBlogForm.date} onChange={(e) => setEditBlogForm({ ...editBlogForm, date: e.target.value })} className={inputClass} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Excerpt *</label>
+                            <input required value={editBlogForm.excerpt} onChange={(e) => setEditBlogForm({ ...editBlogForm, excerpt: e.target.value })} className={inputClass} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Content *</label>
+                            <textarea required value={editBlogForm.content} onChange={(e) => setEditBlogForm({ ...editBlogForm, content: e.target.value })} className={`${inputClass} min-h-[150px]`} />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="space-y-4">
+                          <p className="text-xs text-muted-foreground">Optional — leave empty to use default (EN).</p>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Title ({editBlogLangTab.toUpperCase()})</label>
+                            <input value={(editBlogForm as any)[`title_${editBlogLangTab}`]} onChange={(e) => setEditBlogForm({ ...editBlogForm, [`title_${editBlogLangTab}`]: e.target.value })} className={inputClass} placeholder={editBlogForm.title || "Translation..."} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Excerpt ({editBlogLangTab.toUpperCase()})</label>
+                            <input value={(editBlogForm as any)[`excerpt_${editBlogLangTab}`]} onChange={(e) => setEditBlogForm({ ...editBlogForm, [`excerpt_${editBlogLangTab}`]: e.target.value })} className={inputClass} placeholder={editBlogForm.excerpt || "Translation..."} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Content ({editBlogLangTab.toUpperCase()})</label>
+                            <textarea value={(editBlogForm as any)[`content_${editBlogLangTab}`]} onChange={(e) => setEditBlogForm({ ...editBlogForm, [`content_${editBlogLangTab}`]: e.target.value })} className={`${inputClass} min-h-[150px]`} placeholder={editBlogForm.content || "Translation..."} />
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => setEditingBlogId(null)} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">Cancel</button>
+                        <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">Update Post</button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* Blog Items */}
+                  <div className="space-y-3">
+                    {blogs.length === 0 && !isAddingBlog ? (
+                      <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground">
+                        <PenTool className="h-8 w-8 opacity-50" />
+                        <p className="text-sm">No blog posts found.</p>
+                      </div>
+                    ) : blogs.map((blog) => (
+                      <div key={blog.id} className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${editingBlogId === blog.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30"}`}>
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <h3 className="font-medium">{blog.title}</h3>
+                          <p className="text-xs text-muted-foreground">{blog.date} · {blog.readTime || "—"}</p>
+                          {(blog.title_tr || blog.title_de || blog.title_ja) && (
+                            <div className="flex gap-1 mt-1">
+                              {blog.title_tr && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">TR</span>}
+                              {blog.title_de && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">DE</span>}
+                              {blog.title_ja && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">JA</span>}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                          <button onClick={() => handleEditBlog(blog)} className="rounded-md p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors" title="Edit"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={() => handleDeleteBlog(blog.id)} className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ───── SETTINGS TAB ───── */}
+              {activeTab === "settings" && (
+                <div className="space-y-6">
+                  <h2 className="text-xl font-semibold border-b pb-4">Profile Settings</h2>
+                  <div className="space-y-4 max-w-sm">
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-muted-foreground">Admin Email</label>
+                      <div className="rounded-lg bg-muted px-3 py-2 text-sm">{user?.email || "Unknown"}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-muted-foreground">User UID</label>
+                      <div className="rounded-lg bg-muted px-3 py-2 text-xs font-mono break-all">{user?.uid || "Unknown"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </FadeIn>
+    </div>
+  );
+}

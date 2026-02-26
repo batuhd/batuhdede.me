@@ -1,95 +1,89 @@
-# BATUHD Portfolio
+# batuhdede.me
 
-<div align="center">
-  <video src="media/intro.mp4" autoplay loop muted playsinline width="400"></video>
-  <br>
-  <p>A highly interactive, terminal-inspired, and secure portfolio website built with vanilla web technologies, Firebase, and Vercel Serverless Functions.</p>
-</div>
+Personal portfolio website built with Next.js, React, and Tailwind CSS.
 
----
+## Features
 
-## 🌟 Features
+- **Multi-language support** — Turkish, English, German, Japanese
+- **Admin panel** — Manage Works and Blog posts with multi-language content
+- **Dark / Light theme** — Toggle via the bottom dock
+- **GitHub contribution graph** — Live data via GitHub API
+- **Contact form** — Powered by Formspree
+- **Intro animation** — Custom video sequence on first visit
+- **Responsive design** — Optimized for all screen sizes
 
-- **Immersive Intro Sequence**: A terminal-style boot sequence that transitions into a cinematic video background.
-- **Dynamic Content Management (CMS)**: Firebase Realtime Database integration for managing `WORKS` and `BLOG` sections.
-- **Secure Admin Panel**: A built-in, fully authenticated admin dashboard for CRUD operations on blog posts and portfolio projects.
-- **Formspree Contact Form**: Serverless contact form handling.
-- **Responsive Architecture**: Fluid typographies using `clamp()`, adaptable grid layouts, and mobile-specific navigations.
-- **Custom Aesthetic**: Glitch effects, scanline & grain overlays, custom cursors, glowing terminal interfaces.
-- **Client-Side Routing & Smooth Scroll**: Seamless transitions between sections with a custom `requestAnimationFrame` smooth scroller.
-- **Comprehensive Credits Center**: A dedicated CREDITS page acknowledging tools, typography (Epetri & Google Fonts), AI assistants, and open-source materials.
+## Tech Stack
 
-## 🛠️ Tech Stack
+| Category  | Technology                      |
+| --------- | ------------------------------- |
+| Frontend  | React, Next.js, Tailwind CSS    |
+| Database  | Firebase Realtime Database      |
+| Auth      | Firebase Authentication         |
+| Hosting   | Vercel                          |
+| Forms     | Formspree                       |
+| Icons     | Lucide React                    |
+| Animation | Framer Motion                   |
+| Fonts     | Geist Sans, Geist Mono (Vercel) |
 
-- **Frontend**: HTML5, Vanilla JavaScript (ES6+), Vanilla CSS3 (Custom Properties & Flexbox/Grid).
-- **Backend / Database**: Firebase Realtime Database.
-- **Authentication**: Firebase Authentication (Email/Password).
-- **Serverless API**: Vercel Serverless Functions (Node.js) for secure API key delivery.
-- **Hosting**: Vercel.
-- **Forms**: Formspree API.
+## Getting Started
 
----
+```bash
+# Install dependencies
+npm install
 
-## 🛡️ Security Architecture
+# Run development server
+npm run dev
 
-This project implements a strict security posture to protect the database and admin panel from unauthorized access and brute-force attacks.
-
-### 1. Firebase Authentication & Sign-Up Locking
-
-- **Sign-up Disabled**: New user registration has been completely disabled at the Firebase console level. The API will reject any programmatic sign-up attempt (`auth/operation-not-allowed`).
-- **Single Admin**: Only the pre-configured administrator email can log in to the admin panel.
-
-### 2. Firestore / Realtime Database Security Rules (Whitelist)
-
-The database rules check the authenticated user's email against a hardcoded whitelist.
-
-- **Rule**: `allow write: if request.auth !== null && request.auth.token.email === 'admin@email.com';`
-- **Result**: Even if credentials leak, write access is strictly tied to the verified email address. Read access remains public (`.read: true`) for the frontend to render.
-
-### 3. API Key Domain & CORS Locking
-
-- **Google Cloud Restrictions**: The Firebase API keys are locked via Google Cloud Console to only accept requests from specific `HTTP referrers` (e.g., `https://batuhdede.me/*` and the specific Vercel deployment URL).
-- **Vercel Serverless Function**: The Firebase config is NOT hardcoded in the frontend repository. It is loaded at runtime via a Vercel Serverless Function (`/api/config`) which pulls from Vercel Environment Variables. This function uses strict CORS policies to only respond to allowed origins.
-
-### 4. Admin Login Protection
-
-- **Custom CAPTCHA**: The admin login page features a 6-character, randomized CAPTCHA that must be solved on every login attempt.
-- **Rate Limiting / Lockout**: The client implements a 3-strike rule. Three consecutive failed login attempts (wrong password or CAPTCHA) trigger a mandatory 60-second cooldown lockout.
-
----
-
-## 📁 Project Structure
-
-```text
-├── index.html       # Main landing page (Hero, About, Contact)
-├── works.html       # Projects page (Firebase powered)
-├── blog.html        # Blog page (Firebase powered)
-├── credits.html     # Credits, tech stack, and attributions
-├── admin.html       # Secure admin dashboard
-├── style.css        # Global stylesheet & design system
-├── main.js          # Core application logic & UI interactions
-├── data.js          # Static configuration & fallback data
-├── vercel.json      # Vercel deployment configuration
-├── api/
-│   └── config.js    # Vercel Serverless function for config delivery
-└── media/           # Images, videos, and icons
+# Production build
+npm run build
 ```
 
-## 🚀 Deployment
+Open [http://localhost:3000](http://localhost:3000) to view the site.
 
-1. Set up a **Firebase Project** and enable Authentication (Email/Password only) and Realtime Database.
-2. Configure **Firebase Security Rules** for your admin email.
-3. Restrict your Firebase API Key to your production domains in **Google Cloud Console**.
-4. Push code to GitHub and link to **Vercel**.
-5. Add the following Environment Variables in Vercel:
-   - `FIREBASE_API_KEY`
-   - `FIREBASE_AUTH_DOMAIN`
-   - `FIREBASE_DATABASE_URL`
-   - `FIREBASE_PROJECT_ID`
-   - `FIREBASE_STORAGE_BUCKET`
-   - `FIREBASE_MESSAGING_SENDER_ID`
-   - `FIREBASE_APP_ID`
+## Environment Variables
 
-## 📄 License
+Create a `.env.local` file with the following variables:
 
-Designed and developed by Batuhan Dede. All rights reserved.
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=
+GITHUB_TOKEN=              # Optional, for contribution graph
+```
+
+## Project Structure
+
+```
+src/
+├── app/                   # Next.js App Router pages
+│   ├── admin/             # Admin dashboard & login
+│   ├── api/github/        # GitHub API route
+│   ├── blog/              # Blog page
+│   ├── credits/           # Credits page
+│   └── works/             # Works/Projects page
+├── components/
+│   ├── home/              # Home page sections
+│   ├── motion/            # Animation components
+│   └── navigation/        # Bottom dock navigation
+├── config/
+│   ├── site.ts            # Site metadata
+│   ├── translations.ts    # i18n translations (TR/EN/DE/JA)
+│   └── user.ts            # User configuration
+├── context/
+│   └── language-context.tsx  # Language provider
+└── lib/
+    ├── firebase.ts        # Firebase initialization
+    └── utils.ts           # Utility functions
+```
+
+## Deploy
+
+Deploy to Vercel by connecting the GitHub repository. Set all environment variables in the Vercel dashboard.
+
+## License
+
+MIT
