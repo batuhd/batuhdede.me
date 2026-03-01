@@ -1,6 +1,7 @@
 # batuhdede.me
 
 Personal portfolio website built with Next.js, React, and Tailwind CSS.
+<img width="1920" height="1042" alt="11" src="https://github.com/user-attachments/assets/e6625b4e-0683-4706-8a6b-538fc43c480d" />
 
 ## Features
 
