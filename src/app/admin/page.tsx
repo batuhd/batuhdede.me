@@ -15,6 +15,9 @@ import {
   Pencil,
   X,
   Globe,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
@@ -31,6 +34,53 @@ const LANG_TABS: { key: LangTab; label: string }[] = [
   { key: "ja", label: "JA" },
 ];
 
+const TABS: { key: Tab; icon: typeof FolderKanban; label: string }[] = [
+  { key: "works", icon: FolderKanban, label: "Manage Works" },
+  { key: "blog", icon: PenTool, label: "Manage Blog" },
+  { key: "settings", icon: Settings, label: "Settings" },
+];
+
+const inputClass =
+  "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
+
+function cleanObj(obj: Record<string, unknown>) {
+  const cleaned: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === "string" && v.trim() === "") continue;
+    cleaned[k] = v;
+  }
+  return cleaned;
+}
+
+function LangTabBar({
+  active,
+  onChange,
+}: {
+  active: LangTab;
+  onChange: (t: LangTab) => void;
+}) {
+  return (
+    <div className="flex gap-1 rounded-lg bg-muted p-1 mb-4 overflow-x-auto">
+      {LANG_TABS.map((tab) => (
+        <button
+          key={tab.key}
+          type="button"
+          onClick={() => onChange(tab.key)}
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
+            active === tab.key
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {tab.key !== "default" && <Globe className="h-3 w-3" />}
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -40,7 +90,6 @@ export default function AdminDashboardPage() {
   const [works, setWorks] = useState<any[]>([]);
   const [blogs, setBlogs] = useState<any[]>([]);
 
-  // Add Work
   const [isAddingWork, setIsAddingWork] = useState(false);
   const [workLangTab, setWorkLangTab] = useState<LangTab>("default");
   const [workForm, setWorkForm] = useState({
@@ -50,7 +99,6 @@ export default function AdminDashboardPage() {
     title_ja: "", description_ja: "",
   });
 
-  // Edit Work
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
   const [editWorkLangTab, setEditWorkLangTab] = useState<LangTab>("default");
   const [editWorkForm, setEditWorkForm] = useState({
@@ -60,7 +108,6 @@ export default function AdminDashboardPage() {
     title_ja: "", description_ja: "",
   });
 
-  // Add Blog
   const [isAddingBlog, setIsAddingBlog] = useState(false);
   const [blogLangTab, setBlogLangTab] = useState<LangTab>("default");
   const [blogForm, setBlogForm] = useState({
@@ -70,7 +117,6 @@ export default function AdminDashboardPage() {
     title_ja: "", excerpt_ja: "", content_ja: "",
   });
 
-  // Edit Blog
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [editBlogLangTab, setEditBlogLangTab] = useState<LangTab>("default");
   const [editBlogForm, setEditBlogForm] = useState({
@@ -102,32 +148,25 @@ export default function AdminDashboardPage() {
     return () => { uW(); uB(); };
   }, []);
 
+  const sortedWorks = [...works].sort(
+    (a, b) => (a.order ?? 999) - (b.order ?? 999)
+  );
+
   const handleSignOut = async () => {
     if (auth) { await signOut(auth); router.push("/admin/login"); }
   };
-
-  // ── Helpers ──
-  const cleanObj = (obj: Record<string, any>) => {
-    const cleaned: Record<string, any> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      if (typeof v === "string" && v.trim() === "") continue;
-      cleaned[k] = v;
-    }
-    return cleaned;
-  };
-
-  const inputClass =
-    "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
 
   // ── Works CRUD ──
   const handleAddWork = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!db) return;
     const { link, github, image, tags, ...rest } = workForm;
+    const maxOrder = works.reduce((max, w) => Math.max(max, w.order ?? 0), -1);
     const data = cleanObj({
       ...rest,
       link, github, image,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      order: maxOrder + 1,
     });
     await set(push(ref(db, "projects")), data);
     setWorkForm({ title: "", description: "", link: "", github: "", image: "", tags: "", title_tr: "", description_tr: "", title_de: "", description_de: "", title_ja: "", description_ja: "" });
@@ -167,6 +206,24 @@ export default function AdminDashboardPage() {
     if (!db || !confirm("Delete this project?")) return;
     await remove(ref(db, `projects/${id}`));
     if (editingWorkId === id) setEditingWorkId(null);
+  };
+
+  const handleMoveWork = async (id: string, direction: "up" | "down") => {
+    if (!db) return;
+    const idx = sortedWorks.findIndex((w) => w.id === id);
+    if (idx === -1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sortedWorks.length) return;
+
+    const current = sortedWorks[idx];
+    const swap = sortedWorks[swapIdx];
+    const currentOrder = current.order ?? idx;
+    const swapOrder = swap.order ?? swapIdx;
+
+    await Promise.all([
+      update(ref(db, `projects/${current.id}`), { order: swapOrder }),
+      update(ref(db, `projects/${swap.id}`), { order: currentOrder }),
+    ]);
   };
 
   // ── Blog CRUD ──
@@ -209,30 +266,6 @@ export default function AdminDashboardPage() {
     if (editingBlogId === id) setEditingBlogId(null);
   };
 
-  // ── Language Tab Bar ──
-  function LangTabBar({ active, onChange }: { active: LangTab; onChange: (t: LangTab) => void }) {
-    return (
-      <div className="flex gap-1 rounded-lg bg-muted p-1 mb-4">
-        {LANG_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => onChange(tab.key)}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-              active === tab.key
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.key !== "default" && <Globe className="h-3 w-3" />}
-            {tab.label}
-          </button>
-        ))}
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
@@ -247,13 +280,18 @@ export default function AdminDashboardPage() {
       <FadeIn>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              <LayoutDashboard className="h-8 w-8 text-primary" />
+            <h1 className="flex items-center gap-3 text-2xl sm:text-4xl font-bold tracking-tight">
+              <LayoutDashboard className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
               Dashboard
             </h1>
-            <p className="text-lg text-muted-foreground">Welcome back, {user?.email}</p>
+            <p className="text-sm sm:text-lg text-muted-foreground">
+              Welcome back, {user?.email}
+            </p>
           </div>
-          <button onClick={handleSignOut} className="flex w-fit items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground">
+          <button
+            onClick={handleSignOut}
+            className="flex w-fit items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground"
+          >
             <LogOut className="h-4 w-4" /> Sign Out
           </button>
         </div>
@@ -262,32 +300,41 @@ export default function AdminDashboardPage() {
       <FadeIn delay={0.1}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Sidebar */}
-          <div className="space-y-2 md:col-span-1 border-r border-border pr-4">
-            {([
-              { key: "works", icon: FolderKanban, label: "Manage Works" },
-              { key: "blog", icon: PenTool, label: "Manage Blog" },
-              { key: "settings", icon: Settings, label: "Settings" },
-            ] as const).map((tab) => (
-              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.key ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"}`}>
-                <tab.icon className="h-4 w-4" /> {tab.label}
-              </button>
-            ))}
+          <div className="flex md:flex-col gap-2 md:col-span-1 md:border-r md:border-border md:pr-4 overflow-x-auto pb-2 md:pb-0">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "flex items-center gap-2 sm:gap-3 rounded-xl px-3 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors md:w-full leading-tight",
+                    activeTab === tab.key
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" /> {tab.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Main Content */}
           <div className="md:col-span-3">
-            <div className="rounded-2xl border bg-card p-6 shadow-sm min-h-[400px]">
+            <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm min-h-[400px]">
 
               {/* ───── WORKS TAB ───── */}
               {activeTab === "works" && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between border-b pb-4">
-                    <h2 className="text-xl font-semibold">Works Overview</h2>
-                    <button onClick={() => { setIsAddingWork(!isAddingWork); setEditingWorkId(null); }}
-                      className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+                    <h2 className="text-lg sm:text-xl font-semibold">Works Overview</h2>
+                    <button
+                      onClick={() => { setIsAddingWork(!isAddingWork); setEditingWorkId(null); }}
+                      className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+                    >
                       <Plus className={`h-4 w-4 transition-transform ${isAddingWork ? "rotate-45" : ""}`} />
-                      {isAddingWork ? "Cancel" : "Add Project"}
+                      <span className="hidden sm:inline">{isAddingWork ? "Cancel" : "Add Project"}</span>
                     </button>
                   </div>
 
@@ -403,16 +450,50 @@ export default function AdminDashboardPage() {
                   )}
 
                   {/* Work Items */}
-                  <div className="space-y-3">
-                    {works.length === 0 && !isAddingWork ? (
+                  <div className="space-y-2">
+                    {sortedWorks.length === 0 && !isAddingWork ? (
                       <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground">
                         <FolderKanban className="h-8 w-8 opacity-50" />
                         <p className="text-sm">No projects found.</p>
                       </div>
-                    ) : works.map((work) => (
-                      <div key={work.id} className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${editingWorkId === work.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30"}`}>
+                    ) : sortedWorks.map((work, idx) => (
+                      <div
+                        key={work.id}
+                        className={cn(
+                          "flex items-center gap-2 sm:gap-3 rounded-lg border p-3 sm:p-4 transition-colors",
+                          editingWorkId === work.id
+                            ? "border-primary/50 bg-primary/5"
+                            : "hover:bg-muted/30"
+                        )}
+                      >
+                        {/* Order controls */}
+                        <div className="flex flex-col gap-0.5 flex-shrink-0">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => handleMoveWork(work.id, "up")}
+                            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                            title="Move up"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </button>
+                          <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 mx-auto" />
+                          <button
+                            type="button"
+                            disabled={idx === sortedWorks.length - 1}
+                            onClick={() => handleMoveWork(work.id, "down")}
+                            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                            title="Move down"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+
                         <div className="space-y-1 min-w-0 flex-1">
-                          <h3 className="font-medium">{work.title}</h3>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground font-mono">#{idx + 1}</span>
+                            <h3 className="font-medium truncate">{work.title}</h3>
+                          </div>
                           <p className="text-xs text-muted-foreground line-clamp-1">{work.description}</p>
                           {(work.title_tr || work.title_de || work.title_ja) && (
                             <div className="flex gap-1 mt-1">
@@ -422,7 +503,7 @@ export default function AdminDashboardPage() {
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                        <div className="flex items-center gap-1 flex-shrink-0">
                           <button onClick={() => handleEditWork(work)} className="rounded-md p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors" title="Edit"><Pencil className="h-4 w-4" /></button>
                           <button onClick={() => handleDeleteWork(work.id)} className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors" title="Delete"><Trash2 className="h-4 w-4" /></button>
                         </div>
@@ -436,11 +517,13 @@ export default function AdminDashboardPage() {
               {activeTab === "blog" && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between border-b pb-4">
-                    <h2 className="text-xl font-semibold">Blog Posts</h2>
-                    <button onClick={() => { setIsAddingBlog(!isAddingBlog); setEditingBlogId(null); }}
-                      className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity">
+                    <h2 className="text-lg sm:text-xl font-semibold">Blog Posts</h2>
+                    <button
+                      onClick={() => { setIsAddingBlog(!isAddingBlog); setEditingBlogId(null); }}
+                      className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
+                    >
                       <Plus className={`h-4 w-4 transition-transform ${isAddingBlog ? "rotate-45" : ""}`} />
-                      {isAddingBlog ? "Cancel" : "New Post"}
+                      <span className="hidden sm:inline">{isAddingBlog ? "Cancel" : "New Post"}</span>
                     </button>
                   </div>
 
@@ -559,9 +642,17 @@ export default function AdminDashboardPage() {
                         <p className="text-sm">No blog posts found.</p>
                       </div>
                     ) : blogs.map((blog) => (
-                      <div key={blog.id} className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${editingBlogId === blog.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30"}`}>
+                      <div
+                        key={blog.id}
+                        className={cn(
+                          "flex items-center justify-between rounded-lg border p-3 sm:p-4 transition-colors",
+                          editingBlogId === blog.id
+                            ? "border-primary/50 bg-primary/5"
+                            : "hover:bg-muted/30"
+                        )}
+                      >
                         <div className="space-y-1 min-w-0 flex-1">
-                          <h3 className="font-medium">{blog.title}</h3>
+                          <h3 className="font-medium truncate">{blog.title}</h3>
                           <p className="text-xs text-muted-foreground">{blog.date} · {blog.readTime || "—"}</p>
                           {(blog.title_tr || blog.title_de || blog.title_ja) && (
                             <div className="flex gap-1 mt-1">
@@ -584,7 +675,7 @@ export default function AdminDashboardPage() {
               {/* ───── SETTINGS TAB ───── */}
               {activeTab === "settings" && (
                 <div className="space-y-6">
-                  <h2 className="text-xl font-semibold border-b pb-4">Profile Settings</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold border-b pb-4">Profile Settings</h2>
                   <div className="space-y-4 max-w-sm">
                     <div className="space-y-1">
                       <label className="text-sm font-medium text-muted-foreground">Admin Email</label>

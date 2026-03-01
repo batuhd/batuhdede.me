@@ -85,9 +85,10 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -102,16 +103,31 @@ body {
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Selection */
 ::selection {
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
 }
 
-/* Smooth transitions */
 .transition-theme {
   transition:
     color 0.2s ease,
     background-color 0.2s ease,
     border-color 0.2s ease;
+}
+
+.github-graph-scroll::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+.github-graph-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }

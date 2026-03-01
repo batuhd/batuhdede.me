@@ -13,6 +13,22 @@ interface Week {
   contributionDays: ContributionDay[];
 }
 
+const LEVEL_COLORS = [
+  { max: 0, className: "bg-muted/50" },
+  { max: 3, className: "bg-green-900/40" },
+  { max: 6, className: "bg-green-700/60" },
+  { max: 9, className: "bg-green-500/80" },
+  { max: Infinity, className: "bg-green-400" },
+];
+
+const LEGEND_COUNTS = [0, 2, 5, 8, 12];
+
+function getLevel(count: number) {
+  return (
+    LEVEL_COLORS.find((l) => count <= l.max)?.className ?? "bg-green-400"
+  );
+}
+
 export function GitHubContribution() {
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [total, setTotal] = useState(0);
@@ -21,41 +37,33 @@ export function GitHubContribution() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    async function fetchCommits() {
+    let cancelled = false;
+
+    async function fetchContributions() {
       try {
         const res = await fetch("/api/github");
         if (!res.ok) throw new Error();
         const json = await res.json();
+        const calendar =
+          json.data?.user?.contributionsCollection?.contributionCalendar;
 
-        if (json.data?.user?.contributionsCollection?.contributionCalendar) {
-          setTotal(
-            json.data.user.contributionsCollection.contributionCalendar
-              .totalContributions
-          );
-          setWeeks(
-            json.data.user.contributionsCollection.contributionCalendar.weeks
-          );
-        } else {
-          throw new Error();
-        }
-      } catch (err) {
-        console.error("Failed to fetch Github contributions", err);
-        setError(true);
+        if (!calendar) throw new Error();
+        if (cancelled) return;
+
+        setTotal(calendar.totalContributions);
+        setWeeks(calendar.weeks);
+      } catch {
+        if (!cancelled) setError(true);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
-    fetchCommits();
+    fetchContributions();
+    return () => {
+      cancelled = true;
+    };
   }, []);
-
-  const getLevel = (count: number) => {
-    if (count === 0) return "bg-muted/50";
-    if (count <= 3) return "bg-green-900/40 dark:bg-green-900/40";
-    if (count <= 6) return "bg-green-700/60 dark:bg-green-700/60";
-    if (count <= 9) return "bg-green-500/80 dark:bg-green-500/80";
-    return "bg-green-400 dark:bg-green-400";
-  };
 
   return (
     <section className="space-y-4">
@@ -82,26 +90,27 @@ export function GitHubContribution() {
           </div>
         ) : (
           <div>
-            <div className="flex gap-px">
-              {weeks.map((week, i) => (
-                <div key={i} className="flex flex-col gap-px">
-                  {week.contributionDays.map((day) => (
-                    <motion.div
-                      whileHover={{ scale: 1.8, zIndex: 10 }}
-                      key={day.date}
-                      title={`${day.contributionCount} contributions on ${day.date}`}
-                      className={`h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-[2px] transition-colors duration-200 ${getLevel(
-                        day.contributionCount
-                      )}`}
-                    />
-                  ))}
-                </div>
-              ))}
+            <div className="overflow-x-auto -mx-1 px-1 pb-2 github-graph-scroll">
+              <div className="flex gap-px w-max">
+                {weeks.map((week, i) => (
+                  <div key={i} className="flex flex-col gap-px">
+                    {week.contributionDays.map((day) => (
+                      <motion.div
+                        whileHover={{ scale: 1.8, zIndex: 10 }}
+                        key={day.date}
+                        title={`${day.contributionCount} contributions on ${day.date}`}
+                        className={`h-[10px] w-[10px] sm:h-2.5 sm:w-2.5 rounded-[2px] transition-colors duration-200 ${getLevel(day.contributionCount)}`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
+
             <div className="mt-4 flex items-center justify-end gap-2 text-xs text-muted-foreground">
               <span>{t("home.github.less")}</span>
               <div className="flex gap-1">
-                {[0, 2, 5, 8, 12].map((count) => (
+                {LEGEND_COUNTS.map((count) => (
                   <div
                     key={count}
                     className={`h-3 w-3 rounded-sm ${getLevel(count)}`}

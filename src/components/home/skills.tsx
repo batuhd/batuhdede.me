@@ -11,6 +11,7 @@ const categoryKeys: Record<string, string> = {
 
 export function Skills() {
   const { t } = useLanguage();
+
   return (
     <section className="space-y-6">
       <h2 className="text-lg font-semibold tracking-tight">
@@ -22,11 +23,11 @@ export function Skills() {
             <h3 className="text-sm font-medium text-muted-foreground">
               {t(categoryKeys[category.title] || category.title)}
             </h3>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {category.skills.map((skill) => (
                 <span
                   key={skill}
-                  className="rounded-lg border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  className="rounded-lg border bg-card px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   {skill}
                 </span>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
@@ -11,6 +11,12 @@ import { siteConfig } from "@/config/site";
 import Image from "next/image";
 import Link from "next/link";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: {
@@ -38,6 +44,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  alternates: {
+    types: {
+      "application/rss+xml": `${siteConfig.url}/feed.xml`,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -51,7 +62,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
-      <body className="min-h-screen bg-background antialiased">
+      <body className="min-h-screen bg-background antialiased" suppressHydrationWarning>
         <Intro />
         <ThemeProvider
           attribute="class"
@@ -62,26 +73,26 @@ export default function RootLayout({
           <LanguageProvider>
             <Link
               href="/"
-              className="fixed top-6 right-6 z-50 transition-transform hover:scale-105 duration-300"
+              className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 transition-transform hover:scale-105 duration-300"
             >
               <Image
                 src="/media/logobeyaz.png"
                 alt="Logo"
-                width={56}
-                height={56}
-                className="hidden dark:block drop-shadow-lg"
+                width={44}
+                height={44}
+                className="hidden dark:block drop-shadow-lg sm:w-14 sm:h-14"
                 priority
               />
               <Image
                 src="/media/yuvarlaklogo.png"
                 alt="Logo"
-                width={56}
-                height={56}
-                className="dark:hidden drop-shadow-lg"
+                width={44}
+                height={44}
+                className="dark:hidden drop-shadow-lg sm:w-14 sm:h-14"
                 priority
               />
             </Link>
-            <main className="relative mx-auto max-w-2xl px-6 py-16 pb-32">
+            <main className="relative mx-auto max-w-2xl px-4 sm:px-6 py-12 sm:py-16 pb-28 sm:pb-32">
               {children}
             </main>
             <Dock />

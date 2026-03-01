@@ -5,11 +5,18 @@ import { Send, Loader2, CheckCircle2 } from "lucide-react";
 import { userConfig } from "@/config/user";
 import { useLanguage } from "@/context/language-context";
 
+type FormStatus = "idle" | "sending" | "success" | "error";
+
+const STATUS_RESET_MS = 4000;
+
+const inputStyles =
+  "w-full rounded-lg border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10";
+
 export function ContactForm() {
-  const [status, setStatus] = useState<
-    "idle" | "sending" | "success" | "error"
-  >("idle");
+  const [status, setStatus] = useState<FormStatus>("idle");
   const { t } = useLanguage();
+
+  const resetStatus = () => setTimeout(() => setStatus("idle"), STATUS_RESET_MS);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,11 +26,14 @@ export function ContactForm() {
     const formData = new FormData(form);
 
     try {
-      if (!userConfig.contact.formspree || userConfig.contact.formspree.trim() === "") {
+      if (
+        !userConfig.contact.formspree ||
+        userConfig.contact.formspree.trim() === ""
+      ) {
         await new Promise((resolve) => setTimeout(resolve, 800));
         setStatus("success");
         form.reset();
-        setTimeout(() => setStatus("idle"), 4000);
+        resetStatus();
         return;
       }
 
@@ -40,22 +50,22 @@ export function ContactForm() {
         }),
       });
 
-      if (res.ok) {
-        setStatus("success");
-        form.reset();
-        setTimeout(() => setStatus("idle"), 4000);
-      } else {
-        throw new Error("Failed");
-      }
+      if (!res.ok) throw new Error("Failed");
+
+      setStatus("success");
+      form.reset();
+      resetStatus();
     } catch {
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 4000);
+      resetStatus();
     }
   };
 
   return (
     <section className="space-y-4" id="contact">
-      <h2 className="text-lg font-semibold tracking-tight">{t("home.contact")}</h2>
+      <h2 className="text-lg font-semibold tracking-tight">
+        {t("home.contact")}
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
@@ -71,7 +81,7 @@ export function ContactForm() {
               name="name"
               required
               autoComplete="name"
-              className="w-full rounded-lg border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
+              className={inputStyles}
               placeholder={t("home.contact.namePlaceholder")}
             />
           </div>
@@ -88,7 +98,7 @@ export function ContactForm() {
               name="email"
               required
               autoComplete="email"
-              className="w-full rounded-lg border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
+              className={inputStyles}
               placeholder={t("home.contact.emailPlaceholder")}
             />
           </div>
@@ -105,14 +115,14 @@ export function ContactForm() {
             name="message"
             required
             rows={4}
-            className="w-full resize-none rounded-lg border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30 focus:ring-1 focus:ring-foreground/10"
+            className={`${inputStyles} resize-none`}
             placeholder={t("home.contact.messagePlaceholder")}
           />
         </div>
         <button
           type="submit"
           disabled={status === "sending"}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50 active:scale-[0.98]"
         >
           {status === "sending" ? (
             <>

@@ -4,18 +4,15 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 export function Intro() {
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState(false);
 
   useEffect(() => {
-    // Check if we've already shown the intro in this session
     const hasSeenIntro = sessionStorage.getItem("hasSeenIntro");
-    
-    if (hasSeenIntro) {
-      setShowIntro(false);
-      return;
-    }
 
-    // Hide intro after 3.5 seconds
+    if (hasSeenIntro) return;
+
+    setShowIntro(true);
+
     const timer = setTimeout(() => {
       setShowIntro(false);
       sessionStorage.setItem("hasSeenIntro", "true");
