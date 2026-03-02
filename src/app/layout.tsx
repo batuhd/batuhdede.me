@@ -10,6 +10,7 @@ import { Intro } from "@/components/home/intro";
 import { siteConfig } from "@/config/site";
 import Image from "next/image";
 import Link from "next/link";
+import DemoOne from "@/components/demo";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -64,6 +65,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-background antialiased" suppressHydrationWarning>
         <Intro />
+        <DemoOne />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
