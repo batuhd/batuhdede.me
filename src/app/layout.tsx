@@ -80,7 +80,7 @@ export default function RootLayout({
                 alt="Logo"
                 width={44}
                 height={44}
-                className="hidden dark:block drop-shadow-lg sm:w-14 sm:h-14"
+                className="hidden dark:block drop-shadow-lg sm:w-14 sm:h-14 md:w-20 md:h-20"
                 priority
               />
               <Image
@@ -88,7 +88,7 @@ export default function RootLayout({
                 alt="Logo"
                 width={44}
                 height={44}
-                className="dark:hidden drop-shadow-lg sm:w-14 sm:h-14"
+                className="dark:hidden drop-shadow-lg sm:w-14 sm:h-14 md:w-20 md:h-20"
                 priority
               />
             </Link>

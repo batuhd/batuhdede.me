@@ -9,6 +9,17 @@ import {
 } from "react";
 import { translations, type Locale } from "@/config/translations";
 
+const SUPPORTED_LOCALES: Locale[] = ["tr", "en", "de", "ja", "es", "zh", "fr", "ar", "pt", "ru"];
+
+function detectBrowserLocale(): Locale {
+  if (typeof navigator === "undefined") return "en";
+  const browserLang = navigator.language.toLowerCase();
+  const exact = SUPPORTED_LOCALES.find((l) => browserLang === l);
+  if (exact) return exact;
+  const prefix = browserLang.split("-")[0];
+  return SUPPORTED_LOCALES.find((l) => l === prefix) || "en";
+}
+
 interface LanguageContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
@@ -31,6 +42,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("locale") as Locale | null;
     if (saved && translations[saved]) {
       setLocaleState(saved);
+    } else {
+      const detected = detectBrowserLocale();
+      setLocaleState(detected);
     }
   }, []);
 

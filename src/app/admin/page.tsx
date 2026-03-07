@@ -25,13 +25,14 @@ import { ref, push, set, remove, onValue, update } from "firebase/database";
 import { cn } from "@/lib/utils";
 
 type Tab = "works" | "blog" | "settings";
-type LangTab = "default" | "tr" | "de" | "ja";
+type LangTab = "default" | "tr" | "de" | "ja" | "es";
 
 const LANG_TABS: { key: LangTab; label: string }[] = [
   { key: "default", label: "EN (Default)" },
   { key: "tr", label: "TR" },
   { key: "de", label: "DE" },
   { key: "ja", label: "JA" },
+  { key: "es", label: "ES" },
 ];
 
 const TABS: { key: Tab; icon: typeof FolderKanban; label: string }[] = [
@@ -97,6 +98,7 @@ export default function AdminDashboardPage() {
     title_tr: "", description_tr: "",
     title_de: "", description_de: "",
     title_ja: "", description_ja: "",
+    title_es: "", description_es: "",
   });
 
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
@@ -106,6 +108,7 @@ export default function AdminDashboardPage() {
     title_tr: "", description_tr: "",
     title_de: "", description_de: "",
     title_ja: "", description_ja: "",
+    title_es: "", description_es: "",
   });
 
   const [isAddingBlog, setIsAddingBlog] = useState(false);
@@ -115,6 +118,7 @@ export default function AdminDashboardPage() {
     title_tr: "", excerpt_tr: "", content_tr: "",
     title_de: "", excerpt_de: "", content_de: "",
     title_ja: "", excerpt_ja: "", content_ja: "",
+    title_es: "", excerpt_es: "", content_es: "",
   });
 
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
@@ -124,6 +128,7 @@ export default function AdminDashboardPage() {
     title_tr: "", excerpt_tr: "", content_tr: "",
     title_de: "", excerpt_de: "", content_de: "",
     title_ja: "", excerpt_ja: "", content_ja: "",
+    title_es: "", excerpt_es: "", content_es: "",
   });
 
   useEffect(() => {
@@ -169,7 +174,7 @@ export default function AdminDashboardPage() {
       order: maxOrder + 1,
     });
     await set(push(ref(db, "projects")), data);
-    setWorkForm({ title: "", description: "", link: "", github: "", image: "", tags: "", title_tr: "", description_tr: "", title_de: "", description_de: "", title_ja: "", description_ja: "" });
+    setWorkForm({ title: "", description: "", link: "", github: "", image: "", tags: "", title_tr: "", description_tr: "", title_de: "", description_de: "", title_ja: "", description_ja: "", title_es: "", description_es: "" });
     setIsAddingWork(false);
     setWorkLangTab("default");
   };
@@ -184,6 +189,7 @@ export default function AdminDashboardPage() {
       title_tr: work.title_tr || "", description_tr: work.description_tr || "",
       title_de: work.title_de || "", description_de: work.description_de || "",
       title_ja: work.title_ja || "", description_ja: work.description_ja || "",
+      title_es: work.title_es || "", description_es: work.description_es || "",
     });
     setEditWorkLangTab("default");
     setIsAddingWork(false);
@@ -233,7 +239,7 @@ export default function AdminDashboardPage() {
     const date = blogForm.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
     const data = cleanObj({ ...blogForm, date });
     await set(push(ref(db, "blog")), data);
-    setBlogForm({ title: "", excerpt: "", content: "", date: "", readTime: "", title_tr: "", excerpt_tr: "", content_tr: "", title_de: "", excerpt_de: "", content_de: "", title_ja: "", excerpt_ja: "", content_ja: "" });
+    setBlogForm({ title: "", excerpt: "", content: "", date: "", readTime: "", title_tr: "", excerpt_tr: "", content_tr: "", title_de: "", excerpt_de: "", content_de: "", title_ja: "", excerpt_ja: "", content_ja: "", title_es: "", excerpt_es: "", content_es: "" });
     setIsAddingBlog(false);
     setBlogLangTab("default");
   };
@@ -247,6 +253,7 @@ export default function AdminDashboardPage() {
       title_tr: blog.title_tr || "", excerpt_tr: blog.excerpt_tr || "", content_tr: blog.content_tr || "",
       title_de: blog.title_de || "", excerpt_de: blog.excerpt_de || "", content_de: blog.content_de || "",
       title_ja: blog.title_ja || "", excerpt_ja: blog.excerpt_ja || "", content_ja: blog.content_ja || "",
+      title_es: blog.title_es || "", excerpt_es: blog.excerpt_es || "", content_es: blog.content_es || "",
     });
     setEditBlogLangTab("default");
     setIsAddingBlog(false);
@@ -495,11 +502,12 @@ export default function AdminDashboardPage() {
                             <h3 className="font-medium truncate">{work.title}</h3>
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-1">{work.description}</p>
-                          {(work.title_tr || work.title_de || work.title_ja) && (
+                          {(work.title_tr || work.title_de || work.title_ja || work.title_es) && (
                             <div className="flex gap-1 mt-1">
                               {work.title_tr && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">TR</span>}
                               {work.title_de && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">DE</span>}
                               {work.title_ja && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">JA</span>}
+                              {work.title_es && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">ES</span>}
                             </div>
                           )}
                         </div>
@@ -654,11 +662,12 @@ export default function AdminDashboardPage() {
                         <div className="space-y-1 min-w-0 flex-1">
                           <h3 className="font-medium truncate">{blog.title}</h3>
                           <p className="text-xs text-muted-foreground">{blog.date} · {blog.readTime || "—"}</p>
-                          {(blog.title_tr || blog.title_de || blog.title_ja) && (
+                          {(blog.title_tr || blog.title_de || blog.title_ja || blog.title_es) && (
                             <div className="flex gap-1 mt-1">
                               {blog.title_tr && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">TR</span>}
                               {blog.title_de && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">DE</span>}
                               {blog.title_ja && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">JA</span>}
+                              {blog.title_es && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">ES</span>}
                             </div>
                           )}
                         </div>

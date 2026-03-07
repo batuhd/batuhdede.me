@@ -18,11 +18,12 @@ import {
   Globe,
   MoreHorizontal,
   X,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { userConfig } from "@/config/user";
 import { useLanguage } from "@/context/language-context";
-import { localeLabels, type Locale } from "@/config/translations";
+import { type Locale } from "@/config/translations";
 import { motion, AnimatePresence } from "motion/react";
 
 interface NavItem {
@@ -45,7 +46,24 @@ const socialItems: NavItem[] = [
   { href: userConfig.links.resume, icon: FileText, label: "Resume (CV)" },
 ];
 
-const LOCALES: Locale[] = ["tr", "en", "de", "ja"];
+interface LocaleInfo {
+  code: Locale;
+  flag: string;
+  name: string;
+}
+
+const LOCALE_LIST: LocaleInfo[] = [
+  { code: "tr", flag: "🇹🇷", name: "Türkçe" },
+  { code: "en", flag: "🇬🇧", name: "English" },
+  { code: "de", flag: "🇩🇪", name: "Deutsch" },
+  { code: "ja", flag: "🇯🇵", name: "日本語" },
+  { code: "es", flag: "🇪🇸", name: "Español" },
+  { code: "zh", flag: "🇨🇳", name: "中文" },
+  { code: "fr", flag: "🇫🇷", name: "Français" },
+  { code: "ar", flag: "🇸🇦", name: "العربية" },
+  { code: "pt", flag: "🇧🇷", name: "Português" },
+  { code: "ru", flag: "🇷🇺", name: "Русский" },
+];
 
 function DockIcon({
   icon: Icon,
@@ -102,24 +120,24 @@ export function Dock() {
   const { locale, setLocale, t } = useLanguage();
   const [mounted, setMounted] = useState(false);
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [langModalOpen, setLangModalOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-  const langRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
+
+  // Social redirect warning state
+  const [pendingLink, setPendingLink] = useState<string | null>(null);
+  const [pendingLabel, setPendingLabel] = useState<string>("");
 
   useEffect(() => setMounted(true), []);
 
   const closeMenus = useCallback(() => {
-    setLangMenuOpen(false);
+    setLangModalOpen(false);
     setMoreMenuOpen(false);
   }, []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       const target = e.target as Node;
-      if (langRef.current && !langRef.current.contains(target)) {
-        setLangMenuOpen(false);
-      }
       if (moreRef.current && !moreRef.current.contains(target)) {
         setMoreMenuOpen(false);
       }
@@ -133,82 +151,99 @@ export function Dock() {
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
+  const handleSocialClick = (href: string, label: string) => {
+    setPendingLink(href);
+    setPendingLabel(label);
+    setMoreMenuOpen(false);
+  };
+
+  const confirmRedirect = () => {
+    if (pendingLink) {
+      window.open(pendingLink, "_blank", "noopener,noreferrer");
+    }
+    setPendingLink(null);
+    setPendingLabel("");
+  };
+
+  const cancelRedirect = () => {
+    setPendingLink(null);
+    setPendingLabel("");
+  };
+
   return (
-    <motion.div
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-      className="fixed bottom-4 sm:bottom-8 left-1/2 z-50 -translate-x-1/2 w-max"
-    >
-      <nav className="mx-auto flex w-max items-center gap-1 sm:gap-4 rounded-2xl border border-border/50 bg-background/80 px-3 sm:px-6 py-2 sm:py-3 shadow-2xl backdrop-blur-xl">
-        {/* Pages */}
-        <div className="flex items-center gap-0.5 sm:gap-2">
-          {pageItems.map((item) => (
-            <Link key={item.labelKey} href={item.href} onClick={closeMenus}>
+    <>
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+        className="fixed bottom-4 sm:bottom-8 left-1/2 z-50 -translate-x-1/2 w-max"
+      >
+        <nav className="mx-auto flex w-max items-center gap-1 sm:gap-4 rounded-2xl border border-border/50 bg-background/80 px-3 sm:px-6 py-2 sm:py-3 shadow-2xl backdrop-blur-xl">
+          {/* Pages */}
+          <div className="flex items-center gap-0.5 sm:gap-2">
+            {pageItems.map((item) => (
+              <Link key={item.labelKey} href={item.href} onClick={closeMenus}>
+                <DockIcon
+                  icon={item.icon}
+                  label={t(item.labelKey)}
+                  isActive={isPageActive(item.href)}
+                  hoveredLabel={hoveredLabel}
+                  onHover={setHoveredLabel}
+                />
+              </Link>
+            ))}
+          </div>
+
+          <div className="h-6 sm:h-8 w-px bg-border flex-shrink-0" />
+
+          {/* Socials - desktop only */}
+          <div className="hidden sm:flex items-center gap-2">
+            {socialItems.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => handleSocialClick(item.href, item.label)}
+              >
+                <DockIcon
+                  icon={item.icon}
+                  label={item.label}
+                  isActive={false}
+                  hoveredLabel={hoveredLabel}
+                  onHover={setHoveredLabel}
+                />
+              </button>
+            ))}
+          </div>
+
+          <div className="hidden sm:block h-8 w-px bg-border flex-shrink-0" />
+
+          {/* Credits - desktop only */}
+          <div className="hidden sm:flex items-center gap-2">
+            <Link href="/credits" onClick={closeMenus}>
               <DockIcon
-                icon={item.icon}
-                label={t(item.labelKey)}
-                isActive={isPageActive(item.href)}
+                icon={Star}
+                label={t("nav.credits")}
+                isActive={isPageActive("/credits")}
                 hoveredLabel={hoveredLabel}
                 onHover={setHoveredLabel}
               />
             </Link>
-          ))}
-        </div>
+          </div>
 
-        <div className="h-6 sm:h-8 w-px bg-border flex-shrink-0" />
-
-        {/* Socials - desktop only */}
-        <div className="hidden sm:flex items-center gap-2">
-          {socialItems.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <DockIcon
-                icon={item.icon}
-                label={item.label}
-                isActive={false}
-                hoveredLabel={hoveredLabel}
-                onHover={setHoveredLabel}
-              />
-            </a>
-          ))}
-        </div>
-
-        <div className="hidden sm:block h-8 w-px bg-border flex-shrink-0" />
-
-        {/* Credits - desktop only */}
-        <div className="hidden sm:flex items-center gap-2">
-          <Link href="/credits" onClick={closeMenus}>
+          {/* Theme */}
+          <button onClick={toggleTheme}>
             <DockIcon
-              icon={Star}
-              label={t("nav.credits")}
-              isActive={isPageActive("/credits")}
+              icon={mounted ? (theme === "dark" ? Sun : Moon) : Sun}
+              label={t("nav.theme")}
+              isActive={false}
               hoveredLabel={hoveredLabel}
               onHover={setHoveredLabel}
             />
-          </Link>
-        </div>
+          </button>
 
-        {/* Theme */}
-        <button onClick={toggleTheme}>
-          <DockIcon
-            icon={mounted ? (theme === "dark" ? Sun : Moon) : Sun}
-            label={t("nav.theme")}
-            isActive={false}
-            hoveredLabel={hoveredLabel}
-            onHover={setHoveredLabel}
-          />
-        </button>
-
-        {/* Language Selector */}
-        <div className="relative" ref={langRef}>
+          {/* Language Selector — opens modal */}
           <button
             onClick={() => {
-              setLangMenuOpen((prev) => !prev);
+              setLangModalOpen(true);
               setMoreMenuOpen(false);
             }}
           >
@@ -221,95 +256,174 @@ export function Dock() {
             />
           </button>
 
-          <AnimatePresence>
-            {langMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className="absolute -top-[140px] left-1/2 -translate-x-1/2 rounded-xl border border-border/50 bg-background/95 p-1.5 shadow-xl backdrop-blur-xl"
-              >
-                {LOCALES.map((l) => (
-                  <button
-                    key={l}
-                    onClick={() => {
-                      setLocale(l);
-                      setLangMenuOpen(false);
-                    }}
+          {/* More menu - mobile only (socials + credits) */}
+          <div className="relative sm:hidden" ref={moreRef}>
+            <button
+              onClick={() => {
+                setMoreMenuOpen((prev) => !prev);
+                setLangModalOpen(false);
+              }}
+            >
+              <DockIcon
+                icon={moreMenuOpen ? X : MoreHorizontal}
+                label="Menu"
+                isActive={false}
+                hoveredLabel={hoveredLabel}
+                onHover={setHoveredLabel}
+              />
+            </button>
+
+            <AnimatePresence>
+              {moreMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute -top-[260px] right-0 w-48 rounded-xl border border-border/50 bg-background/95 p-2 shadow-xl backdrop-blur-xl"
+                >
+                  {socialItems.map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleSocialClick(item.href, item.label)}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                    </button>
+                  ))}
+                  <div className="my-1 h-px bg-border" />
+                  <Link
+                    href="/credits"
+                    onClick={() => setMoreMenuOpen(false)}
                     className={cn(
-                      "flex w-full items-center justify-center rounded-lg px-4 py-1.5 text-xs font-semibold transition-colors",
-                      locale === l
-                        ? "bg-foreground text-background"
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                      isPageActive("/credits")
+                        ? "bg-muted text-foreground"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    {localeLabels[l]}
+                    <Star className="h-4 w-4" />
+                    {t("nav.credits")}
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </nav>
+      </motion.div>
+
+      {/* Language Selection Modal */}
+      <AnimatePresence>
+        {langModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-background/60 backdrop-blur-sm px-4"
+            onClick={() => setLangModalOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <Globe className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold tracking-tight">
+                    {t("nav.language")}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setLangModalOpen(false)}
+                  className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {LOCALE_LIST.map((item) => (
+                  <button
+                    key={item.code}
+                    onClick={() => {
+                      setLocale(item.code);
+                      setLangModalOpen(false);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all active:scale-[0.98]",
+                      locale === item.code
+                        ? "bg-foreground text-background shadow-sm"
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                  >
+                    <span className="text-xl leading-none">{item.flag}</span>
+                    <span>{item.name}</span>
                   </button>
                 ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* More menu - mobile only (socials + credits) */}
-        <div className="relative sm:hidden" ref={moreRef}>
-          <button
-            onClick={() => {
-              setMoreMenuOpen((prev) => !prev);
-              setLangMenuOpen(false);
-            }}
+      {/* Social Redirect Warning Modal */}
+      <AnimatePresence>
+        {pendingLink && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-background/60 backdrop-blur-sm px-4"
+            onClick={cancelRedirect}
           >
-            <DockIcon
-              icon={moreMenuOpen ? X : MoreHorizontal}
-              label="Menu"
-              isActive={false}
-              hoveredLabel={hoveredLabel}
-              onHover={setHoveredLabel}
-            />
-          </button>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                  <ExternalLink className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold tracking-tight">
+                  {t("social.redirect.title")}
+                </h3>
+              </div>
 
-          <AnimatePresence>
-            {moreMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className="absolute -top-[260px] right-0 w-48 rounded-xl border border-border/50 bg-background/95 p-2 shadow-xl backdrop-blur-xl"
-              >
-                {socialItems.map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setMoreMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </a>
-                ))}
-                <div className="my-1 h-px bg-border" />
-                <Link
-                  href="/credits"
-                  onClick={() => setMoreMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                    isPageActive("/credits")
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+                {t("social.redirect.message", { platform: pendingLabel })}
+              </p>
+
+              <div className="flex items-center gap-3 justify-end">
+                <button
+                  onClick={cancelRedirect}
+                  className="rounded-lg border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  <Star className="h-4 w-4" />
-                  {t("nav.credits")}
-                </Link>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </nav>
-    </motion.div>
+                  {t("social.redirect.cancel")}
+                </button>
+                <button
+                  onClick={confirmRedirect}
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]"
+                >
+                  {t("social.redirect.accept")}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
