@@ -18,26 +18,39 @@ import {
   ChevronUp,
   ChevronDown,
   GripVertical,
+  UserCircle,
+  Briefcase,
+  GraduationCap,
+  MessageSquare,
+  Award,
+  Trophy,
 } from "lucide-react";
-import { auth, db } from "@/lib/firebase";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { ref, push, set, remove, onValue, update } from "firebase/database";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import type { User } from "@supabase/supabase-js";
+import { AdminAboutTab, AdminCrudTab, AdminSocialLinksTab, AdminSkillsTab } from "@/components/admin/admin-tabs";
 
-type Tab = "works" | "blog" | "settings";
-type LangTab = "default" | "tr" | "de" | "ja" | "es";
+type Tab = "works" | "blog" | "about" | "skills" | "experience" | "education" | "languages" | "activities" | "certifications" | "social" | "settings";
+type LangTab = "default" | "tr" | "de" | "es";
 
 const LANG_TABS: { key: LangTab; label: string }[] = [
   { key: "default", label: "EN (Default)" },
   { key: "tr", label: "TR" },
   { key: "de", label: "DE" },
-  { key: "ja", label: "JA" },
   { key: "es", label: "ES" },
 ];
 
 const TABS: { key: Tab; icon: typeof FolderKanban; label: string }[] = [
-  { key: "works", icon: FolderKanban, label: "Manage Works" },
-  { key: "blog", icon: PenTool, label: "Manage Blog" },
+  { key: "works", icon: FolderKanban, label: "Works" },
+  { key: "blog", icon: PenTool, label: "Blog" },
+  { key: "about", icon: UserCircle, label: "About Me" },
+  { key: "skills", icon: Award, label: "Skills" },
+  { key: "experience", icon: Briefcase, label: "Experience" },
+  { key: "education", icon: GraduationCap, label: "Education" },
+  { key: "languages", icon: MessageSquare, label: "Languages" },
+  { key: "activities", icon: Trophy, label: "Activities" },
+  { key: "certifications", icon: Award, label: "Certifications" },
+  { key: "social", icon: Globe, label: "Social Links" },
   { key: "settings", icon: Settings, label: "Settings" },
 ];
 
@@ -97,7 +110,6 @@ export default function AdminDashboardPage() {
     title: "", description: "", link: "", github: "", image: "", tags: "",
     title_tr: "", description_tr: "",
     title_de: "", description_de: "",
-    title_ja: "", description_ja: "",
     title_es: "", description_es: "",
   });
 
@@ -107,76 +119,94 @@ export default function AdminDashboardPage() {
     title: "", description: "", link: "", github: "", image: "", tags: "",
     title_tr: "", description_tr: "",
     title_de: "", description_de: "",
-    title_ja: "", description_ja: "",
     title_es: "", description_es: "",
   });
 
   const [isAddingBlog, setIsAddingBlog] = useState(false);
   const [blogLangTab, setBlogLangTab] = useState<LangTab>("default");
   const [blogForm, setBlogForm] = useState({
-    title: "", excerpt: "", content: "", date: "", readTime: "",
+    title: "", excerpt: "", content: "", date: "", read_time: "",
     title_tr: "", excerpt_tr: "", content_tr: "",
     title_de: "", excerpt_de: "", content_de: "",
-    title_ja: "", excerpt_ja: "", content_ja: "",
     title_es: "", excerpt_es: "", content_es: "",
   });
 
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [editBlogLangTab, setEditBlogLangTab] = useState<LangTab>("default");
   const [editBlogForm, setEditBlogForm] = useState({
-    title: "", excerpt: "", content: "", date: "", readTime: "",
+    title: "", excerpt: "", content: "", date: "", read_time: "",
     title_tr: "", excerpt_tr: "", content_tr: "",
     title_de: "", excerpt_de: "", content_de: "",
-    title_ja: "", excerpt_ja: "", content_ja: "",
     title_es: "", excerpt_es: "", content_es: "",
   });
 
   useEffect(() => {
-    if (!auth) { router.push("/admin/login"); return; }
-    const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u) router.push("/admin/login");
-      else { setUser(u); setLoading(false); }
+    if (!supabase) { router.push("/admin/login"); return; }
+    const sb = supabase;
+    const checkAuth = async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { router.push("/admin/login"); return; }
+      setUser(session.user);
+      setLoading(false);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+      if (!session) router.push("/admin/login");
+      else setUser(session.user);
     });
-    return () => unsub();
+
+    return () => { subscription.unsubscribe(); };
   }, [router]);
 
+  // Fetch works and blogs
   useEffect(() => {
-    if (!db) return;
-    const uW = onValue(ref(db, "projects"), (s) => {
-      const d = s.val();
-      setWorks(d ? Object.keys(d).map((k) => ({ id: k, ...d[k] })) : []);
-    });
-    const uB = onValue(ref(db, "blog"), (s) => {
-      const d = s.val();
-      setBlogs(d ? Object.keys(d).map((k) => ({ id: k, ...d[k] })) : []);
-    });
-    return () => { uW(); uB(); };
+    if (!supabase) return;
+    const sb = supabase;
+    const fetchData = async () => {
+      const [worksRes, blogsRes] = await Promise.all([
+        sb.from("projects").select("*").order("order_index", { ascending: true }),
+        sb.from("blogs").select("*").order("created_at", { ascending: false }),
+      ]);
+      if (worksRes.data) setWorks(worksRes.data);
+      if (blogsRes.data) setBlogs(blogsRes.data);
+    };
+    fetchData();
   }, []);
 
-  const sortedWorks = [...works].sort(
-    (a, b) => (a.order ?? 999) - (b.order ?? 999)
-  );
+  const refreshWorks = async () => {
+    if (!supabase) return;
+    const { data } = await supabase.from("projects").select("*").order("order_index", { ascending: true });
+    if (data) setWorks(data);
+  };
+
+  const refreshBlogs = async () => {
+    if (!supabase) return;
+    const { data } = await supabase.from("blogs").select("*").order("created_at", { ascending: false });
+    if (data) setBlogs(data);
+  };
 
   const handleSignOut = async () => {
-    if (auth) { await signOut(auth); router.push("/admin/login"); }
+    if (supabase) { await supabase.auth.signOut(); router.push("/admin/login"); }
   };
 
   // ── Works CRUD ──
   const handleAddWork = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!db) return;
+    if (!supabase) return;
     const { link, github, image, tags, ...rest } = workForm;
-    const maxOrder = works.reduce((max, w) => Math.max(max, w.order ?? 0), -1);
+    const maxOrder = works.reduce((max, w) => Math.max(max, w.order_index ?? 0), -1);
     const data = cleanObj({
       ...rest,
       link, github, image,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-      order: maxOrder + 1,
+      order_index: maxOrder + 1,
     });
-    await set(push(ref(db, "projects")), data);
-    setWorkForm({ title: "", description: "", link: "", github: "", image: "", tags: "", title_tr: "", description_tr: "", title_de: "", description_de: "", title_ja: "", description_ja: "", title_es: "", description_es: "" });
+    await supabase.from("projects").insert(data);
+    setWorkForm({ title: "", description: "", link: "", github: "", image: "", tags: "", title_tr: "", description_tr: "", title_de: "", description_de: "", title_es: "", description_es: "" });
     setIsAddingWork(false);
     setWorkLangTab("default");
+    await refreshWorks();
   };
 
   const handleEditWork = (work: any) => {
@@ -188,7 +218,6 @@ export default function AdminDashboardPage() {
       tags: Array.isArray(work.tags) ? work.tags.join(", ") : work.tags || "",
       title_tr: work.title_tr || "", description_tr: work.description_tr || "",
       title_de: work.title_de || "", description_de: work.description_de || "",
-      title_ja: work.title_ja || "", description_ja: work.description_ja || "",
       title_es: work.title_es || "", description_es: work.description_es || "",
     });
     setEditWorkLangTab("default");
@@ -197,51 +226,55 @@ export default function AdminDashboardPage() {
 
   const handleSaveEditWork = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!db || !editingWorkId) return;
+    if (!supabase || !editingWorkId) return;
     const { link, github, image, tags, ...rest } = editWorkForm;
     const data = cleanObj({
       ...rest,
       link, github, image,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     });
-    await update(ref(db, `projects/${editingWorkId}`), data);
+    await supabase.from("projects").update(data).eq("id", editingWorkId);
     setEditingWorkId(null);
+    await refreshWorks();
   };
 
   const handleDeleteWork = async (id: string) => {
-    if (!db || !confirm("Delete this project?")) return;
-    await remove(ref(db, `projects/${id}`));
+    if (!supabase || !confirm("Delete this project?")) return;
+    await supabase.from("projects").delete().eq("id", id);
     if (editingWorkId === id) setEditingWorkId(null);
+    await refreshWorks();
   };
 
   const handleMoveWork = async (id: string, direction: "up" | "down") => {
-    if (!db) return;
-    const idx = sortedWorks.findIndex((w) => w.id === id);
+    if (!supabase) return;
+    const idx = works.findIndex((w) => w.id === id);
     if (idx === -1) return;
     const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= sortedWorks.length) return;
+    if (swapIdx < 0 || swapIdx >= works.length) return;
 
-    const current = sortedWorks[idx];
-    const swap = sortedWorks[swapIdx];
-    const currentOrder = current.order ?? idx;
-    const swapOrder = swap.order ?? swapIdx;
+    const current = works[idx];
+    const swap = works[swapIdx];
+    const currentOrder = current.order_index ?? idx;
+    const swapOrder = swap.order_index ?? swapIdx;
 
     await Promise.all([
-      update(ref(db, `projects/${current.id}`), { order: swapOrder }),
-      update(ref(db, `projects/${swap.id}`), { order: currentOrder }),
+      supabase.from("projects").update({ order_index: swapOrder }).eq("id", current.id),
+      supabase.from("projects").update({ order_index: currentOrder }).eq("id", swap.id),
     ]);
+    await refreshWorks();
   };
 
   // ── Blog CRUD ──
   const handleAddBlog = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!db) return;
+    if (!supabase) return;
     const date = blogForm.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
     const data = cleanObj({ ...blogForm, date });
-    await set(push(ref(db, "blog")), data);
-    setBlogForm({ title: "", excerpt: "", content: "", date: "", readTime: "", title_tr: "", excerpt_tr: "", content_tr: "", title_de: "", excerpt_de: "", content_de: "", title_ja: "", excerpt_ja: "", content_ja: "", title_es: "", excerpt_es: "", content_es: "" });
+    await supabase.from("blogs").insert(data);
+    setBlogForm({ title: "", excerpt: "", content: "", date: "", read_time: "", title_tr: "", excerpt_tr: "", content_tr: "", title_de: "", excerpt_de: "", content_de: "", title_es: "", excerpt_es: "", content_es: "" });
     setIsAddingBlog(false);
     setBlogLangTab("default");
+    await refreshBlogs();
   };
 
   const handleEditBlog = (blog: any) => {
@@ -249,10 +282,9 @@ export default function AdminDashboardPage() {
     setEditBlogForm({
       title: blog.title || "", excerpt: blog.excerpt || "",
       content: blog.content || "", date: blog.date || "",
-      readTime: blog.readTime || "",
+      read_time: blog.read_time || "",
       title_tr: blog.title_tr || "", excerpt_tr: blog.excerpt_tr || "", content_tr: blog.content_tr || "",
       title_de: blog.title_de || "", excerpt_de: blog.excerpt_de || "", content_de: blog.content_de || "",
-      title_ja: blog.title_ja || "", excerpt_ja: blog.excerpt_ja || "", content_ja: blog.content_ja || "",
       title_es: blog.title_es || "", excerpt_es: blog.excerpt_es || "", content_es: blog.content_es || "",
     });
     setEditBlogLangTab("default");
@@ -261,16 +293,18 @@ export default function AdminDashboardPage() {
 
   const handleSaveEditBlog = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!db || !editingBlogId) return;
+    if (!supabase || !editingBlogId) return;
     const data = cleanObj(editBlogForm);
-    await update(ref(db, `blog/${editingBlogId}`), data);
+    await supabase.from("blogs").update(data).eq("id", editingBlogId);
     setEditingBlogId(null);
+    await refreshBlogs();
   };
 
   const handleDeleteBlog = async (id: string) => {
-    if (!db || !confirm("Delete this post?")) return;
-    await remove(ref(db, `blog/${id}`));
+    if (!supabase || !confirm("Delete this post?")) return;
+    await supabase.from("blogs").delete().eq("id", id);
     if (editingBlogId === id) setEditingBlogId(null);
+    await refreshBlogs();
   };
 
   if (loading) {
@@ -305,9 +339,9 @@ export default function AdminDashboardPage() {
       </FadeIn>
 
       <FadeIn delay={0.1}>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar */}
-          <div className="flex md:flex-col gap-2 md:col-span-1 md:border-r md:border-border md:pr-4 overflow-x-auto pb-2 md:pb-0">
+          <div className="flex md:flex-col gap-1.5 md:w-48 flex-shrink-0 md:border-r md:border-border md:pr-4 overflow-x-auto md:overflow-x-visible md:overflow-y-auto md:max-h-[70vh] md:sticky md:top-4 pb-2 md:pb-0">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -315,7 +349,7 @@ export default function AdminDashboardPage() {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={cn(
-                    "flex items-center gap-2 sm:gap-3 rounded-xl px-3 py-2 sm:py-3 text-xs sm:text-sm font-medium transition-colors md:w-full leading-tight",
+                    "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium transition-colors md:w-full whitespace-nowrap",
                     activeTab === tab.key
                       ? "bg-foreground text-background"
                       : "text-muted-foreground hover:bg-muted"
@@ -458,12 +492,12 @@ export default function AdminDashboardPage() {
 
                   {/* Work Items */}
                   <div className="space-y-2">
-                    {sortedWorks.length === 0 && !isAddingWork ? (
+                    {works.length === 0 && !isAddingWork ? (
                       <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground">
                         <FolderKanban className="h-8 w-8 opacity-50" />
                         <p className="text-sm">No projects found.</p>
                       </div>
-                    ) : sortedWorks.map((work, idx) => (
+                    ) : works.map((work, idx) => (
                       <div
                         key={work.id}
                         className={cn(
@@ -487,7 +521,7 @@ export default function AdminDashboardPage() {
                           <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 mx-auto" />
                           <button
                             type="button"
-                            disabled={idx === sortedWorks.length - 1}
+                            disabled={idx === works.length - 1}
                             onClick={() => handleMoveWork(work.id, "down")}
                             className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
                             title="Move down"
@@ -502,11 +536,10 @@ export default function AdminDashboardPage() {
                             <h3 className="font-medium truncate">{work.title}</h3>
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-1">{work.description}</p>
-                          {(work.title_tr || work.title_de || work.title_ja || work.title_es) && (
+                          {(work.title_tr || work.title_de || work.title_es) && (
                             <div className="flex gap-1 mt-1">
                               {work.title_tr && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">TR</span>}
                               {work.title_de && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">DE</span>}
-                              {work.title_ja && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">JA</span>}
                               {work.title_es && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">ES</span>}
                             </div>
                           )}
@@ -549,7 +582,7 @@ export default function AdminDashboardPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-medium text-muted-foreground">Read Time</label>
-                              <input value={blogForm.readTime} onChange={(e) => setBlogForm({ ...blogForm, readTime: e.target.value })} className={inputClass} placeholder="5 min read" />
+                              <input value={blogForm.read_time} onChange={(e) => setBlogForm({ ...blogForm, read_time: e.target.value })} className={inputClass} placeholder="5 min read" />
                             </div>
                           </div>
                           <div className="space-y-1">
@@ -602,7 +635,7 @@ export default function AdminDashboardPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-medium text-muted-foreground">Read Time</label>
-                              <input value={editBlogForm.readTime} onChange={(e) => setEditBlogForm({ ...editBlogForm, readTime: e.target.value })} className={inputClass} />
+                              <input value={editBlogForm.read_time} onChange={(e) => setEditBlogForm({ ...editBlogForm, read_time: e.target.value })} className={inputClass} />
                             </div>
                           </div>
                           <div className="space-y-1">
@@ -661,12 +694,11 @@ export default function AdminDashboardPage() {
                       >
                         <div className="space-y-1 min-w-0 flex-1">
                           <h3 className="font-medium truncate">{blog.title}</h3>
-                          <p className="text-xs text-muted-foreground">{blog.date} · {blog.readTime || "—"}</p>
-                          {(blog.title_tr || blog.title_de || blog.title_ja || blog.title_es) && (
+                          <p className="text-xs text-muted-foreground">{blog.date} · {blog.read_time || "—"}</p>
+                          {(blog.title_tr || blog.title_de || blog.title_es) && (
                             <div className="flex gap-1 mt-1">
                               {blog.title_tr && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">TR</span>}
                               {blog.title_de && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">DE</span>}
-                              {blog.title_ja && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">JA</span>}
                               {blog.title_es && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium">ES</span>}
                             </div>
                           )}
@@ -681,6 +713,106 @@ export default function AdminDashboardPage() {
                 </div>
               )}
 
+              {/* ───── ABOUT ME TAB ───── */}
+              {activeTab === "about" && <AdminAboutTab />}
+
+              {/* ───── SKILLS TAB ───── */}
+              {activeTab === "skills" && <AdminSkillsTab />}
+
+              {/* ───── EXPERIENCE TAB ───── */}
+              {activeTab === "experience" && (
+                <AdminCrudTab
+                  title="Experience"
+                  tableName="experiences"
+                  displayField="title"
+                  subtitleField="company"
+                  fields={[
+                    { key: "title", label: "Job Title", required: true, placeholder: "Software Engineer", translatable: true },
+                    { key: "company", label: "Company", required: true, placeholder: "Google" },
+                    { key: "location", label: "Location", placeholder: "Istanbul, Turkey" },
+                    { key: "start_date", label: "Start Date", placeholder: "Sep 2023" },
+                    { key: "end_date", label: "End Date", placeholder: "Present" },
+                    { key: "is_current", label: "Current Job", type: "checkbox", placeholder: "Currently working here" },
+                    { key: "logo_url", label: "Logo URL", placeholder: "https://..." },
+                    { key: "description", label: "Description", type: "textarea", placeholder: "What you did...", translatable: true },
+                  ]}
+                />
+              )}
+
+              {/* ───── EDUCATION TAB ───── */}
+              {activeTab === "education" && (
+                <AdminCrudTab
+                  title="Education"
+                  tableName="educations"
+                  displayField="university"
+                  subtitleField="degree"
+                  fields={[
+                    { key: "university", label: "University", required: true, placeholder: "MIT" },
+                    { key: "degree", label: "Degree", placeholder: "Bachelor of Science" },
+                    { key: "major", label: "Major", placeholder: "Computer Science" },
+                    { key: "location", label: "Location", placeholder: "Cambridge, MA" },
+                    { key: "start_date", label: "Start Date", placeholder: "2020" },
+                    { key: "end_date", label: "End Date", placeholder: "2024" },
+                    { key: "logo_url", label: "Logo URL", placeholder: "https://..." },
+                  ]}
+                />
+              )}
+
+              {/* ───── LANGUAGES TAB ───── */}
+              {activeTab === "languages" && (
+                <AdminCrudTab
+                  title="Languages"
+                  tableName="languages"
+                  displayField="name"
+                  fields={[
+                    { key: "name", label: "Language", required: true, placeholder: "English" },
+                    { key: "reading_level", label: "Reading (0-100)", type: "number", placeholder: "90" },
+                    { key: "listening_level", label: "Listening (0-100)", type: "number", placeholder: "85" },
+                    { key: "writing_level", label: "Writing (0-100)", type: "number", placeholder: "80" },
+                    { key: "speaking_level", label: "Speaking (0-100)", type: "number", placeholder: "75" },
+                  ]}
+                />
+              )}
+
+              {/* ───── ACTIVITIES TAB ───── */}
+              {activeTab === "activities" && (
+                <AdminCrudTab
+                  title="Leadership & Activities"
+                  tableName="activities"
+                  displayField="organization"
+                  subtitleField="role"
+                  fields={[
+                    { key: "organization", label: "Organization", required: true, placeholder: "Google Developer Student Club", translatable: true },
+                    { key: "role", label: "Role", required: true, placeholder: "Lead", translatable: true },
+                    { key: "start_date", label: "Start Date", placeholder: "2023" },
+                    { key: "end_date", label: "End Date", placeholder: "Present" },
+                    { key: "logo_url", label: "Logo URL", placeholder: "https://..." },
+                    { key: "link_url", label: "Link", placeholder: "https://..." },
+                    { key: "description", label: "Description", type: "textarea", placeholder: "What you did...", translatable: true },
+                  ]}
+                />
+              )}
+
+              {/* ───── CERTIFICATIONS TAB ───── */}
+              {activeTab === "certifications" && (
+                <AdminCrudTab
+                  title="Certifications"
+                  tableName="certifications"
+                  displayField="name"
+                  subtitleField="issuer"
+                  fields={[
+                    { key: "name", label: "Certificate Name", required: true, placeholder: "AWS Solutions Architect", translatable: true },
+                    { key: "issuer", label: "Issuer", required: true, placeholder: "Amazon Web Services" },
+                    { key: "issue_date", label: "Issue Date", placeholder: "Jan 2024" },
+                    { key: "icon_url", label: "Icon URL", placeholder: "https://..." },
+                    { key: "link_url", label: "Certificate Link", placeholder: "https://..." },
+                  ]}
+                />
+              )}
+
+              {/* ───── SOCIAL LINKS TAB ───── */}
+              {activeTab === "social" && <AdminSocialLinksTab />}
+
               {/* ───── SETTINGS TAB ───── */}
               {activeTab === "settings" && (
                 <div className="space-y-6">
@@ -691,8 +823,8 @@ export default function AdminDashboardPage() {
                       <div className="rounded-lg bg-muted px-3 py-2 text-sm">{user?.email || "Unknown"}</div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-sm font-medium text-muted-foreground">User UID</label>
-                      <div className="rounded-lg bg-muted px-3 py-2 text-xs font-mono break-all">{user?.uid || "Unknown"}</div>
+                      <label className="text-sm font-medium text-muted-foreground">User ID</label>
+                      <div className="rounded-lg bg-muted px-3 py-2 text-xs font-mono break-all">{user?.id || "Unknown"}</div>
                     </div>
                   </div>
                 </div>

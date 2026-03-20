@@ -1,26 +1,12 @@
 import { NextResponse } from "next/server";
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getDatabase, ref, get } from "firebase/database";
+import { createClient } from "@supabase/supabase-js";
 import { siteConfig } from "@/config/site";
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL || "",
-};
-
-function getFirebaseDb() {
-  const app =
-    getApps().length > 0
-      ? getApp()
-      : firebaseConfig.apiKey
-        ? initializeApp(firebaseConfig)
-        : null;
-  return app ? getDatabase(app) : null;
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  if (!url || !key) return null;
+  return createClient(url, key);
 }
 
 function escapeXml(str: string): string {
@@ -43,33 +29,26 @@ function parseDate(dateStr: string): string {
 }
 
 export async function GET() {
-  const db = getFirebaseDb();
+  const supabase = getSupabase();
 
   let items = "";
   let lastBuildDate = new Date().toUTCString();
 
-  if (db) {
+  if (supabase) {
     try {
-      const snapshot = await get(ref(db, "blog"));
-      const data = snapshot.val();
+      const { data, error } = await supabase
+        .from("blogs")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      if (data) {
-        const posts = Object.keys(data)
-          .map((key) => ({ id: key, ...data[key] }))
-          .sort((a: any, b: any) => {
-            const dateA = new Date(a.date || 0).getTime();
-            const dateB = new Date(b.date || 0).getTime();
-            return dateB - dateA;
-          });
-
-        if (posts.length > 0 && posts[0].date) {
-          lastBuildDate = parseDate(posts[0].date);
+      if (!error && data && data.length > 0) {
+        if (data[0].date) {
+          lastBuildDate = parseDate(data[0].date);
         }
 
-        for (const post of posts) {
+        for (const post of data) {
           const title = escapeXml(String(post.title || "Untitled"));
           const excerpt = escapeXml(String(post.excerpt || post.content || ""));
-          const content = escapeXml(String(post.content || ""));
           const link = `${siteConfig.url}/blog`;
           const pubDate = parseDate(String(post.date || ""));
           const guid = `${siteConfig.url}/blog#${post.id}`;
@@ -86,7 +65,7 @@ export async function GET() {
         }
       }
     } catch {
-      // Firebase read failed, return empty feed
+      // Supabase read failed, return empty feed
     }
   }
 

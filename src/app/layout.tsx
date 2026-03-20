@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/context/language-context";
+import { SiteDataProvider } from "@/context/site-data-context";
 import { Dock } from "@/components/navigation/dock";
 import { Intro } from "@/components/home/intro";
 import { siteConfig } from "@/config/site";
@@ -71,6 +72,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
+            <SiteDataProvider>
             <Link
               href="/"
               className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 transition-transform hover:scale-105 duration-300"
@@ -96,6 +98,7 @@ export default function RootLayout({
               {children}
             </main>
             <Dock />
+            </SiteDataProvider>
           </LanguageProvider>
         </ThemeProvider>
         <Analytics />

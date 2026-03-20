@@ -3,9 +3,14 @@
 import Image from "next/image";
 import { userConfig } from "@/config/user";
 import { useLanguage } from "@/context/language-context";
+import { useSiteData } from "@/context/site-data-context";
 
 export function Info() {
-  const { t } = useLanguage();
+  const { getLocalized } = useLanguage();
+  const { aboutMe, loaded } = useSiteData();
+
+  const name = aboutMe?.name || userConfig.name;
+  const tagline = aboutMe ? (getLocalized(aboutMe, "hero_tagline") || userConfig.heroTagline) : (loaded ? userConfig.heroTagline : "");
 
   return (
     <section className="space-y-2">
@@ -27,11 +32,11 @@ export function Info() {
           priority
         />
         <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">
-          {userConfig.name}
+          {loaded ? name : ""}
         </h1>
       </div>
       <p className="text-base sm:text-lg text-muted-foreground">
-        {t("user.heroTagline")}
+        {tagline}
       </p>
     </section>
   );

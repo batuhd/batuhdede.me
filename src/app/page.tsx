@@ -3,13 +3,19 @@
 import { Info } from "@/components/home/info";
 import { About } from "@/components/home/about";
 import { Skills } from "@/components/home/skills";
+import { Experience, Education, Languages, Activities, Certifications } from "@/components/home/profile-sections";
 import { GitHubContribution } from "@/components/home/github-contribution";
 import { ContactForm } from "@/components/home/contact-form";
 import { FadeIn } from "@/components/motion/fade-in";
 import { useLanguage } from "@/context/language-context";
+import { useSiteData } from "@/context/site-data-context";
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, getLocalized } = useLanguage();
+  const { aboutMe, loaded } = useSiteData();
+
+  const quoteText = aboutMe ? (getLocalized(aboutMe, "quote_text") || t("user.quote.text")) : (loaded ? t("user.quote.text") : "");
+  const quoteAuthor = aboutMe?.quote_author || (loaded ? t("user.quote.author") : "");
 
   return (
     <div className="space-y-12 sm:space-y-24">
@@ -25,20 +31,42 @@ export default function Home() {
         <Skills />
       </FadeIn>
 
+      <FadeIn delay={0.3}>
+        <Experience />
+      </FadeIn>
+
+      <FadeIn delay={0.3}>
+        <Education />
+      </FadeIn>
+
+      <FadeIn delay={0.3}>
+        <Languages />
+      </FadeIn>
+
+      <FadeIn delay={0.3}>
+        <Activities />
+      </FadeIn>
+
+      <FadeIn delay={0.3}>
+        <Certifications />
+      </FadeIn>
+
       <FadeIn delay={0.4}>
         <GitHubContribution />
       </FadeIn>
 
-      <FadeIn delay={0.5}>
-        <blockquote className="border-l-2 border-muted-foreground/20 pl-4 sm:pl-6 italic text-muted-foreground">
-          <p className="text-base sm:text-lg">
-            &ldquo;{t("user.quote.text")}&rdquo;
-          </p>
-          <footer className="mt-2 text-sm not-italic">
-            — {t("user.quote.author")}
-          </footer>
-        </blockquote>
-      </FadeIn>
+      {quoteText && (
+        <FadeIn delay={0.5}>
+          <blockquote className="border-l-2 border-muted-foreground/20 pl-4 sm:pl-6 italic text-muted-foreground">
+            <p className="text-base sm:text-lg">
+              &ldquo;{quoteText}&rdquo;
+            </p>
+            <footer className="mt-2 text-sm not-italic">
+              — {quoteAuthor}
+            </footer>
+          </blockquote>
+        </FadeIn>
+      )}
 
       <FadeIn delay={0.6}>
         <ContactForm />

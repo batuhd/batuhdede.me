@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { FadeIn } from "@/components/motion/fade-in";
 import { LogIn, Loader2, ShieldCheck } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, onAuthStateChanged, User } from "firebase/auth";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
@@ -14,7 +13,7 @@ export default function AdminLoginPage() {
   const [captchaCode, setCaptchaCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<User | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
   // Generate a new 6 char captcha
@@ -30,21 +29,24 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     generateCaptcha();
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      if (u) {
-        setUser(u);
+    if (!supabase) return;
+
+    const checkSession = async () => {
+      if (!supabase) return;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsLoggedIn(true);
         router.push("/admin");
       }
-    });
-    return () => unsubscribe();
+    };
+    checkSession();
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+
     if (captchaInput.toUpperCase() !== captchaCode) {
       setError("Security check failed. Please try again.");
       generateCaptcha();
@@ -52,17 +54,27 @@ export default function AdminLoginPage() {
       return;
     }
 
-    if (!auth) {
-      setError("Firebase Authentication is not configured.");
+    if (!supabase) {
+      setError("Supabase is not configured.");
       setLoading(false);
       return;
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Success - onAuthStateChanged will redirect
-    } catch (err: any) {
-      setError("Invalid credentials or access denied.");
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        setError("Invalid credentials or access denied.");
+        generateCaptcha();
+        setPassword("");
+      } else {
+        router.push("/admin");
+      }
+    } catch {
+      setError("An unexpected error occurred.");
       generateCaptcha();
       setPassword("");
     } finally {
@@ -70,7 +82,7 @@ export default function AdminLoginPage() {
     }
   };
 
-  if (user) {
+  if (isLoggedIn) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -111,7 +123,7 @@ export default function AdminLoginPage() {
                 placeholder="admin@example.com"
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-foreground">
                 Password

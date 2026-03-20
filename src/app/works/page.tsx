@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { FadeIn } from "@/components/motion/fade-in";
 import { FolderKanban, ExternalLink, Github, Loader2, X } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { ref, onValue } from "firebase/database";
+import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
 
@@ -16,7 +15,7 @@ interface Project {
   github?: string;
   image?: string;
   tags: string[];
-  order?: number;
+  order_index?: number;
 }
 
 export default function WorksPage() {
@@ -28,34 +27,37 @@ export default function WorksPage() {
   useEffect(() => {
     let isMounted = true;
 
-    if (!db) {
+    if (!supabase) {
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onValue(
-      ref(db, "projects"),
-      (snapshot) => {
-        if (!isMounted) return;
-        const data = snapshot.val();
-        if (data) {
-          const loaded = Object.keys(data)
-            .map((key) => ({ id: key, ...data[key] }))
-            .sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-          setProjects(loaded);
-        } else {
-          setProjects([]);
-        }
-        setLoading(false);
-      },
-      () => {
-        if (isMounted) setLoading(false);
+    const fetchProjects = async () => {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("order_index", { ascending: true });
+
+      if (!isMounted) return;
+      if (error) {
+        console.error("Error fetching projects:", error);
+        setProjects([]);
+      } else {
+        setProjects(
+          (data || []).map((p: any) => ({
+            ...p,
+            tags: Array.isArray(p.tags) ? p.tags : [],
+          }))
+        );
       }
-    );
+      setLoading(false);
+    };
+
+    fetchProjects();
 
     return () => {
       isMounted = false;
-      unsubscribe();
     };
   }, []);
 

@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { FadeIn } from "@/components/motion/fade-in";
 import { PenTool, Loader2, Calendar, X, ExternalLink, Rss } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { ref, onValue } from "firebase/database";
+import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
 
@@ -14,7 +13,7 @@ interface BlogPost {
   excerpt: string;
   content: string;
   date: string;
-  readTime: string;
+  read_time: string;
 }
 
 export default function BlogPage() {
@@ -26,33 +25,32 @@ export default function BlogPage() {
   useEffect(() => {
     let isMounted = true;
 
-    if (!db) {
+    if (!supabase) {
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onValue(
-      ref(db, "blog"),
-      (snapshot) => {
-        if (!isMounted) return;
-        const data = snapshot.val();
-        setPosts(
-          data
-            ? Object.keys(data)
-                .map((key) => ({ id: key, ...data[key] }))
-                .reverse()
-            : []
-        );
-        setLoading(false);
-      },
-      () => {
-        if (isMounted) setLoading(false);
+    const fetchPosts = async () => {
+      if (!supabase) return;
+      const { data, error } = await supabase
+        .from("blogs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!isMounted) return;
+      if (error) {
+        console.error("Error fetching blog posts:", error);
+        setPosts([]);
+      } else {
+        setPosts(data || []);
       }
-    );
+      setLoading(false);
+    };
+
+    fetchPosts();
 
     return () => {
       isMounted = false;
-      unsubscribe();
     };
   }, []);
 
@@ -129,7 +127,7 @@ export default function BlogPage() {
                       </span>
                       <span className="hidden sm:inline">&middot;</span>
                       <span className="hidden sm:inline">
-                        {String(post.readTime || "5 min read")}
+                        {String(post.read_time || "5 min read")}
                       </span>
                     </div>
                     <div className="flex justify-between items-start gap-4">
@@ -173,7 +171,7 @@ export default function BlogPage() {
                     {String(selectedPost.date || "Unknown date")}
                   </span>
                   <span>&middot;</span>
-                  <span>{String(selectedPost.readTime || "5 min read")}</span>
+                  <span>{String(selectedPost.read_time || "5 min read")}</span>
                 </div>
                 <button
                   onClick={() => setSelectedPost(null)}

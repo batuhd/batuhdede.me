@@ -9,7 +9,7 @@ import {
 } from "react";
 import { translations, type Locale } from "@/config/translations";
 
-const SUPPORTED_LOCALES: Locale[] = ["tr", "en", "de", "ja", "es", "zh", "fr", "ar", "pt", "ru"];
+const SUPPORTED_LOCALES: Locale[] = ["tr", "en", "de", "es"];
 
 function detectBrowserLocale(): Locale {
   if (typeof navigator === "undefined") return "en";
@@ -64,7 +64,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Get a localized field from a Firebase item.
+   * Get a localized field from a Supabase item.
    * Tries `field_locale` first, falls back to `field`.
    * Example: getLocalized(project, "title") → project.title_tr || project.title
    */

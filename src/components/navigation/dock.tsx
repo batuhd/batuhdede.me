@@ -19,12 +19,17 @@ import {
   MoreHorizontal,
   X,
   ExternalLink,
+  Twitter,
+  Youtube,
+  Dribbble,
+  Link2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { userConfig } from "@/config/user";
 import { useLanguage } from "@/context/language-context";
 import { type Locale } from "@/config/translations";
 import { motion, AnimatePresence } from "motion/react";
+import { supabase } from "@/lib/supabase";
 
 interface NavItem {
   href: string;
@@ -39,7 +44,18 @@ const pageItems: (NavItem & { labelKey: string })[] = [
   { href: "/blog", icon: PenTool, labelKey: "nav.blog", label: "" },
 ];
 
-const socialItems: NavItem[] = [
+const PLATFORM_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  LinkedIn: Linkedin,
+  GitHub: Github,
+  Instagram: Instagram,
+  "Resume (CV)": FileText,
+  Twitter: Twitter,
+  YouTube: Youtube,
+  Dribbble: Dribbble,
+  Other: Link2,
+};
+
+const FALLBACK_SOCIAL: NavItem[] = [
   { href: userConfig.links.linkedin, icon: Linkedin, label: "LinkedIn" },
   { href: userConfig.links.github, icon: Github, label: "GitHub" },
   { href: userConfig.links.instagram, icon: Instagram, label: "Instagram" },
@@ -56,13 +72,7 @@ const LOCALE_LIST: LocaleInfo[] = [
   { code: "tr", flag: "🇹🇷", name: "Türkçe" },
   { code: "en", flag: "🇬🇧", name: "English" },
   { code: "de", flag: "🇩🇪", name: "Deutsch" },
-  { code: "ja", flag: "🇯🇵", name: "日本語" },
   { code: "es", flag: "🇪🇸", name: "Español" },
-  { code: "zh", flag: "🇨🇳", name: "中文" },
-  { code: "fr", flag: "🇫🇷", name: "Français" },
-  { code: "ar", flag: "🇸🇦", name: "العربية" },
-  { code: "pt", flag: "🇧🇷", name: "Português" },
-  { code: "ru", flag: "🇷🇺", name: "Русский" },
 ];
 
 function DockIcon({
@@ -123,12 +133,30 @@ export function Dock() {
   const [langModalOpen, setLangModalOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
+  const [socialItems, setSocialItems] = useState<NavItem[]>(FALLBACK_SOCIAL);
 
   // Social redirect warning state
   const [pendingLink, setPendingLink] = useState<string | null>(null);
   const [pendingLabel, setPendingLabel] = useState<string>("");
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    if (!supabase) return;
+    const fetchLinks = async () => {
+      if (!supabase) return;
+      const { data } = await supabase.from("social_links").select("*").order("order_index", { ascending: true });
+      if (data && data.length > 0) {
+        setSocialItems(
+          data.map((link: any) => ({
+            href: link.url,
+            icon: PLATFORM_ICONS[link.platform] || Link2,
+            label: link.platform,
+          }))
+        );
+      }
+    };
+    fetchLinks();
+  }, []);
 
   const closeMenus = useCallback(() => {
     setLangModalOpen(false);
