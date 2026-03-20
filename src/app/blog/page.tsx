@@ -63,7 +63,7 @@ export default function BlogPage() {
 
   return (
     <>
-      <div className="space-y-8 sm:space-y-12 pb-24">
+      <div className="space-y-8 sm:space-y-12 pb-24 max-w-2xl mx-auto w-full">
         <FadeIn>
           <div className="space-y-2">
             <div className="flex items-center justify-between">

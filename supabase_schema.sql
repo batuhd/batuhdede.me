@@ -7,6 +7,12 @@
 --   ✅ SQL Injection impossible (Supabase PostgREST)
 -- =============================================
 
+-- Homepage Section Ordering
+CREATE TABLE public.section_order (
+    section_id text PRIMARY KEY,
+    order_index integer DEFAULT 0
+);
+
 -- About Me (profile info, bio, stats, quote)
 CREATE TABLE public.about_me (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -88,10 +94,7 @@ CREATE TABLE public.educations (
 CREATE TABLE public.languages (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     name text NOT NULL,
-    reading_level integer DEFAULT 0,
-    listening_level integer DEFAULT 0,
-    writing_level integer DEFAULT 0,
-    speaking_level integer DEFAULT 0,
+    level text,
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -190,6 +193,7 @@ CREATE TABLE public.social_links (
 -- =============================================
 
 ALTER TABLE public.about_me ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.section_order ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.skill_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.experiences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.educations ENABLE ROW LEVEL SECURITY;
@@ -201,6 +205,7 @@ ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
 
 -- PUBLIC READ
+CREATE POLICY "Public read" ON public.section_order FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.about_me FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.skill_categories FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.experiences FOR SELECT USING (true);
@@ -213,6 +218,10 @@ CREATE POLICY "Public read" ON public.blogs FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.social_links FOR SELECT USING (true);
 
 -- AUTHENTICATED WRITE
+CREATE POLICY "Auth insert" ON public.section_order FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Auth update" ON public.section_order FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Auth delete" ON public.section_order FOR DELETE USING (auth.role() = 'authenticated');
+
 CREATE POLICY "Auth insert" ON public.about_me FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 CREATE POLICY "Auth update" ON public.about_me FOR UPDATE USING (auth.role() = 'authenticated');
 CREATE POLICY "Auth delete" ON public.about_me FOR DELETE USING (auth.role() = 'authenticated');

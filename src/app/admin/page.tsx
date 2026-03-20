@@ -28,9 +28,9 @@ import {
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
-import { AdminAboutTab, AdminCrudTab, AdminSocialLinksTab, AdminSkillsTab } from "@/components/admin/admin-tabs";
+import { AdminAboutTab, AdminCrudTab, AdminSocialLinksTab, AdminSkillsTab, AdminLayoutTab } from "@/components/admin/admin-tabs";
 
-type Tab = "works" | "blog" | "about" | "skills" | "experience" | "education" | "languages" | "activities" | "certifications" | "social" | "settings";
+type Tab = "works" | "blog" | "about" | "skills" | "experience" | "education" | "languages" | "activities" | "certifications" | "social" | "settings" | "section_layout";
 type LangTab = "default" | "tr" | "de" | "es";
 
 const LANG_TABS: { key: LangTab; label: string }[] = [
@@ -40,18 +40,39 @@ const LANG_TABS: { key: LangTab; label: string }[] = [
   { key: "es", label: "ES" },
 ];
 
-const TABS: { key: Tab; icon: typeof FolderKanban; label: string }[] = [
-  { key: "works", icon: FolderKanban, label: "Works" },
-  { key: "blog", icon: PenTool, label: "Blog" },
-  { key: "about", icon: UserCircle, label: "About Me" },
-  { key: "skills", icon: Award, label: "Skills" },
-  { key: "experience", icon: Briefcase, label: "Experience" },
-  { key: "education", icon: GraduationCap, label: "Education" },
-  { key: "languages", icon: MessageSquare, label: "Languages" },
-  { key: "activities", icon: Trophy, label: "Activities" },
-  { key: "certifications", icon: Award, label: "Certifications" },
-  { key: "social", icon: Globe, label: "Social Links" },
-  { key: "settings", icon: Settings, label: "Settings" },
+const SIDEBAR_CATEGORIES = [
+  {
+    title: "Profile & Identity",
+    tabs: [
+      { key: "about", icon: UserCircle, label: "About Me" },
+      { key: "social", icon: Globe, label: "Social Links" },
+    ]
+  },
+  {
+    title: "Portfolio Content",
+    tabs: [
+      { key: "works", icon: FolderKanban, label: "Works" },
+      { key: "blog", icon: PenTool, label: "Blog" },
+    ]
+  },
+  {
+    title: "Resume Data",
+    tabs: [
+      { key: "skills", icon: Award, label: "Skills" },
+      { key: "experience", icon: Briefcase, label: "Experience" },
+      { key: "education", icon: GraduationCap, label: "Education" },
+      { key: "languages", icon: MessageSquare, label: "Languages" },
+      { key: "activities", icon: Trophy, label: "Activities" },
+      { key: "certifications", icon: Award, label: "Certifications" },
+    ]
+  },
+  {
+    title: "Configuration",
+    tabs: [
+      { key: "section_layout", icon: LayoutDashboard, label: "Page Layout" },
+      { key: "settings", icon: Settings, label: "Settings" },
+    ]
+  }
 ];
 
 const inputClass =
@@ -317,7 +338,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="space-y-8 sm:space-y-12">
+    <div className="space-y-8 sm:space-y-12 max-w-6xl mx-auto w-full">
       <FadeIn>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-2">
@@ -341,28 +362,37 @@ export default function AdminDashboardPage() {
       <FadeIn delay={0.1}>
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar */}
-          <div className="flex md:flex-col gap-1.5 md:w-48 flex-shrink-0 md:border-r md:border-border md:pr-4 overflow-x-auto md:overflow-x-visible md:overflow-y-auto md:max-h-[70vh] md:sticky md:top-4 pb-2 md:pb-0">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-medium transition-colors md:w-full whitespace-nowrap",
-                    activeTab === tab.key
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  <Icon className="h-4 w-4 flex-shrink-0" /> {tab.label}
-                </button>
-              );
-            })}
+          <div className="flex md:flex-col gap-2 md:w-56 flex-shrink-0 md:border-r md:border-border md:pr-6 overflow-x-auto md:overflow-x-visible md:overflow-y-auto max-h-none md:max-h-[75vh] md:sticky md:top-4 pb-4 md:pb-0 hide-scrollbar items-center md:items-stretch">
+            {SIDEBAR_CATEGORIES.map((category) => (
+              <div key={category.title} className="flex md:block gap-2 md:gap-0 md:mb-6 flex-shrink-0">
+                <p className="hidden md:block px-3 text-[10px] uppercase font-bold text-muted-foreground mb-3">
+                  {category.title}
+                </p>
+                <div className="flex md:flex-col gap-1.5 flex-shrink-0">
+                  {category.tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key as Tab)}
+                        className={cn(
+                          "flex items-center gap-2 sm:gap-3 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium transition-colors md:w-full whitespace-nowrap",
+                          activeTab === tab.key
+                            ? "bg-foreground text-background"
+                            : "text-muted-foreground hover:bg-muted"
+                        )}
+                      >
+                        <Icon className="h-4 w-4 flex-shrink-0" /> {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Main Content */}
-          <div className="md:col-span-3">
+          <div className="flex-1 min-w-0">
             <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm min-h-[400px]">
 
               {/* ───── WORKS TAB ───── */}
@@ -392,7 +422,7 @@ export default function AdminDashboardPage() {
                               <input required value={workForm.title} onChange={(e) => setWorkForm({ ...workForm, title: e.target.value })} className={inputClass} placeholder="Project Title" />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground">Image URL</label>
+                              <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Image URL <span className="text-[10px] text-muted-foreground/60 font-normal">(Use imgbb.com)</span></label>
                               <input value={workForm.image} onChange={(e) => setWorkForm({ ...workForm, image: e.target.value })} className={inputClass} placeholder="https://..." />
                             </div>
                             <div className="space-y-1">
@@ -449,7 +479,7 @@ export default function AdminDashboardPage() {
                               <input required value={editWorkForm.title} onChange={(e) => setEditWorkForm({ ...editWorkForm, title: e.target.value })} className={inputClass} />
                             </div>
                             <div className="space-y-1">
-                              <label className="text-xs font-medium text-muted-foreground">Image URL</label>
+                              <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Image URL <span className="text-[10px] text-muted-foreground/60 font-normal">(Use imgbb.com)</span></label>
                               <input value={editWorkForm.image} onChange={(e) => setEditWorkForm({ ...editWorkForm, image: e.target.value })} className={inputClass} />
                             </div>
                             <div className="space-y-1">
@@ -757,6 +787,8 @@ export default function AdminDashboardPage() {
                   ]}
                 />
               )}
+              {/* ───── LAYOUT CFG TAB ───── */}
+              {activeTab === "section_layout" && <AdminLayoutTab />}
 
               {/* ───── LANGUAGES TAB ───── */}
               {activeTab === "languages" && (
@@ -764,12 +796,10 @@ export default function AdminDashboardPage() {
                   title="Languages"
                   tableName="languages"
                   displayField="name"
+                  subtitleField="level"
                   fields={[
                     { key: "name", label: "Language", required: true, placeholder: "English" },
-                    { key: "reading_level", label: "Reading (0-100)", type: "number", placeholder: "90" },
-                    { key: "listening_level", label: "Listening (0-100)", type: "number", placeholder: "85" },
-                    { key: "writing_level", label: "Writing (0-100)", type: "number", placeholder: "80" },
-                    { key: "speaking_level", label: "Speaking (0-100)", type: "number", placeholder: "75" },
+                    { key: "level", label: "Level", placeholder: "C1" },
                   ]}
                 />
               )}

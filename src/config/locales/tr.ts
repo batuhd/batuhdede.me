@@ -18,6 +18,9 @@ export const tr: Record<string, string> = {
   "user.skill.frontend": "Frontend Geliştirme",
   "user.skill.backend": "Backend Geliştirme",
   "user.skill.systems": "Sistemler & Multimedya",
+  "user.stats.started": "Kodlamaya Başlangıç",
+  "user.stats.projects": "Tamamlanan Proje",
+  "user.stats.experience": "Yıllık Deneyim",
 
   // Home
   "home.about": "Hakkımda",

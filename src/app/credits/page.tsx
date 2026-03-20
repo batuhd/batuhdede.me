@@ -14,9 +14,9 @@ import {
 import { useLanguage } from "@/context/language-context";
 
 const techStack = [
-  { labelKey: "credits.tech.frontend", value: "React, Next.js, Tailwind CSS" },
-  { labelKey: "credits.tech.database", value: "Firebase Realtime Database" },
-  { labelKey: "credits.tech.auth", value: "Firebase Authentication" },
+  { labelKey: "credits.tech.frontend", value: "React 19, Next.js 15, Tailwind CSS 4" },
+  { labelKey: "credits.tech.database", value: "Supabase (PostgreSQL)" },
+  { labelKey: "credits.tech.auth", value: "Supabase Authentication" },
   { labelKey: "credits.tech.hosting", value: "Vercel" },
   { labelKey: "credits.tech.forms", value: "Formspree" },
   { labelKey: "credits.tech.icons", value: "Lucide React" },
@@ -31,7 +31,7 @@ export default function CreditsPage() {
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-8 sm:space-y-12">
+    <div className="space-y-8 sm:space-y-12 max-w-2xl mx-auto w-full">
       <FadeIn>
         <div className="space-y-2">
           <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">

@@ -70,7 +70,7 @@ export default function WorksPage() {
 
   return (
     <>
-      <div className="space-y-8 sm:space-y-12">
+      <div className="space-y-8 sm:space-y-12 max-w-2xl mx-auto w-full">
         <FadeIn>
           <div className="space-y-2">
             <h1 className="flex items-center gap-3 text-2xl sm:text-4xl font-bold tracking-tight">

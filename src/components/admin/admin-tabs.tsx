@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Plus, Trash2, Pencil, X, Loader2, Globe } from "lucide-react";
+import { Plus, Trash2, Pencil, X, Loader2, Globe, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -107,10 +107,10 @@ export function AdminAboutTab() {
               <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} className={`${inputClass} min-h-[100px]`} placeholder="Your bio text..." />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Profile Photo URL</label>
+              <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Profile Photo URL <span className="text-[10px] text-muted-foreground/60 font-normal">(Use imgbb.com for free)</span></label>
               <input value={form.profile_photo_url} onChange={(e) => setForm({ ...form, profile_photo_url: e.target.value })} className={inputClass} placeholder="https://..." />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-3 items-end">
               <div className="space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Started Coding Year</label>
                 <input type="number" value={form.started_coding_year} onChange={(e) => setForm({ ...form, started_coding_year: e.target.value })} className={inputClass} placeholder="2021" />
@@ -232,6 +232,25 @@ export function AdminSkillsTab() {
     await fetchItems();
   };
 
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    if (!supabase) return;
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= items.length) return;
+
+    const current = items[idx];
+    const swap = items[swapIdx];
+    const currentOrder = current.order_index ?? idx;
+    const swapOrder = swap.order_index ?? swapIdx;
+
+    await Promise.all([
+      supabase.from("skill_categories").update({ order_index: swapOrder }).eq("id", current.id),
+      supabase.from("skill_categories").update({ order_index: currentOrder }).eq("id", swap.id),
+    ]);
+    await fetchItems();
+  };
+
   const renderForm = (onSubmit: (e: React.FormEvent) => void, submitLabel: string, isEdit = false) => (
     <form onSubmit={onSubmit} className={cn("space-y-4 rounded-xl border p-4", isEdit ? "border-primary/30 bg-primary/5" : "bg-muted/30")}>
       {isEdit && (
@@ -285,8 +304,13 @@ export function AdminSkillsTab() {
       <div className="space-y-2">
         {items.length === 0 && !isAdding ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground"><p className="text-sm">No categories yet.</p></div>
-        ) : items.map((item) => (
-          <div key={item.id} className={cn("flex items-center justify-between rounded-lg border p-3 sm:p-4 transition-colors", editingId === item.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30")}>
+        ) : items.map((item, idx) => (
+          <div key={item.id} className={cn("flex items-center gap-2 sm:gap-3 rounded-lg border p-3 sm:p-4 transition-colors", editingId === item.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30")}>
+            <div className="flex flex-col gap-0.5 flex-shrink-0">
+              <button type="button" disabled={idx === 0} onClick={() => handleMove(item.id, "up")} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"><ChevronUp className="h-3.5 w-3.5" /></button>
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 mx-auto" />
+              <button type="button" disabled={idx === items.length - 1} onClick={() => handleMove(item.id, "down")} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"><ChevronDown className="h-3.5 w-3.5" /></button>
+            </div>
             <div className="space-y-1 min-w-0 flex-1">
               <h3 className="font-medium truncate">{item.title}</h3>
               <p className="text-xs text-muted-foreground line-clamp-1">{Array.isArray(item.skills) ? item.skills.join(", ") : ""}</p>
@@ -397,6 +421,25 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     await fetchItems();
   };
 
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    if (!supabase) return;
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= items.length) return;
+
+    const current = items[idx];
+    const swap = items[swapIdx];
+    const currentOrder = current.order_index ?? idx;
+    const swapOrder = swap.order_index ?? swapIdx;
+
+    await Promise.all([
+      supabase.from(tableName).update({ order_index: swapOrder }).eq("id", current.id),
+      supabase.from(tableName).update({ order_index: currentOrder }).eq("id", swap.id),
+    ]);
+    await fetchItems();
+  };
+
   const renderFormFields = () => {
     if (hasTranslatable && langTab !== "default") {
       return (
@@ -419,7 +462,10 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
       <div className="grid gap-4 sm:grid-cols-2">
         {fields.map(field => (
           <div key={field.key} className={cn("space-y-1", field.type === "textarea" && "sm:col-span-2")}>
-            <label className="text-xs font-medium text-muted-foreground">{field.label}{field.required && " *"}</label>
+            <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">
+              {field.label}{field.required && " *"}
+              {(field.label.includes("Logo") || field.label.includes("Icon")) && <span className="text-[10px] text-muted-foreground/60 font-normal">(Use imgbb.com for free)</span>}
+            </label>
             {field.type === "textarea" ? (
               <textarea required={field.required} value={form[field.key] || ""} onChange={(e) => setForm({ ...form, [field.key]: e.target.value })} className={`${inputClass} min-h-[80px]`} placeholder={field.placeholder} />
             ) : field.type === "checkbox" ? (
@@ -470,8 +516,13 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
       <div className="space-y-2">
         {items.length === 0 && !isAdding ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground"><p className="text-sm">No items yet.</p></div>
-        ) : items.map(item => (
-          <div key={item.id} className={cn("flex items-center justify-between rounded-lg border p-3 sm:p-4 transition-colors", editingId === item.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30")}>
+        ) : items.map((item, idx) => (
+          <div key={item.id} className={cn("flex items-center gap-2 sm:gap-3 rounded-lg border p-3 sm:p-4 transition-colors", editingId === item.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30")}>
+            <div className="flex flex-col gap-0.5 flex-shrink-0">
+              <button type="button" disabled={idx === 0} onClick={() => handleMove(item.id, "up")} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"><ChevronUp className="h-3.5 w-3.5" /></button>
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 mx-auto" />
+              <button type="button" disabled={idx === items.length - 1} onClick={() => handleMove(item.id, "down")} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"><ChevronDown className="h-3.5 w-3.5" /></button>
+            </div>
             <div className="space-y-0.5 min-w-0 flex-1">
               <h3 className="font-medium truncate">{item[displayField] || "—"}</h3>
               {subtitleField && <p className="text-xs text-muted-foreground truncate">{item[subtitleField] || ""}</p>}
@@ -544,6 +595,25 @@ export function AdminSocialLinksTab() {
     await fetchItems();
   };
 
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    if (!supabase) return;
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= items.length) return;
+
+    const current = items[idx];
+    const swap = items[swapIdx];
+    const currentOrder = current.order_index ?? idx;
+    const swapOrder = swap.order_index ?? swapIdx;
+
+    await Promise.all([
+      supabase.from("social_links").update({ order_index: swapOrder }).eq("id", current.id),
+      supabase.from("social_links").update({ order_index: currentOrder }).eq("id", swap.id),
+    ]);
+    await fetchItems();
+  };
+
   const renderForm = (onSubmit: (e: React.FormEvent) => void, submitLabel: string, isEdit = false) => (
     <form onSubmit={onSubmit} className={cn("space-y-4 rounded-xl border p-4", isEdit ? "border-primary/30 bg-primary/5" : "bg-muted/30")}>
       {isEdit && (
@@ -589,8 +659,13 @@ export function AdminSocialLinksTab() {
       <div className="space-y-2">
         {items.length === 0 && !isAdding ? (
           <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground"><p className="text-sm">No social links yet.</p></div>
-        ) : items.map(item => (
-          <div key={item.id} className={cn("flex items-center justify-between rounded-lg border p-3 sm:p-4 transition-colors", editingId === item.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30")}>
+        ) : items.map((item, idx) => (
+          <div key={item.id} className={cn("flex items-center gap-2 sm:gap-3 rounded-lg border p-3 sm:p-4 transition-colors", editingId === item.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30")}>
+            <div className="flex flex-col gap-0.5 flex-shrink-0">
+              <button type="button" disabled={idx === 0} onClick={() => handleMove(item.id, "up")} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"><ChevronUp className="h-3.5 w-3.5" /></button>
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 mx-auto" />
+              <button type="button" disabled={idx === items.length - 1} onClick={() => handleMove(item.id, "down")} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"><ChevronDown className="h-3.5 w-3.5" /></button>
+            </div>
             <div className="space-y-0.5 min-w-0 flex-1">
               <h3 className="font-medium truncate">{item.platform}</h3>
               <p className="text-xs text-muted-foreground truncate">{item.url}</p>
@@ -601,6 +676,192 @@ export function AdminSocialLinksTab() {
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ──────── Layout Config Tab (order sections) ────────
+
+export function AdminLayoutTab() {
+  const [sections, setSections] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const { Eye, EyeOff, Wrench } = require("lucide-react");
+
+  const fetchSections = async () => {
+    if (!supabase) return;
+    const { data } = await supabase.from("section_order").select("*").order("order_index", { ascending: true });
+    
+    if (data && data.length === 0) {
+      const defaultOrder = [
+        { section_id: "skills", order_index: 0 },
+        { section_id: "experience", order_index: 1 },
+        { section_id: "education", order_index: 2 },
+        { section_id: "languages", order_index: 3 },
+        { section_id: "activities", order_index: 4 },
+        { section_id: "certifications", order_index: 5 },
+      ];
+      await supabase.from("section_order").insert(defaultOrder);
+      setSections(defaultOrder);
+    } else {
+      setSections(data ? data.filter(d => d.section_id !== "maintenance_mode") : []);
+      setMaintenanceMode(data?.some(d => d.section_id === "maintenance_mode") || false);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchSections();
+  }, []);
+
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    if (!supabase) return;
+    const idx = sections.findIndex((s) => s.section_id === id);
+    if (idx === -1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sections.length) return;
+
+    // Optimistic UI update
+    const newSections = [...sections];
+    const temp = newSections[idx];
+    newSections[idx] = newSections[swapIdx];
+    newSections[swapIdx] = temp;
+    setSections(newSections);
+
+    // Robust bulk update forces perfect 0-based indexing to correct any database errors
+    await Promise.all(
+      newSections.map((sec, i) =>
+        supabase!.from("section_order").update({ order_index: i }).eq("section_id", sec.section_id)
+      )
+    );
+    
+    await fetchSections();
+  };
+
+  const handleToggleVisibility = async (sec: any) => {
+    if (!supabase) return;
+
+    const isHidden = sec.section_id.endsWith("_hidden");
+    const baseId = sec.section_id.replace("_hidden", "");
+    const newId = isHidden ? baseId : `${baseId}_hidden`;
+
+    // Optimistic UI update
+    const newSections = sections.map((s) =>
+      s.section_id === sec.section_id ? { ...s, section_id: newId } : s
+    );
+    setSections(newSections);
+
+    // Update DB
+    const { error } = await supabase
+      .from("section_order")
+      .update({ section_id: newId })
+      .eq("section_id", sec.section_id);
+
+    if (error) {
+      console.error("Error toggling visibility:", error);
+      await fetchSections();
+    }
+  };
+
+  const handleToggleMaintenanceMode = async () => {
+    if (!supabase) return;
+    const newState = !maintenanceMode;
+    setMaintenanceMode(newState); // Optimistic UI
+
+    if (newState) {
+      const { error } = await supabase.from("section_order").insert({ section_id: "maintenance_mode", order_index: -1 });
+      if (error) setMaintenanceMode(false);
+    } else {
+      const { error } = await supabase.from("section_order").delete().eq("section_id", "maintenance_mode");
+      if (error) setMaintenanceMode(true);
+    }
+  };
+
+  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-sm">
+        <h2 className="text-lg font-bold tracking-tight mb-2">Site Settings</h2>
+        <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-4 mb-6">
+          <div className="space-y-0.5">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-primary" /> Maintenance Mode
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Temporarily block public access to the site while you apply updates. The admin panel remains accessible.
+            </p>
+          </div>
+          <button
+            onClick={handleToggleMaintenanceMode}
+            className={cn(
+              "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+              maintenanceMode ? "bg-primary" : "bg-muted-foreground/30"
+            )}
+            role="switch"
+            aria-checked={maintenanceMode}
+          >
+            <span
+              className={cn(
+                "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out",
+                maintenanceMode ? "translate-x-5" : "translate-x-0"
+              )}
+            />
+          </button>
+        </div>
+
+        <h2 className="text-lg font-bold tracking-tight mb-2 pt-6 border-t mt-6">Portfolio Section Reordering</h2>
+        <p className="text-sm text-muted-foreground mb-6">
+          Use the arrows to drag and reorder the sections exactly as you want them to appear natively on your public frontend logic.
+        </p>
+        <div className="space-y-3">
+          {sections.map((sec, index) => (
+            <div key={sec.section_id} className="flex items-center justify-between rounded-lg border bg-muted/30 p-3 sm:p-4">
+              <div className="flex items-center gap-3">
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                <span className={cn("font-medium lowercase capitalize", sec.section_id.endsWith("_hidden") ? "text-muted-foreground line-through opacity-70" : "text-foreground")}>
+                  {sec.section_id.replace("_hidden", "")}
+                </span>
+                {sec.section_id.endsWith("_hidden") && (
+                  <span className="text-[10px] uppercase tracking-wider font-semibold rounded bg-muted px-1.5 py-0.5 text-muted-foreground">Hidden</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleToggleVisibility(sec)}
+                  className="mr-2 flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title={sec.section_id.endsWith("_hidden") ? "Show on public site" : "Hide from public site"}
+                >
+                  {sec.section_id.endsWith("_hidden") ? (
+                    <><EyeOff className="h-3.5 w-3.5" /> Hidden</>
+                  ) : (
+                    <><Eye className="h-3.5 w-3.5" /> Visible</>
+                  )}
+                </button>
+                <div className="flex items-center gap-1 border-l pl-2">
+                  <button
+                    type="button"
+                    onClick={() => handleMove(sec.section_id, "up")}
+                    disabled={index === 0}
+                    className="rounded p-1.5 hover:bg-muted disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMove(sec.section_id, "down")}
+                    disabled={index === sections.length - 1}
+                    className="rounded p-1.5 hover:bg-muted disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

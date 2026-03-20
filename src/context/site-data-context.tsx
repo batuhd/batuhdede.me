@@ -11,7 +11,9 @@ interface SiteData {
   languages: any[];
   activities: any[];
   certifications: any[];
+  sectionOrder: any[];
   loaded: boolean;
+  isMaintenance: boolean;
 }
 
 const defaultData: SiteData = {
@@ -22,7 +24,9 @@ const defaultData: SiteData = {
   languages: [],
   activities: [],
   certifications: [],
+  sectionOrder: [],
   loaded: false,
+  isMaintenance: false,
 };
 
 const SiteDataContext = createContext<SiteData>(defaultData);
@@ -38,7 +42,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
 
     const fetchAll = async () => {
       const sb = supabase!;
-      const [aboutRes, skillsRes, expRes, eduRes, langRes, actRes, certRes] = await Promise.all([
+      const [aboutRes, skillsRes, expRes, eduRes, langRes, actRes, certRes, sectionRes] = await Promise.all([
         sb.from("about_me").select("*").limit(1),
         sb.from("skill_categories").select("*").order("order_index", { ascending: true }),
         sb.from("experiences").select("*").order("order_index", { ascending: true }),
@@ -46,6 +50,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         sb.from("languages").select("*").order("order_index", { ascending: true }),
         sb.from("activities").select("*").order("order_index", { ascending: true }),
         sb.from("certifications").select("*").order("order_index", { ascending: true }),
+        sb.from("section_order").select("*").order("order_index", { ascending: true }),
       ]);
 
       setData({
@@ -56,7 +61,9 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         languages: langRes.data || [],
         activities: actRes.data || [],
         certifications: certRes.data || [],
+        sectionOrder: sectionRes?.data || [],
         loaded: true,
+        isMaintenance: sectionRes?.data?.some((s: any) => s.section_id === "maintenance_mode") || false,
       });
     };
 

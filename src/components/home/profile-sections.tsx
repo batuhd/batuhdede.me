@@ -3,6 +3,7 @@
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
 import { ExternalLink } from "lucide-react";
+import { ExpandableText } from "@/components/ui/expandable-text";
 
 export function Experience() {
   const { getLocalized } = useLanguage();
@@ -23,11 +24,11 @@ export function Experience() {
               <h3 className="font-medium">{getLocalized(exp, "title")}</h3>
               <p className="text-sm text-muted-foreground">{exp.company}</p>
               <p className="text-xs text-muted-foreground">
-                {exp.start_date}{exp.end_date ? ` — ${exp.end_date}` : ""}{exp.is_current ? " · Present" : ""}
+                {exp.start_date}{exp.end_date ? ` - ${exp.end_date}` : (exp.is_current ? " - present" : "")}
                 {exp.location ? ` · ${exp.location}` : ""}
               </p>
               {exp.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed pt-1">{getLocalized(exp, "description")}</p>
+                <ExpandableText text={getLocalized(exp, "description")} className="pt-1" />
               )}
             </div>
           </div>
@@ -53,9 +54,9 @@ export function Education() {
             )}
             <div className="space-y-1 min-w-0">
               <h3 className="font-medium">{edu.university}</h3>
-              {edu.degree && <p className="text-sm text-muted-foreground">{edu.degree}{edu.major ? ` — ${edu.major}` : ""}</p>}
+              {(edu.degree || edu.major) && <p className="text-sm text-muted-foreground">{edu.degree}{edu.degree && edu.major ? ` - ` : ""}{edu.major}</p>}
               <p className="text-xs text-muted-foreground">
-                {edu.start_date}{edu.end_date ? ` — ${edu.end_date}` : ""}
+                {edu.start_date}{edu.end_date ? ` - ${edu.end_date}` : ""}
                 {edu.location ? ` · ${edu.location}` : ""}
               </p>
             </div>
@@ -74,38 +75,16 @@ export function Languages() {
   return (
     <section className="space-y-6">
       <h2 className="text-lg font-semibold tracking-tight">Languages</h2>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {languages.map((lang: any) => {
-          const avg = Math.round(
-            ((lang.reading_level || 0) + (lang.listening_level || 0) + (lang.writing_level || 0) + (lang.speaking_level || 0)) / 4
-          );
-          return (
-            <div key={lang.id} className="rounded-lg border bg-card p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">{lang.name}</h3>
-                <span className="text-xs text-muted-foreground">{avg}%</span>
-              </div>
-              <div className="space-y-2">
-                {[
-                  { label: "Reading", value: lang.reading_level },
-                  { label: "Listening", value: lang.listening_level },
-                  { label: "Writing", value: lang.writing_level },
-                  { label: "Speaking", value: lang.speaking_level },
-                ].map((s) => (
-                  <div key={s.label} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{s.label}</span>
-                      <span>{s.value || 0}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full rounded-full bg-primary/70 transition-all duration-500" style={{ width: `${s.value || 0}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+        {languages.map((lang: any) => (
+          <span
+            key={lang.id}
+            className="rounded-lg border bg-card px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground flex items-center gap-1.5"
+          >
+            {lang.name}
+            {lang.level && <span className="font-medium text-foreground">{lang.level}</span>}
+          </span>
+        ))}
       </div>
     </section>
   );
@@ -137,10 +116,10 @@ export function Activities() {
               </div>
               <p className="text-sm text-muted-foreground">{getLocalized(act, "role")}</p>
               <p className="text-xs text-muted-foreground">
-                {act.start_date}{act.end_date ? ` — ${act.end_date}` : ""}
+                {act.start_date}{act.end_date ? ` - ${act.end_date}` : ""}
               </p>
               {act.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed pt-1">{getLocalized(act, "description")}</p>
+                <ExpandableText text={getLocalized(act, "description")} className="pt-1" />
               )}
             </div>
           </div>

@@ -92,18 +92,41 @@ export function GitHubContribution() {
           <div>
             <div className="overflow-x-auto -mx-1 px-1 pb-2 github-graph-scroll">
               <div className="flex gap-px w-max">
-                {weeks.map((week, i) => (
+                {weeks.map((week, i) => {
+                  const days = [...week.contributionDays];
+                  // If first week is incomplete, it means days are missing at the START of the week (Sunday -> start_day)
+                  if (i === 0 && days.length > 0 && days.length < 7) {
+                    const padCount = 7 - days.length;
+                    for (let p = 0; p < padCount; p++) {
+                      days.unshift({ contributionCount: -1, date: `pad-start-${p}` });
+                    }
+                  }
+                  // If last week is incomplete, days are missing at the END of the week (end_day -> Saturday)
+                  if (i === weeks.length - 1 && days.length > 0 && days.length < 7) {
+                    const padCount = 7 - days.length;
+                    for (let p = 0; p < padCount; p++) {
+                      days.push({ contributionCount: -1, date: `pad-end-${p}` });
+                    }
+                  }
+
+                  return (
                   <div key={i} className="flex flex-col gap-px">
-                    {week.contributionDays.map((day) => (
+                    {days.map((day) => {
+                      if (day.contributionCount === -1) {
+                        return <div key={day.date} className="h-[10px] w-[10px] sm:h-2.5 sm:w-2.5 rounded-[2px]" />;
+                      }
+                      return (
                       <motion.div
                         whileHover={{ scale: 1.8, zIndex: 10 }}
                         key={day.date}
                         title={`${day.contributionCount} contributions on ${day.date}`}
                         className={`h-[10px] w-[10px] sm:h-2.5 sm:w-2.5 rounded-[2px] transition-colors duration-200 ${getLevel(day.contributionCount)}`}
                       />
-                    ))}
+                      );
+                    })}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

@@ -17,6 +17,9 @@ export const en: Record<string, string> = {
   "user.skill.frontend": "Frontend Excellence",
   "user.skill.backend": "Backend Development",
   "user.skill.systems": "Systems & Multimedia",
+  "user.stats.started": "Started Coding",
+  "user.stats.projects": "Projects Completed",
+  "user.stats.experience": "Years Experience",
 
   // Home
   "home.about": "About",

@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/context/language-context";
 import { SiteDataProvider } from "@/context/site-data-context";
+import { MaintenanceGuard } from "@/components/maintenance-guard";
 import { Dock } from "@/components/navigation/dock";
 import { Intro } from "@/components/home/intro";
 import { siteConfig } from "@/config/site";
@@ -44,11 +45,15 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+    noarchive: true,
   },
   alternates: {
     types: {
       "application/rss+xml": `${siteConfig.url}/feed.xml`,
     },
+  },
+  other: {
+    darkreader: "disable",
   },
 };
 
@@ -73,31 +78,33 @@ export default function RootLayout({
         >
           <LanguageProvider>
             <SiteDataProvider>
-            <Link
-              href="/"
-              className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 transition-transform hover:scale-105 duration-300"
-            >
-              <Image
-                src="/media/logobeyaz.png"
-                alt="Logo"
-                width={44}
-                height={44}
-                className="hidden dark:block drop-shadow-lg sm:w-14 sm:h-14 md:w-20 md:h-20"
-                priority
-              />
-              <Image
-                src="/media/yuvarlaklogo.png"
-                alt="Logo"
-                width={44}
-                height={44}
-                className="dark:hidden drop-shadow-lg sm:w-14 sm:h-14 md:w-20 md:h-20"
-                priority
-              />
-            </Link>
-            <main className="relative mx-auto max-w-2xl px-4 sm:px-6 py-12 sm:py-16 pb-28 sm:pb-32">
-              {children}
-            </main>
-            <Dock />
+              <MaintenanceGuard>
+                <Link
+                  href="/"
+                  className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 transition-transform hover:scale-105 duration-300"
+                >
+                  <Image
+                    src="/media/logobeyaz.png"
+                    alt="Logo"
+                    width={44}
+                    height={44}
+                    className="hidden dark:block drop-shadow-lg sm:w-14 sm:h-14 md:w-20 md:h-20"
+                    priority
+                  />
+                  <Image
+                    src="/media/yuvarlaklogo.png"
+                    alt="Logo"
+                    width={44}
+                    height={44}
+                    className="dark:hidden drop-shadow-lg sm:w-14 sm:h-14 md:w-20 md:h-20"
+                    priority
+                  />
+                </Link>
+                <main className="relative mx-auto w-full px-4 sm:px-6 py-12 sm:py-16 pb-28 sm:pb-32">
+                  {children}
+                </main>
+                <Dock />
+              </MaintenanceGuard>
             </SiteDataProvider>
           </LanguageProvider>
         </ThemeProvider>

@@ -9,16 +9,34 @@ import { ContactForm } from "@/components/home/contact-form";
 import { FadeIn } from "@/components/motion/fade-in";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
+import { ReactNode } from "react";
 
 export default function Home() {
   const { t, getLocalized } = useLanguage();
-  const { aboutMe, loaded } = useSiteData();
+  const { aboutMe, loaded, sectionOrder } = useSiteData();
 
   const quoteText = aboutMe ? (getLocalized(aboutMe, "quote_text") || t("user.quote.text")) : (loaded ? t("user.quote.text") : "");
   const quoteAuthor = aboutMe?.quote_author || (loaded ? t("user.quote.author") : "");
 
+  const componentsMap: Record<string, ReactNode> = {
+    skills: <Skills />,
+    experience: <Experience />,
+    education: <Education />,
+    languages: <Languages />,
+    activities: <Activities />,
+    certifications: <Certifications />,
+  };
+
+  const defaultOrder = ["skills", "experience", "education", "languages", "activities", "certifications"];
+  const orderedKeys = sectionOrder && sectionOrder.length > 0
+    ? [...sectionOrder]
+        .filter((s) => !s.section_id.endsWith("_hidden"))
+        .sort((a, b) => a.order_index - b.order_index)
+        .map((s) => s.section_id)
+    : defaultOrder;
+
   return (
-    <div className="space-y-12 sm:space-y-24">
+    <div className="space-y-10 sm:space-y-16 max-w-2xl mx-auto w-full">
       <FadeIn delay={0.1}>
         <Info />
       </FadeIn>
@@ -27,31 +45,15 @@ export default function Home() {
         <About />
       </FadeIn>
 
-      <FadeIn delay={0.3}>
-        <Skills />
-      </FadeIn>
+      {orderedKeys.map((key, i) => (
+        componentsMap[key] ? (
+          <FadeIn key={key} delay={0.3 + i * 0.05}>
+            {componentsMap[key]}
+          </FadeIn>
+        ) : null
+      ))}
 
-      <FadeIn delay={0.3}>
-        <Experience />
-      </FadeIn>
-
-      <FadeIn delay={0.3}>
-        <Education />
-      </FadeIn>
-
-      <FadeIn delay={0.3}>
-        <Languages />
-      </FadeIn>
-
-      <FadeIn delay={0.3}>
-        <Activities />
-      </FadeIn>
-
-      <FadeIn delay={0.3}>
-        <Certifications />
-      </FadeIn>
-
-      <FadeIn delay={0.4}>
+      <FadeIn delay={0.5}>
         <GitHubContribution />
       </FadeIn>
 
