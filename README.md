@@ -20,7 +20,7 @@ An ultra-modern, deeply interactive, multilingual personal space built with the 
 <br />
 
 <div align="center">
-  <img width="100%" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);" alt="Project Preview" src="https://github.com/user-attachments/assets/e6625b4e-0683-4706-8a6b-538fc43c480d" />
+  <img width="100%" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);" alt="Project Preview" src="./c1.gif" />
 </div>
 
 ## ✨ The Vision
