@@ -35,7 +35,7 @@ export default function BlogPage() {
       const { data, error } = await supabase
         .from("blogs")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("order_index", { ascending: true });
 
       if (!isMounted) return;
       if (error) {

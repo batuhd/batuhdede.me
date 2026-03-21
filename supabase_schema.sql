@@ -3,8 +3,9 @@
 -- =============================================
 -- Security Model:
 --   ✅ Anyone can READ (public portfolio)
---   ✅ Only authenticated users can WRITE
+--   ✅ Only the site owner (first registered user) can WRITE
 --   ✅ SQL Injection impossible (Supabase PostgREST)
+--   ✅ Sign-up disabled in Supabase Auth settings
 -- =============================================
 
 -- Homepage Section Ordering
@@ -26,6 +27,15 @@ CREATE TABLE public.about_me (
     years_experience integer,
     quote_text text,
     quote_author text,
+    stat_1_value text,
+    stat_1_label text,
+    stat_2_value text,
+    stat_2_label text,
+    stat_3_value text,
+    stat_3_label text,
+    show_quote boolean DEFAULT true,
+    show_stats boolean DEFAULT true,
+    show_profile_photo boolean DEFAULT true,
     -- Translations
     hero_tagline_tr text,
     hero_tagline_de text,
@@ -39,6 +49,15 @@ CREATE TABLE public.about_me (
     quote_text_tr text,
     quote_text_de text,
     quote_text_es text,
+    stat_1_label_tr text,
+    stat_1_label_de text,
+    stat_1_label_es text,
+    stat_2_label_tr text,
+    stat_2_label_de text,
+    stat_2_label_es text,
+    stat_3_label_tr text,
+    stat_3_label_de text,
+    stat_3_label_es text,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -175,6 +194,7 @@ CREATE TABLE public.blogs (
     title_es text,
     excerpt_es text,
     content_es text,
+    order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -217,47 +237,52 @@ CREATE POLICY "Public read" ON public.projects FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.blogs FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.social_links FOR SELECT USING (true);
 
--- AUTHENTICATED WRITE
-CREATE POLICY "Auth insert" ON public.section_order FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.section_order FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.section_order FOR DELETE USING (auth.role() = 'authenticated');
+-- ADMIN-ONLY WRITE (only the first registered user can write)
+-- This ensures that even if someone signs up, they cannot modify data.
+-- Replace the subquery with your actual user UUID for even better security:
+--   auth.uid() = 'YOUR-UUID-HERE'::uuid
 
-CREATE POLICY "Auth insert" ON public.about_me FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.about_me FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.about_me FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.section_order FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.section_order FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.section_order FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.skill_categories FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.skill_categories FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.skill_categories FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.about_me FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.about_me FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.about_me FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.experiences FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.experiences FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.experiences FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.skill_categories FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.skill_categories FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.skill_categories FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.educations FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.educations FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.educations FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.experiences FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.experiences FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.experiences FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.languages FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.languages FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.languages FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.educations FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.educations FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.educations FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.activities FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.activities FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.activities FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.languages FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.languages FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.languages FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.certifications FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.certifications FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.certifications FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.activities FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.activities FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.activities FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.projects FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.projects FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.projects FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.certifications FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.certifications FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.certifications FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.blogs FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.blogs FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.blogs FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.projects FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.projects FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.projects FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
 
-CREATE POLICY "Auth insert" ON public.social_links FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-CREATE POLICY "Auth update" ON public.social_links FOR UPDATE USING (auth.role() = 'authenticated');
-CREATE POLICY "Auth delete" ON public.social_links FOR DELETE USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin insert" ON public.blogs FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.blogs FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+
+CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+

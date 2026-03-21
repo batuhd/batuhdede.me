@@ -29,36 +29,38 @@ export function Info() {
   };
 
   return (
-    <section className="space-y-2">
+    <section className="space-y-4">
       <div className="flex items-center gap-4 sm:gap-6">
-        <div onClick={handlePhotoClick} className="cursor-pointer select-none relative group transition-transform active:scale-95">
-          {aboutMe?.profile_photo_url ? (
-            <img
-              src={aboutMe.profile_photo_url}
-              alt="Profile Photo"
-              className="rounded-2xl object-cover w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-transparent group-hover:ring-primary/20 transition-all shadow-md"
-            />
-          ) : (
-            <>
-              <Image
-                src="/media/yuvarlaklogobeyaz.png"
-                alt="Logo"
-                width={96}
-                height={96}
-                className="hidden dark:block rounded-2xl w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-transparent group-hover:ring-primary/20 transition-all shadow-md"
-                priority
+        {aboutMe?.show_profile_photo !== false && (
+          <div onClick={handlePhotoClick} className="cursor-pointer select-none relative group transition-transform active:scale-95">
+            {aboutMe?.profile_photo_url ? (
+              <img
+                src={aboutMe.profile_photo_url}
+                alt="Profile Photo"
+                className="rounded-2xl object-cover w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-transparent group-hover:ring-primary/20 transition-all shadow-md"
               />
-              <Image
-                src="/media/yuvarlaklogo.png"
-                alt="Logo"
-                width={96}
-                height={96}
-                className="dark:hidden rounded-2xl w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-transparent group-hover:ring-primary/20 transition-all shadow-md"
-                priority
-              />
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <Image
+                  src="/media/yuvarlaklogobeyaz.png"
+                  alt="Logo"
+                  width={96}
+                  height={96}
+                  className="hidden dark:block rounded-2xl w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-transparent group-hover:ring-primary/20 transition-all shadow-md"
+                  priority
+                />
+                <Image
+                  src="/media/yuvarlaklogo.png"
+                  alt="Logo"
+                  width={96}
+                  height={96}
+                  className="dark:hidden rounded-2xl w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-transparent group-hover:ring-primary/20 transition-all shadow-md"
+                  priority
+                />
+              </>
+            )}
+          </div>
+        )}
         <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">
           {loaded ? name : ""}
         </h1>

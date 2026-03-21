@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Plus, Trash2, Pencil, X, Loader2, Globe, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
+import { Plus, Trash2, Pencil, X, Loader2, Globe, ChevronUp, ChevronDown, GripVertical, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -33,20 +33,89 @@ function LangTabBar({ active, onChange }: { active: LangTab; onChange: (t: LangT
   );
 }
 
+export function ImageInputWithRecent({ value, onChange, placeholder, className }: { value: string, onChange: (val: string) => void, placeholder?: string, className?: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [images, setImages] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadImages = async () => {
+    if (isOpen) { setIsOpen(false); return; }
+    setIsOpen(true);
+    setLoading(true);
+    if (!supabase) return;
+    
+    const [edu, exp, proj, cert, about] = await Promise.all([
+      supabase.from("educations").select("logo_url").not("logo_url", "is", null),
+      supabase.from("experiences").select("logo_url").not("logo_url", "is", null),
+      supabase.from("projects").select("image").not("image", "is", null),
+      supabase.from("certifications").select("icon_url").not("icon_url", "is", null),
+      supabase.from("about_me").select("profile_photo_url").not("profile_photo_url", "is", null),
+    ]);
+
+    const urls = new Set<string>();
+    edu.data?.forEach((d: any) => { if (d.logo_url?.trim()) urls.add(d.logo_url) });
+    exp.data?.forEach((d: any) => { if (d.logo_url?.trim()) urls.add(d.logo_url) });
+    proj.data?.forEach((d: any) => { if (d.image?.trim()) urls.add(d.image) });
+    cert.data?.forEach((d: any) => { if (d.icon_url?.trim()) urls.add(d.icon_url) });
+    about.data?.forEach((d: any) => { if (d.profile_photo_url?.trim()) urls.add(d.profile_photo_url) });
+    
+    setImages(Array.from(urls));
+    setLoading(false);
+  };
+
+  return (
+    <div className="relative flex gap-2 w-full">
+      <input value={value} onChange={(e) => onChange(e.target.value)} className={className} placeholder={placeholder} />
+      <button type="button" onClick={loadImages} className="flex flex-shrink-0 items-center justify-center rounded-md border bg-muted/50 px-3 hover:bg-muted transition-colors" title="Recent Images">
+        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+      </button>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 w-[280px] sm:w-[320px] bg-card border rounded-lg shadow-xl z-50 p-3 max-h-[300px] overflow-y-auto">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b">
+              <span className="text-xs font-semibold text-muted-foreground">Previously Used Images</span>
+              <button type="button" onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors"><X className="h-3.5 w-3.5" /></button>
+            </div>
+            {loading ? (
+              <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            ) : images.length === 0 ? (
+              <p className="text-xs text-center text-muted-foreground py-6">No recent images found.</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {images.map(img => (
+                  <div key={img} onClick={() => { onChange(img); setIsOpen(false); }} className="aspect-square relative cursor-pointer group rounded-md overflow-hidden border hover:border-primary transition-all">
+                    <img src={img} alt="recent" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ──────── About Me Tab (name, role, tagline, bio, stats, quote) ────────
 
 export function AdminAboutTab() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [langTab, setLangTab] = useState<LangTab>("default");
-  const [form, setForm] = useState<Record<string, string>>({
+  const [form, setForm] = useState<Record<string, any>>({
     name: "", role: "", hero_tagline: "", bio: "", profile_photo_url: "",
     started_coding_year: "", projects_count: "", years_experience: "",
+    stat_1_value: "", stat_1_label: "", stat_2_value: "", stat_2_label: "", stat_3_value: "", stat_3_label: "",
     quote_text: "", quote_author: "",
     hero_tagline_tr: "", hero_tagline_de: "", hero_tagline_es: "",
     bio_tr: "", bio_de: "", bio_es: "",
     role_tr: "", role_de: "", role_es: "",
     quote_text_tr: "", quote_text_de: "", quote_text_es: "",
+    stat_1_label_tr: "", stat_1_label_de: "", stat_1_label_es: "",
+    stat_2_label_tr: "", stat_2_label_de: "", stat_2_label_es: "",
+    stat_3_label_tr: "", stat_3_label_de: "", stat_3_label_es: "",
+    show_quote: true, show_stats: true, show_profile_photo: true,
   });
 
   const fetchData = async () => {
@@ -55,8 +124,11 @@ export function AdminAboutTab() {
     if (rows && rows.length > 0) {
       const row = rows[0];
       setData(row);
-      const f: Record<string, string> = {};
-      Object.keys(form).forEach(k => { f[k] = row[k]?.toString() || ""; });
+      const f: Record<string, any> = {};
+      Object.keys(form).forEach(k => { 
+        if (k === "show_quote" || k === "show_stats" || k === "show_profile_photo") f[k] = row[k] !== false;
+        else f[k] = row[k]?.toString() || ""; 
+      });
       setForm(f);
     }
     setLoading(false);
@@ -70,7 +142,8 @@ export function AdminAboutTab() {
     const payload: Record<string, any> = {};
     const numFields = ["started_coding_year", "projects_count", "years_experience"];
     Object.keys(form).forEach(k => {
-      if (numFields.includes(k)) payload[k] = form[k] ? parseInt(form[k]) : null;
+      if (k === "show_quote" || k === "show_stats" || k === "show_profile_photo") payload[k] = !!form[k];
+      else if (numFields.includes(k)) payload[k] = form[k] ? parseInt(form[k]) : null;
       else payload[k] = form[k] || null;
     });
     if (data) await supabase.from("about_me").update(payload).eq("id", data.id);
@@ -107,25 +180,62 @@ export function AdminAboutTab() {
               <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} className={`${inputClass} min-h-[100px]`} placeholder="Your bio text..." />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Profile Photo URL <span className="text-[10px] text-muted-foreground/60 font-normal">(Use imgbb.com for free)</span></label>
-              <input value={form.profile_photo_url} onChange={(e) => setForm({ ...form, profile_photo_url: e.target.value })} className={inputClass} placeholder="https://..." />
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Profile Photo URL <span className="text-[10px] text-muted-foreground/60 font-normal">(Use imgbb.com for free)</span></label>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.show_profile_photo !== false} onChange={(e) => setForm({ ...form, show_profile_photo: e.target.checked })} className="h-4 w-4 rounded border accent-primary" />
+                  <span className="text-xs text-muted-foreground">Show Photo</span>
+                </div>
+              </div>
+              <ImageInputWithRecent value={form.profile_photo_url || ""} onChange={(val) => setForm({ ...form, profile_photo_url: val })} className={inputClass} placeholder="https://..." />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3 items-end">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Started Coding Year</label>
-                <input type="number" value={form.started_coding_year} onChange={(e) => setForm({ ...form, started_coding_year: e.target.value })} className={inputClass} placeholder="2021" />
+            <div className="border-t pt-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-muted-foreground">Customizable Stats</h3>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.show_stats !== false} onChange={(e) => setForm({ ...form, show_stats: e.target.checked })} className="h-4 w-4 rounded border accent-primary" />
+                  <span className="text-xs text-muted-foreground">Show Section</span>
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Projects Count</label>
-                <input type="number" value={form.projects_count} onChange={(e) => setForm({ ...form, projects_count: e.target.value })} className={inputClass} placeholder="10" />
+              <div className="grid gap-4 sm:grid-cols-2 bg-muted/20 p-3 rounded-lg border">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Stat 1 Value (e.g. 2018)</label>
+                  <input value={form.stat_1_value} onChange={(e) => setForm({ ...form, stat_1_value: e.target.value })} className={inputClass} placeholder="2018" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Stat 1 Label</label>
+                  <input value={form.stat_1_label} onChange={(e) => setForm({ ...form, stat_1_label: e.target.value })} className={inputClass} placeholder="STARTED CODING" />
+                </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">Years Experience</label>
-                <input type="number" value={form.years_experience} onChange={(e) => setForm({ ...form, years_experience: e.target.value })} className={inputClass} placeholder="4" />
+              <div className="grid gap-4 sm:grid-cols-2 bg-muted/20 p-3 rounded-lg border">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Stat 2 Value (e.g. 3+)</label>
+                  <input value={form.stat_2_value} onChange={(e) => setForm({ ...form, stat_2_value: e.target.value })} className={inputClass} placeholder="3+" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Stat 2 Label</label>
+                  <input value={form.stat_2_label} onChange={(e) => setForm({ ...form, stat_2_label: e.target.value })} className={inputClass} placeholder="PROJECTS" />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 bg-muted/20 p-3 rounded-lg border">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Stat 3 Value (e.g. 2+)</label>
+                  <input value={form.stat_3_value} onChange={(e) => setForm({ ...form, stat_3_value: e.target.value })} className={inputClass} placeholder="2+" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Stat 3 Label</label>
+                  <input value={form.stat_3_label} onChange={(e) => setForm({ ...form, stat_3_label: e.target.value })} className={inputClass} placeholder="YEARS EXPERIENCE" />
+                </div>
               </div>
             </div>
             <div className="border-t pt-4 space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Favorite Quote</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-muted-foreground">Favorite Quote</h3>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" checked={form.show_quote !== false} onChange={(e) => setForm({ ...form, show_quote: e.target.checked })} className="h-4 w-4 rounded border accent-primary" />
+                  <span className="text-xs text-muted-foreground">Show Section</span>
+                </div>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-muted-foreground">Quote Text</label>
@@ -156,6 +266,20 @@ export function AdminAboutTab() {
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Quote Text ({langTab.toUpperCase()})</label>
               <input value={form[`quote_text_${langTab}`] || ""} onChange={(e) => setForm({ ...form, [`quote_text_${langTab}`]: e.target.value })} className={inputClass} placeholder={form.quote_text || "Translation..."} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3 pt-2">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Stat 1 ({langTab.toUpperCase()})</label>
+                <input value={form[`stat_1_label_${langTab}`] || ""} onChange={(e) => setForm({ ...form, [`stat_1_label_${langTab}`]: e.target.value })} className={inputClass} placeholder={form.stat_1_label || "Label..."} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Stat 2 ({langTab.toUpperCase()})</label>
+                <input value={form[`stat_2_label_${langTab}`] || ""} onChange={(e) => setForm({ ...form, [`stat_2_label_${langTab}`]: e.target.value })} className={inputClass} placeholder={form.stat_2_label || "Label..."} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Stat 3 ({langTab.toUpperCase()})</label>
+                <input value={form[`stat_3_label_${langTab}`] || ""} onChange={(e) => setForm({ ...form, [`stat_3_label_${langTab}`]: e.target.value })} className={inputClass} placeholder={form.stat_3_label || "Label..."} />
+              </div>
             </div>
           </div>
         )}
@@ -473,6 +597,8 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
                 <input type="checkbox" checked={!!form[field.key]} onChange={(e) => setForm({ ...form, [field.key]: e.target.checked })} className="h-4 w-4 rounded border accent-primary" />
                 <span className="text-sm text-muted-foreground">{field.placeholder || "Yes"}</span>
               </div>
+            ) : (field.key.includes("url") || field.key.includes("image")) ? (
+              <ImageInputWithRecent value={form[field.key] || ""} onChange={(val) => setForm({ ...form, [field.key]: val })} className={inputClass} placeholder={field.placeholder} />
             ) : (
               <input type={field.type === "number" ? "number" : "text"} required={field.required} value={form[field.key] || ""} onChange={(e) => setForm({ ...form, [field.key]: e.target.value })} className={inputClass} placeholder={field.placeholder} />
             )}

@@ -37,6 +37,7 @@ This repository is not just a static template; it is a full-stack **Content Mana
   - Works/Projects (with tags, live links, and GitHub sources)
   - Blog Posts (with rich content and computed read times)
   - Social Links configuration
+  - Section reordering & visibility toggles
 - 🎨 **Kinetic UI Design:** Utilizing `framer-motion` for fluid page transitions, staggered `<FadeIn />` reveals, Apple-esque interactive Dock magnification, and beautifully crafted spring-animated modals.
 - 🌓 **Dynamic Theming:** Seamless dark/light mode toggling implemented via `next-themes`.
 - 📊 **Live GitHub Activity:** A custom-built GitHub contribution graph fetching live data through a dedicated Next.js Route Handler (`/api/github`), complete with interactive tooltips.
@@ -44,51 +45,62 @@ This repository is not just a static template; it is a full-stack **Content Mana
 
 ---
 
-## 💻 Tech Stack Deep Dive
+## 💻 Tech Stack
 
-- **Core Framework:** [Next.js](https://nextjs.org/) (App Router, React 19)
-- **Language:** TypeScript (Strict Mode)
-- **Styling Engine:** Tailwind CSS v4 alongside `tailwind-merge` and `clsx` for dynamic class resolution.
-- **Animation Engine:** [Framer Motion](https://www.framer.com/motion/)
-- **Iconography:** [Lucide React](https://lucide.dev/)
-- **Database & Backend:** [Supabase](https://supabase.com/) (PostgreSQL real-time backend) with Firebase SDK retained for localized legacy/auth implementations.
-- **Infrastructure:** Vercel Hosting & Analytics.
+| Layer | Technology |
+|---|---|
+| **Framework** | [Next.js 15](https://nextjs.org/) (App Router, React 19) |
+| **Language** | TypeScript (Strict Mode) |
+| **Styling** | Tailwind CSS v4 + `tailwind-merge` + `clsx` |
+| **Animations** | [Framer Motion](https://www.framer.com/motion/) |
+| **Icons** | [Lucide React](https://lucide.dev/) |
+| **Database** | [Supabase](https://supabase.com/) (PostgreSQL + RLS) |
+| **Hosting** | [Vercel](https://vercel.com/) |
+
+---
+
+## 🔒 Security Model
+
+| Layer | Protection |
+|---|---|
+| **RLS (Row Level Security)** | All tables have RLS enabled. Write policies are locked to the admin user ID. |
+| **Auth** | Supabase Email Auth with sign-ups disabled — only the owner can log in. |
+| **SQL Injection** | Impossible — Supabase uses PostgREST parameterized queries. |
+| **Public Access** | Read-only. No anonymous user can insert, update, or delete any data. |
 
 ---
 
 ## 📂 Source Code Architecture
 
-The codebase is meticulously organized to separate UI from state and configuration.
-
 ```text
 src/
-├── app/                      # Next.js 14+ App Router Logic
+├── app/                      # Next.js App Router Logic
 │   ├── admin/                # The Secure CMS interface
-│   ├── api/github/           # Serverless function to route GitHub GraphQL requests
+│   ├── api/github/           # Serverless function for GitHub GraphQL
 │   ├── blog/                 # Blog post Feed & Spring-Animated Modals
 │   ├── works/                # Portfolio Highlight Feed & Modals
 │   ├── credits/              # Acknowledgements page
 │   ├── feed.xml/             # Dynamic RSS generator route
-│   └── page.tsx              # The Main Full-Assembly Landing Page
+│   └── page.tsx              # The Main Landing Page
 │
 ├── components/               
-│   ├── admin/                # Highly abstracted logic-heavy CMS tab forms (admin-tabs.tsx)
-│   ├── home/                 # Reusable blocks (Skills, Educations, Timeline, GitHub Graph)
-│   ├── motion/               # Reusable declarative Framer Motion wrappers
-│   ├── navigation/           # The iconic, animated, stateful Bottom Dock
-│   └── theme-provider.tsx    # Global NextThemes initialization wrapper
+│   ├── admin/                # CMS tab forms (admin-tabs.tsx)
+│   ├── home/                 # Reusable blocks (Skills, Education, Timeline, GitHub Graph)
+│   ├── motion/               # Reusable Framer Motion wrappers
+│   ├── navigation/           # Animated Bottom Dock
+│   └── theme-provider.tsx    # NextThemes wrapper
 │
 ├── config/                   
-│   ├── locales/              # Hardcoded localizations for static UI elements
-│   └── translations.ts       # Strictly typed localization dictionary mapped for EN, TR, DE, ES
+│   ├── locales/              # Localizations for static UI elements
+│   └── translations.ts       # Typed i18n dictionary (EN, TR, DE, ES)
 │
 ├── context/                  
-│   ├── language-context.tsx  # Global robust provider for seamless i18n switching
-│   └── site-data-context.tsx # Global cache provider syncing Supabase profile state
+│   ├── language-context.tsx  # Global i18n provider
+│   └── site-data-context.tsx # Global Supabase data cache
 │
 └── lib/                      
-    ├── supabase.ts           # Supabase DB Client Singleton
-    └── utils.ts              # Global Tailwind logic helper functions
+    ├── supabase.ts           # Supabase Client Singleton
+    └── utils.ts              # Tailwind helper functions
 ```
 
 ---
@@ -102,8 +114,6 @@ src/
 - A GitHub Personal Access Token
 
 ### 2. Installation
-
-Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/batuhd/batuhd.github.io.git
@@ -122,27 +132,21 @@ cp .env.example .env.local
 Populate `.env.local`:
 
 ```env
-# Primary Database (Required)
+# Supabase (Required)
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# Fallback Services (Optional, if transitioning)
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-#...
-
-# Live Data Fetching
+# GitHub Contribution Graph (Required)
 GITHUB_TOKEN=your_github_classic_token
 ```
 
 ### 4. Database Initialization
 
-Execute the SQL script located at the project root (`supabase_schema.sql`) inside your Supabase SQL Editor. This will instantly scaffold:
-`about_me`, `skill_categories`, `social_links`, `experiences`, `educations`, `languages`, `activities`, `certifications`, `projects`, and `blogs`.
+Execute the SQL script located at the project root (`supabase_schema.sql`) inside your Supabase SQL Editor. This will scaffold all tables with secure RLS policies.
+
+> **Important:** After running the schema, go to **Supabase Dashboard → Authentication → Settings** and disable **"Allow new users to sign up"** to lock down your admin panel.
 
 ### 5. Launch
-
-Start the development server:
 
 ```bash
 npm run dev

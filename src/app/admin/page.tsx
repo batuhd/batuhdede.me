@@ -28,7 +28,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
-import { AdminAboutTab, AdminCrudTab, AdminSocialLinksTab, AdminSkillsTab, AdminLayoutTab } from "@/components/admin/admin-tabs";
+import { AdminAboutTab, AdminCrudTab, AdminSocialLinksTab, AdminSkillsTab, AdminLayoutTab, ImageInputWithRecent } from "@/components/admin/admin-tabs";
 
 type Tab = "works" | "blog" | "about" | "skills" | "experience" | "education" | "languages" | "activities" | "certifications" | "social" | "settings" | "section_layout";
 type LangTab = "default" | "tr" | "de" | "es";
@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
     const fetchData = async () => {
       const [worksRes, blogsRes] = await Promise.all([
         sb.from("projects").select("*").order("order_index", { ascending: true }),
-        sb.from("blogs").select("*").order("created_at", { ascending: false }),
+        sb.from("blogs").select("*").order("order_index", { ascending: true }),
       ]);
       if (worksRes.data) setWorks(worksRes.data);
       if (blogsRes.data) setBlogs(blogsRes.data);
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
 
   const refreshBlogs = async () => {
     if (!supabase) return;
-    const { data } = await supabase.from("blogs").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("blogs").select("*").order("order_index", { ascending: true });
     if (data) setBlogs(data);
   };
 
@@ -290,7 +290,8 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     if (!supabase) return;
     const date = blogForm.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-    const data = cleanObj({ ...blogForm, date });
+    const maxOrder = blogs.reduce((max, b) => Math.max(max, b.order_index ?? 0), -1);
+    const data = cleanObj({ ...blogForm, date, order_index: maxOrder + 1 });
     await supabase.from("blogs").insert(data);
     setBlogForm({ title: "", excerpt: "", content: "", date: "", read_time: "", title_tr: "", excerpt_tr: "", content_tr: "", title_de: "", excerpt_de: "", content_de: "", title_es: "", excerpt_es: "", content_es: "" });
     setIsAddingBlog(false);
@@ -325,6 +326,25 @@ export default function AdminDashboardPage() {
     if (!supabase || !confirm("Delete this post?")) return;
     await supabase.from("blogs").delete().eq("id", id);
     if (editingBlogId === id) setEditingBlogId(null);
+    await refreshBlogs();
+  };
+
+  const handleMoveBlog = async (id: string, direction: "up" | "down") => {
+    if (!supabase) return;
+    const idx = blogs.findIndex((b) => b.id === id);
+    if (idx === -1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= blogs.length) return;
+
+    const current = blogs[idx];
+    const swap = blogs[swapIdx];
+    const currentOrder = current.order_index ?? idx;
+    const swapOrder = swap.order_index ?? swapIdx;
+
+    await Promise.all([
+      supabase.from("blogs").update({ order_index: swapOrder }).eq("id", current.id),
+      supabase.from("blogs").update({ order_index: currentOrder }).eq("id", swap.id),
+    ]);
     await refreshBlogs();
   };
 
@@ -423,7 +443,7 @@ export default function AdminDashboardPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Image URL <span className="text-[10px] text-muted-foreground/60 font-normal">(Use imgbb.com)</span></label>
-                              <input value={workForm.image} onChange={(e) => setWorkForm({ ...workForm, image: e.target.value })} className={inputClass} placeholder="https://..." />
+                              <ImageInputWithRecent value={workForm.image} onChange={(val) => setWorkForm({ ...workForm, image: val })} className={inputClass} placeholder="https://..." />
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-medium text-muted-foreground">Live Link</label>
@@ -480,7 +500,7 @@ export default function AdminDashboardPage() {
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Image URL <span className="text-[10px] text-muted-foreground/60 font-normal">(Use imgbb.com)</span></label>
-                              <input value={editWorkForm.image} onChange={(e) => setEditWorkForm({ ...editWorkForm, image: e.target.value })} className={inputClass} />
+                              <ImageInputWithRecent value={editWorkForm.image} onChange={(val) => setEditWorkForm({ ...editWorkForm, image: val })} className={inputClass} />
                             </div>
                             <div className="space-y-1">
                               <label className="text-xs font-medium text-muted-foreground">Live Link</label>
@@ -712,16 +732,38 @@ export default function AdminDashboardPage() {
                         <PenTool className="h-8 w-8 opacity-50" />
                         <p className="text-sm">No blog posts found.</p>
                       </div>
-                    ) : blogs.map((blog) => (
+                    ) : blogs.map((blog, idx) => (
                       <div
                         key={blog.id}
                         className={cn(
-                          "flex items-center justify-between rounded-lg border p-3 sm:p-4 transition-colors",
+                          "flex items-center gap-2 sm:gap-3 rounded-lg border p-3 sm:p-4 transition-colors",
                           editingBlogId === blog.id
                             ? "border-primary/50 bg-primary/5"
                             : "hover:bg-muted/30"
                         )}
                       >
+                        <div className="flex flex-col gap-0.5 flex-shrink-0">
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => handleMoveBlog(blog.id, "up")}
+                            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                            title="Move up"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </button>
+                          <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 mx-auto" />
+                          <button
+                            type="button"
+                            disabled={idx === blogs.length - 1}
+                            onClick={() => handleMoveBlog(blog.id, "down")}
+                            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                            title="Move down"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+
                         <div className="space-y-1 min-w-0 flex-1">
                           <h3 className="font-medium truncate">{blog.title}</h3>
                           <p className="text-xs text-muted-foreground">{blog.date} · {blog.read_time || "—"}</p>

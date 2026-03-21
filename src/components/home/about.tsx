@@ -18,24 +18,27 @@ export function About() {
         {loaded ? (bio || t("user.about")) : ""}
       </p>
 
-      {loaded && aboutMe && (aboutMe.started_coding_year || aboutMe.projects_count || aboutMe.years_experience) && (
+      {loaded && aboutMe && aboutMe.show_stats !== false && (
+        aboutMe.stat_1_value || aboutMe.stat_2_value || aboutMe.stat_3_value || 
+        aboutMe.started_coding_year || aboutMe.projects_count || aboutMe.years_experience
+      ) && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 pt-6 mt-4 border-t">
-          {aboutMe.started_coding_year && (
+          {(aboutMe.stat_1_value || aboutMe.started_coding_year) && (
             <div className="flex flex-col gap-1">
-              <span className="text-2xl font-bold tracking-tight text-foreground">{aboutMe.started_coding_year}</span>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">{t("user.stats.started")}</span>
+              <span className="text-2xl font-bold tracking-tight text-foreground">{aboutMe.stat_1_value || aboutMe.started_coding_year}</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">{aboutMe.stat_1_label || t("user.stats.started")}</span>
             </div>
           )}
-          {aboutMe.projects_count && (
+          {(aboutMe.stat_2_value || aboutMe.projects_count) && (
             <div className="flex flex-col gap-1">
-              <span className="text-2xl font-bold tracking-tight text-foreground">{aboutMe.projects_count}+</span>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">{t("user.stats.projects")}</span>
+              <span className="text-2xl font-bold tracking-tight text-foreground">{aboutMe.stat_2_value || `${aboutMe.projects_count}+`}</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">{aboutMe.stat_2_label || t("user.stats.projects")}</span>
             </div>
           )}
-          {aboutMe.years_experience && (
+          {(aboutMe.stat_3_value || aboutMe.years_experience) && (
             <div className="flex flex-col gap-1">
-              <span className="text-2xl font-bold tracking-tight text-foreground">{aboutMe.years_experience}+</span>
-              <span className="text-xs text-muted-foreground uppercase tracking-wider">{t("user.stats.experience")}</span>
+              <span className="text-2xl font-bold tracking-tight text-foreground">{aboutMe.stat_3_value || `${aboutMe.years_experience}+`}</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">{aboutMe.stat_3_label || t("user.stats.experience")}</span>
             </div>
           )}
         </div>

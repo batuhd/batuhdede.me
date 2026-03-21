@@ -57,7 +57,7 @@ export default function Home() {
         <GitHubContribution />
       </FadeIn>
 
-      {quoteText && (
+      {aboutMe?.show_quote !== false && quoteText && (
         <FadeIn delay={0.5}>
           <blockquote className="border-l-2 border-muted-foreground/20 pl-4 sm:pl-6 italic text-muted-foreground">
             <p className="text-base sm:text-lg">
