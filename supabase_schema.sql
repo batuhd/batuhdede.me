@@ -237,52 +237,55 @@ CREATE POLICY "Public read" ON public.projects FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.blogs FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.social_links FOR SELECT USING (true);
 
--- ADMIN-ONLY WRITE (only the first registered user can write)
--- This ensures that even if someone signs up, they cannot modify data.
--- Replace the subquery with your actual user UUID for even better security:
---   auth.uid() = 'YOUR-UUID-HERE'::uuid
+-- ADMIN-ONLY WRITE (locked to site owner)
+-- ⚠️ SETUP REQUIRED: Replace YOUR-USER-UUID-HERE with your Supabase Auth user ID.
+-- To find your user ID, run this query after creating your account:
+--   SELECT id FROM auth.users;
+-- Then replace every occurrence of YOUR-USER-UUID-HERE below with that UUID.
 
-CREATE POLICY "Admin insert" ON public.section_order FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.section_order FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.section_order FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.section_order FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.section_order FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.section_order FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.about_me FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.about_me FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.about_me FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.about_me FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.about_me FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.about_me FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.skill_categories FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.skill_categories FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.skill_categories FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.skill_categories FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.skill_categories FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.skill_categories FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.experiences FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.experiences FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.experiences FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.experiences FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.experiences FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.experiences FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.educations FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.educations FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.educations FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.educations FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.educations FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.educations FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.languages FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.languages FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.languages FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.languages FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.languages FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.languages FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.activities FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.activities FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.activities FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.activities FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.activities FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.activities FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.certifications FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.certifications FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.certifications FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.certifications FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.certifications FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.certifications FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.projects FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.projects FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.projects FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.projects FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.projects FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.projects FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.blogs FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.blogs FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.blogs FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.blogs FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
-CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
-CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING (auth.uid() = (SELECT id FROM auth.users LIMIT 1));
+CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
+
 

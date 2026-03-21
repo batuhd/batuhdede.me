@@ -273,15 +273,17 @@ export default function AdminDashboardPage() {
     const swapIdx = direction === "up" ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= works.length) return;
 
-    const current = works[idx];
-    const swap = works[swapIdx];
-    const currentOrder = current.order_index ?? idx;
-    const swapOrder = swap.order_index ?? swapIdx;
+    const newWorks = [...works];
+    const temp = newWorks[idx];
+    newWorks[idx] = newWorks[swapIdx];
+    newWorks[swapIdx] = temp;
+    setWorks(newWorks);
 
-    await Promise.all([
-      supabase.from("projects").update({ order_index: swapOrder }).eq("id", current.id),
-      supabase.from("projects").update({ order_index: currentOrder }).eq("id", swap.id),
-    ]);
+    await Promise.all(
+      newWorks.map((w, i) =>
+        supabase!.from("projects").update({ order_index: i }).eq("id", w.id)
+      )
+    );
     await refreshWorks();
   };
 
@@ -336,15 +338,19 @@ export default function AdminDashboardPage() {
     const swapIdx = direction === "up" ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= blogs.length) return;
 
-    const current = blogs[idx];
-    const swap = blogs[swapIdx];
-    const currentOrder = current.order_index ?? idx;
-    const swapOrder = swap.order_index ?? swapIdx;
+    // Optimistic UI: swap items in array
+    const newBlogs = [...blogs];
+    const temp = newBlogs[idx];
+    newBlogs[idx] = newBlogs[swapIdx];
+    newBlogs[swapIdx] = temp;
+    setBlogs(newBlogs);
 
-    await Promise.all([
-      supabase.from("blogs").update({ order_index: swapOrder }).eq("id", current.id),
-      supabase.from("blogs").update({ order_index: currentOrder }).eq("id", swap.id),
-    ]);
+    // Bulk re-index to fix any duplicate order_index values
+    await Promise.all(
+      newBlogs.map((b, i) =>
+        supabase!.from("blogs").update({ order_index: i }).eq("id", b.id)
+      )
+    );
     await refreshBlogs();
   };
 
