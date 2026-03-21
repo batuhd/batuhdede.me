@@ -209,6 +209,31 @@ CREATE TABLE public.social_links (
 );
 
 -- =============================================
+-- DATA VALIDATION CONSTRAINTS (Security Hardening)
+-- =============================================
+
+-- URL Validations to prevent stored XSS or bad links
+ALTER TABLE public.about_me ADD CONSTRAINT check_about_photo_url CHECK (profile_photo_url IS NULL OR profile_photo_url ~ '^https?://|^\/');
+ALTER TABLE public.experiences ADD CONSTRAINT check_exp_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^\/');
+ALTER TABLE public.educations ADD CONSTRAINT check_edu_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^\/');
+ALTER TABLE public.activities ADD CONSTRAINT check_act_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^\/');
+ALTER TABLE public.activities ADD CONSTRAINT check_act_link_url CHECK (link_url IS NULL OR link_url ~ '^https?://|^\/');
+ALTER TABLE public.certifications ADD CONSTRAINT check_cert_icon_url CHECK (icon_url IS NULL OR icon_url ~ '^https?://|^\/');
+ALTER TABLE public.certifications ADD CONSTRAINT check_cert_link_url CHECK (link_url IS NULL OR link_url ~ '^https?://|^\/');
+ALTER TABLE public.projects ADD CONSTRAINT check_project_link CHECK (link IS NULL OR link ~ '^https?://|^\/');
+ALTER TABLE public.projects ADD CONSTRAINT check_project_github CHECK (github IS NULL OR github ~ '^https?://|^\/');
+ALTER TABLE public.projects ADD CONSTRAINT check_project_image CHECK (image IS NULL OR image ~ '^https?://|^\/');
+ALTER TABLE public.social_links ADD CONSTRAINT check_social_url CHECK (url IS NULL OR url ~ '^https?://|^mailto:');
+
+-- Content Length Limits to prevent DoS (payload size)
+ALTER TABLE public.about_me ADD CONSTRAINT check_bio_length CHECK (char_length(bio) <= 5000);
+ALTER TABLE public.experiences ADD CONSTRAINT check_exp_desc_length CHECK (char_length(description) <= 5000);
+ALTER TABLE public.activities ADD CONSTRAINT check_act_desc_length CHECK (char_length(description) <= 5000);
+ALTER TABLE public.projects ADD CONSTRAINT check_project_desc_length CHECK (char_length(description) <= 5000);
+ALTER TABLE public.blogs ADD CONSTRAINT check_blog_excerpt_length CHECK (char_length(excerpt) <= 2000);
+ALTER TABLE public.blogs ADD CONSTRAINT check_blog_content_length CHECK (char_length(content) <= 100000);
+
+-- =============================================
 -- ROW LEVEL SECURITY (RLS)
 -- =============================================
 
