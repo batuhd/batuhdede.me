@@ -808,8 +808,8 @@ export default function AdminDashboardPage() {
                     { key: "title", label: "Job Title", required: true, placeholder: "Software Engineer", translatable: true },
                     { key: "company", label: "Company", required: true, placeholder: "Google" },
                     { key: "location", label: "Location", placeholder: "Istanbul, Turkey" },
-                    { key: "start_date", label: "Start Date", placeholder: "Sep 2023" },
-                    { key: "end_date", label: "End Date", placeholder: "Present" },
+                    { key: "start_date", label: "Start Date", type: "month_year", placeholder: "Sep 2023" },
+                    { key: "end_date", label: "End Date", type: "month_year", placeholder: "Present" },
                     { key: "is_current", label: "Current Job", type: "checkbox", placeholder: "Currently working here" },
                     { key: "logo_url", label: "Logo URL", placeholder: "https://..." },
                     { key: "description", label: "Description", type: "textarea", placeholder: "What you did...", translatable: true },
@@ -825,12 +825,14 @@ export default function AdminDashboardPage() {
                   displayField="university"
                   subtitleField="degree"
                   fields={[
-                    { key: "university", label: "University", required: true, placeholder: "MIT" },
-                    { key: "degree", label: "Degree", placeholder: "Bachelor of Science" },
-                    { key: "major", label: "Major", placeholder: "Computer Science" },
-                    { key: "location", label: "Location", placeholder: "Cambridge, MA" },
-                    { key: "start_date", label: "Start Date", placeholder: "2020" },
-                    { key: "end_date", label: "End Date", placeholder: "2024" },
+                    { key: "university", label: "University", required: true, placeholder: "MIT", translatable: true },
+                    { key: "degree", label: "Degree", placeholder: "Bachelor of Science", translatable: true },
+                    { key: "major", label: "Major", placeholder: "Computer Science", translatable: true },
+                    { key: "location", label: "Location", placeholder: "Cambridge, MA", translatable: true },
+                    { key: "start_date", label: "Start Date", type: "month_year", placeholder: "2020" },
+                    { key: "end_date", label: "End Date", type: "month_year", placeholder: "2024" },
+                    { key: "is_current", label: "Currently Studying", type: "checkbox", placeholder: "Currently studying here" },
+                    { key: "gpa", label: "GPA / GANO", placeholder: "3.50 / 4.00" },
                     { key: "logo_url", label: "Logo URL", placeholder: "https://..." },
                   ]}
                 />
@@ -846,8 +848,22 @@ export default function AdminDashboardPage() {
                   displayField="name"
                   subtitleField="level"
                   fields={[
-                    { key: "name", label: "Language", required: true, placeholder: "English" },
-                    { key: "level", label: "Level", placeholder: "C1" },
+                    { key: "name", label: "Language", required: true, placeholder: "English", translatable: true },
+                    { 
+                      key: "level", 
+                      label: "Level", 
+                      type: "select", 
+                      placeholder: "Select Proficiency",
+                      options: [
+                        { label: "Native", value: "Native" },
+                        { label: "A1 - Beginner", value: "A1" },
+                        { label: "A2 - Elementary", value: "A2" },
+                        { label: "B1 - Intermediate", value: "B1" },
+                        { label: "B2 - Upper Intermediate", value: "B2" },
+                        { label: "C1 - Advanced", value: "C1" },
+                        { label: "C2 - Proficient", value: "C2" }
+                      ]
+                    },
                   ]}
                 />
               )}
@@ -862,8 +878,8 @@ export default function AdminDashboardPage() {
                   fields={[
                     { key: "organization", label: "Organization", required: true, placeholder: "Google Developer Student Club", translatable: true },
                     { key: "role", label: "Role", required: true, placeholder: "Lead", translatable: true },
-                    { key: "start_date", label: "Start Date", placeholder: "2023" },
-                    { key: "end_date", label: "End Date", placeholder: "Present" },
+                    { key: "start_date", label: "Start Date", type: "month_year", placeholder: "2023" },
+                    { key: "end_date", label: "End Date", type: "month_year", placeholder: "Present" },
                     { key: "logo_url", label: "Logo URL", placeholder: "https://..." },
                     { key: "link_url", label: "Link", placeholder: "https://..." },
                     { key: "description", label: "Description", type: "textarea", placeholder: "What you did...", translatable: true },

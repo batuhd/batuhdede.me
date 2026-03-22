@@ -452,10 +452,51 @@ export function AdminSkillsTab() {
 
 // ──────── Generic CRUD List with Language Support ────────
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const YEARS = Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i);
+
+export function MonthYearInput({ value, onChange, className, disabled }: { value: string, onChange: (val: string) => void, className?: string, disabled?: boolean }) {
+  let month = "";
+  let year = "";
+  if (value && value.toLowerCase() !== "present" && value.toLowerCase() !== "devam") {
+    const parts = value.split(" ");
+    if (parts.length === 2) { month = parts[0]; year = parts[1]; }
+    else if (parts.length === 1 && parts[0].length === 4) { year = parts[0]; }
+  }
+
+  const handleMonth = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const m = e.target.value;
+    if (m && year) onChange(`${m} ${year}`);
+    else if (!m && year) onChange(year);
+    else onChange("");
+  };
+
+  const handleYear = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const y = e.target.value;
+    if (month && y) onChange(`${month} ${y}`);
+    else if (!month && y) onChange(y);
+    else onChange("");
+  };
+
+  return (
+    <div className="flex gap-2 w-full">
+      <select value={month} onChange={handleMonth} disabled={disabled} className={cn(className, "w-1/2 flex-1 disabled:opacity-50")}>
+        <option value="">Month</option>
+        {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+      </select>
+      <select value={year} onChange={handleYear} disabled={disabled} className={cn(className, "w-1/2 flex-1 disabled:opacity-50")}>
+        <option value="">Year</option>
+        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+      </select>
+    </div>
+  );
+}
+
 interface FieldConfig {
   key: string;
   label: string;
-  type?: "text" | "textarea" | "number" | "checkbox";
+  type?: "text" | "textarea" | "number" | "checkbox" | "month_year" | "select";
+  options?: { label: string; value: string }[];
   placeholder?: string;
   required?: boolean;
   translatable?: boolean;
@@ -597,7 +638,26 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
                 <input type="checkbox" checked={!!form[field.key]} onChange={(e) => setForm({ ...form, [field.key]: e.target.checked })} className="h-4 w-4 rounded border accent-primary" />
                 <span className="text-sm text-muted-foreground">{field.placeholder || "Yes"}</span>
               </div>
-            ) : (field.key.includes("url") || field.key.includes("image")) ? (
+            ) : field.type === "month_year" ? (
+              <MonthYearInput
+                value={form[field.key] || ""}
+                onChange={(val) => setForm({ ...form, [field.key]: val })}
+                disabled={field.key === "end_date" && !!form["is_current"]}
+                className={inputClass}
+              />
+            ) : field.type === "select" ? (
+              <select
+                required={field.required}
+                value={form[field.key] || ""}
+                onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                className={inputClass}
+              >
+                <option value="" disabled>{field.placeholder || "Select an option"}</option>
+                {field.options?.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            ) : (field.key.includes("logo") || field.key.includes("icon") || field.key.includes("image")) ? (
               <ImageInputWithRecent value={form[field.key] || ""} onChange={(val) => setForm({ ...form, [field.key]: val })} className={inputClass} placeholder={field.placeholder} />
             ) : (
               <input type={field.type === "number" ? "number" : "text"} required={field.required} value={form[field.key] || ""} onChange={(e) => setForm({ ...form, [field.key]: e.target.value })} className={inputClass} placeholder={field.placeholder} />

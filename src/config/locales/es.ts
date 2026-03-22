@@ -19,9 +19,23 @@ export const es: Record<string, string> = {
   "user.skill.backend": "Desarrollo Backend",
   "user.skill.systems": "Sistemas y Multimedia",
 
+  // Language Levels
+  "level.native": "Nativo",
+  "level.a1": "A1 - Principiante",
+  "level.a2": "A2 - Básico",
+  "level.b1": "B1 - Intermedio",
+  "level.b2": "B2 - Intermedio Alto",
+  "level.c1": "C1 - Avanzado",
+  "level.c2": "C2 - Proficiente",
+
   // Home
   "home.about": "Sobre mí",
   "home.skills": "Habilidades",
+  "home.experience": "Experiencia",
+  "home.education": "Educación",
+  "home.languages": "Idiomas",
+  "home.activities": "Liderazgo y Actividades",
+  "home.certifications": "Certificaciones",
   "home.github": "Contribuciones en GitHub",
   "home.github.contributions": "{count} contribuciones en el último año",
   "home.github.nodata": "(Añade GITHUB_TOKEN a .env para ver datos reales)",

@@ -19,9 +19,23 @@ export const de: Record<string, string> = {
   "user.skill.backend": "Backend-Entwicklung",
   "user.skill.systems": "Systeme & Multimedia",
 
+  // Language Levels
+  "level.native": "Muttersprache",
+  "level.a1": "A1 - Anfänger",
+  "level.a2": "A2 - Grundstufe",
+  "level.b1": "B1 - Mittelstufe",
+  "level.b2": "B2 - Gute Mittelstufe",
+  "level.c1": "C1 - Fortgeschritten",
+  "level.c2": "C2 - Exzellent",
+
   // Home
   "home.about": "Über mich",
   "home.skills": "Fähigkeiten",
+  "home.experience": "Erfahrung",
+  "home.education": "Ausbildung",
+  "home.languages": "Sprachen",
+  "home.activities": "Führung & Aktivitäten",
+  "home.certifications": "Zertifikate",
   "home.github": "GitHub-Beiträge",
   "home.github.contributions": "{count} Beiträge im letzten Jahr",
   "home.github.nodata":

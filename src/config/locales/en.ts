@@ -21,9 +21,23 @@ export const en: Record<string, string> = {
   "user.stats.projects": "Projects Completed",
   "user.stats.experience": "Years Experience",
 
+  // Language Levels
+  "level.native": "Native",
+  "level.a1": "A1 - Beginner",
+  "level.a2": "A2 - Elementary",
+  "level.b1": "B1 - Intermediate",
+  "level.b2": "B2 - Upper Intermediate",
+  "level.c1": "C1 - Advanced",
+  "level.c2": "C2 - Proficient",
+
   // Home
   "home.about": "About",
   "home.skills": "Skills",
+  "home.experience": "Experience",
+  "home.education": "Education",
+  "home.languages": "Languages",
+  "home.activities": "Leadership & Activities",
+  "home.certifications": "Certifications",
   "home.github": "GitHub Contribution",
   "home.github.contributions": "{count} contributions in the last year",
   "home.github.nodata": "(Add GITHUB_TOKEN to .env to see real data)",

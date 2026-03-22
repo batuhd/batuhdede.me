@@ -5,15 +5,103 @@ import { useSiteData } from "@/context/site-data-context";
 import { ExternalLink } from "lucide-react";
 import { ExpandableText } from "@/components/ui/expandable-text";
 
+function parseDate(dateStr: string | null): Date | null {
+  if (!dateStr || dateStr.toLowerCase().includes("present") || dateStr.toLowerCase().includes("devam") || dateStr.toLowerCase().includes("heute") || dateStr.toLowerCase().includes("actual")) {
+    return new Date();
+  }
+  
+  // Custom parsing for localized inputs to avoid Safari/Firefox Date.parse() bugs
+  const monthsTr: Record<string, number> = { "oca":0, "şub":1, "mar":2, "nis":3, "may":4, "haz":5, "tem":6, "ağu":7, "eyl":8, "eki":9, "kas":10, "ara":11 };
+  const monthsEn: Record<string, number> = { "jan":0, "feb":1, "mar":2, "apr":3, "may":4, "jun":5, "jul":6, "aug":7, "sep":8, "oct":9, "nov":10, "dec":11 };
+  
+  const parts = dateStr.trim().split(" ");
+  if (parts.length === 2) {
+    const m = parts[0].toLowerCase().substring(0,3);
+    const yr = parseInt(parts[1]);
+    if (monthsTr[m] !== undefined && !isNaN(yr)) return new Date(yr, monthsTr[m], 1);
+    if (monthsEn[m] !== undefined && !isNaN(yr)) return new Date(yr, monthsEn[m], 1);
+  }
+
+  const yearMatch = dateStr.match(/^\d{4}$/);
+  if (yearMatch) {
+    return new Date(parseInt(dateStr.trim()), 0, 1);
+  }
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) return parsed;
+  return null;
+}
+
+function formatDate(dateStr: string | null, locale: string): string {
+  if (!dateStr) return "";
+  if (dateStr.toLowerCase().includes("present") || dateStr.toLowerCase().includes("devam") || dateStr.toLowerCase().includes("heute") || dateStr.toLowerCase().includes("actual")) {
+    return locale === "tr" ? "Devam ediyor" : locale === "de" ? "Heute" : locale === "es" ? "Actual" : "Present";
+  }
+  const d = parseDate(dateStr);
+  if (!d) return dateStr;
+
+  const parts = dateStr.split(" ");
+  if (parts.length === 1 && parts[0].length === 4) return parts[0]; // just year
+
+  try {
+    const formatted = new Intl.DateTimeFormat(locale, { month: "short", year: "numeric" }).format(d);
+    // Capitalize first letter
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+function calculateDuration(start: string | null, end: string | null, isCurrent: boolean, locale: string) {
+  if (!start) return null;
+  const startDate = parseDate(start);
+  const endDateStr = end || (isCurrent ? "Present" : "");
+  const endDate = endDateStr ? parseDate(endDateStr) : null;
+
+  if (!startDate || !endDate) return null;
+
+  let months = (endDate.getFullYear() - startDate.getFullYear()) * 12;
+  months -= startDate.getMonth();
+  months += endDate.getMonth();
+  months += 1;
+
+  if (months <= 0) return null;
+
+  const years = Math.floor(months / 12);
+  const remainingMonths = months % 12;
+
+  if (locale === "tr") {
+    let s = "";
+    if (years > 0) s += `${years} yıl`;
+    if (remainingMonths > 0) s += (s ? " " : "") + `${remainingMonths} ay`;
+    return s || null;
+  }
+  if (locale === "de") {
+    let s = "";
+    if (years > 0) s += `${years} Jahr${years > 1 ? "e" : ""}`;
+    if (remainingMonths > 0) s += (s ? " " : "") + `${remainingMonths} Monat${remainingMonths > 1 ? "e" : ""}`;
+    return s || null;
+  }
+  if (locale === "es") {
+    let s = "";
+    if (years > 0) s += `${years} año${years > 1 ? "s" : ""}`;
+    if (remainingMonths > 0) s += (s ? " " : "") + `${remainingMonths} mes${remainingMonths > 1 ? "es" : ""}`;
+    return s || null;
+  }
+  let s = "";
+  if (years > 0) s += `${years} yr${years > 1 ? "s" : ""}`;
+  if (remainingMonths > 0) s += (s ? " " : "") + `${remainingMonths} mo${remainingMonths > 1 ? "s" : ""}`;
+  return s || null;
+}
+
 export function Experience() {
-  const { getLocalized } = useLanguage();
+  const { locale, getLocalized, t } = useLanguage();
   const { experiences } = useSiteData();
 
   if (experiences.length === 0) return null;
 
   return (
     <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">Experience</h2>
+      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.experience")}</h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
         {experiences.map((exp: any) => (
           <div key={exp.id} className="relative pl-6 sm:pl-8 group">
@@ -33,8 +121,14 @@ export function Experience() {
                     {exp.company}
                     {exp.location ? ` · ${exp.location}` : ""}
                   </p>
-                  <p className="text-xs text-muted-foreground/80 mt-1">
-                    {exp.start_date}{exp.end_date ? ` - ${exp.end_date}` : (exp.is_current ? " - present" : "")}
+                  <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span>{formatDate(exp.start_date, locale)}{exp.end_date || exp.is_current ? ` - ${formatDate(exp.end_date || "Present", locale)}` : ""}</span>
+                    {calculateDuration(exp.start_date, exp.end_date, exp.is_current, locale) && (
+                      <>
+                        <span>·</span>
+                        <span>{calculateDuration(exp.start_date, exp.end_date, exp.is_current, locale)}</span>
+                      </>
+                    )}
                   </p>
                   {exp.description && (
                     <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
@@ -52,13 +146,14 @@ export function Experience() {
 }
 
 export function Education() {
+  const { locale, getLocalized, t } = useLanguage();
   const { educations } = useSiteData();
 
   if (educations.length === 0) return null;
 
   return (
     <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">Education</h2>
+      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.education")}</h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
         {educations.map((edu: any) => (
           <div key={edu.id} className="relative pl-6 sm:pl-8 group">
@@ -73,15 +168,30 @@ export function Education() {
                   </div>
                 )}
                 <div className="space-y-1 min-w-0 flex-1">
-                  <h3 className="font-semibold text-base">{edu.university}</h3>
-                  {(edu.degree || edu.major) && (
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {edu.degree}{edu.degree && edu.major ? ` - ` : ""}{edu.major}
-                    </p>
+                  <h3 className="font-semibold text-base">{getLocalized(edu, "university")}</h3>
+                  {(edu.degree || edu.major || edu.gpa) && (
+                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {getLocalized(edu, "degree")}{getLocalized(edu, "degree") && getLocalized(edu, "major") ? ` - ` : ""}{getLocalized(edu, "major")}
+                      </p>
+                      {edu.gpa && (
+                        <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-primary ring-1 ring-inset ring-primary/20 uppercase">
+                          {locale === "tr" ? "GANO" : "GPA"}: {edu.gpa}
+                        </span>
+                      )}
+                    </div>
                   )}
-                  <p className="text-xs text-muted-foreground/80 mt-1">
-                    {edu.start_date}{edu.end_date ? ` - ${edu.end_date}` : ""}
-                    {edu.location ? ` · ${edu.location}` : ""}
+                  <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span>
+                      {formatDate(edu.start_date, locale)}{edu.end_date || edu.is_current ? ` - ${formatDate(edu.end_date || "Present", locale)}` : ""}
+                      {getLocalized(edu, "location") ? ` · ${getLocalized(edu, "location")}` : ""}
+                    </span>
+                    {calculateDuration(edu.start_date, edu.end_date, !!edu.is_current, locale) && (
+                      <>
+                        <span>·</span>
+                        <span>{calculateDuration(edu.start_date, edu.end_date, !!edu.is_current, locale)}</span>
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -94,6 +204,7 @@ export function Education() {
 }
 
 export function Languages() {
+  const { locale, getLocalized, t } = useLanguage();
   const { languages } = useSiteData();
 
   if (languages.length === 0) return null;
@@ -118,7 +229,7 @@ export function Languages() {
 
   return (
     <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">Languages</h2>
+      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.languages")}</h2>
       <div className="flex flex-wrap gap-2 sm:gap-3 ml-3">
         {languages.map((lang: any) => {
           const flag = getLanguageFlag(lang.name);
@@ -128,11 +239,13 @@ export function Languages() {
               className="group flex items-center gap-2 rounded-xl border bg-card/40 px-3 py-1.5 sm:px-4 sm:py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               {flag && <span className="text-base sm:text-lg leading-none">{flag}</span>}
-              <span className="text-xs sm:text-sm font-medium text-foreground group-hover:text-accent-foreground">{lang.name}</span>
+              <span className="text-xs sm:text-sm font-medium text-foreground group-hover:text-accent-foreground">{getLocalized(lang, "name")}</span>
               {lang.level && (
                 <>
                   <span className="w-1 h-1 rounded-full bg-muted-foreground/30 mx-0.5" />
-                  <span className="text-xs sm:text-sm group-hover:text-accent-foreground/80 transition-colors">{lang.level}</span>
+                  <span className="text-xs sm:text-sm group-hover:text-accent-foreground/80 transition-colors">
+                    {t(`level.${lang.level.toLowerCase()}`) !== `level.${lang.level.toLowerCase()}` ? t(`level.${lang.level.toLowerCase()}`) : lang.level}
+                  </span>
                 </>
               )}
             </span>
@@ -144,14 +257,14 @@ export function Languages() {
 }
 
 export function Activities() {
-  const { getLocalized } = useLanguage();
+  const { locale, getLocalized, t } = useLanguage();
   const { activities } = useSiteData();
 
   if (activities.length === 0) return null;
 
   return (
     <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">Leadership & Activities</h2>
+      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.activities")}</h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
         {activities.map((act: any) => (
           <div key={act.id} className="relative pl-6 sm:pl-8 group">
@@ -175,8 +288,14 @@ export function Activities() {
                     )}
                   </div>
                   <p className="text-sm font-medium text-muted-foreground">{getLocalized(act, "role")}</p>
-                  <p className="text-xs text-muted-foreground/80 mt-1">
-                    {act.start_date}{act.end_date ? ` - ${act.end_date}` : ""}
+                  <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
+                    <span>{formatDate(act.start_date, locale)}{act.end_date ? ` - ${formatDate(act.end_date, locale)}` : ""}</span>
+                    {calculateDuration(act.start_date, act.end_date, false, locale) && (
+                      <>
+                        <span>·</span>
+                        <span>{calculateDuration(act.start_date, act.end_date, false, locale)}</span>
+                      </>
+                    )}
                   </p>
                   {act.description && (
                     <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
@@ -194,14 +313,14 @@ export function Activities() {
 }
 
 export function Certifications() {
-  const { getLocalized } = useLanguage();
+  const { getLocalized, t } = useLanguage();
   const { certifications } = useSiteData();
 
   if (certifications.length === 0) return null;
 
   return (
     <section className="space-y-6">
-      <h2 className="text-lg font-semibold tracking-tight">Certifications</h2>
+      <h2 className="text-lg font-semibold tracking-tight">{t("home.certifications")}</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {certifications.map((cert: any) => (
           <div key={cert.id} className="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/30">

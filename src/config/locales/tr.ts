@@ -22,9 +22,23 @@ export const tr: Record<string, string> = {
   "user.stats.projects": "Tamamlanan Proje",
   "user.stats.experience": "Yıllık Deneyim",
 
+  // Language Levels
+  "level.native": "Anadil",
+  "level.a1": "A1 - Başlangıç",
+  "level.a2": "A2 - Temel",
+  "level.b1": "B1 - Orta",
+  "level.b2": "B2 - İleri Orta",
+  "level.c1": "C1 - İleri",
+  "level.c2": "C2 - Yetkin",
+
   // Home
   "home.about": "Hakkımda",
   "home.skills": "Yetenekler",
+  "home.experience": "Deneyim",
+  "home.education": "Eğitim",
+  "home.languages": "Diller",
+  "home.activities": "Liderlik & Etkinlikler",
+  "home.certifications": "Sertifikalar",
   "home.github": "GitHub Katkıları",
   "home.github.contributions": "Son bir yılda {count} katkı",
   "home.github.nodata":
