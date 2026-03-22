@@ -243,7 +243,7 @@ function BlogContent() {
                               <Icon className="h-3.5 w-3.5" />
                             </span>
                             <span className="truncate max-w-[200px]">
-                              {entity.type === "project" ? "Work" : entity.title}
+                              {entity.type === "project" ? t("blog.entityType.work") : entity.title}
                             </span>
                             <ExternalLink className="h-3 w-3 opacity-50 ml-0.5" />
                           </div>
@@ -323,13 +323,13 @@ function BlogContent() {
                   return (
                     <div className="mt-8 pt-6 border-t space-y-6">
                       {[
-                        { id: selectedPost.linked_project_id, icon: FolderKanban, typeLabel: "Work", section: null },
-                        { id: selectedPost.linked_experience_id, icon: Briefcase, typeLabel: "Experience", section: "/#experience" },
-                        { id: selectedPost.linked_education_id, icon: GraduationCap, typeLabel: "Education", section: "/#education" },
-                        ...(selectedPost.linked_skill_category_ids || []).map((id: string) => ({ id, icon: Code, typeLabel: "Skill", section: "/#skills" })),
-                        { id: selectedPost.linked_language_id, icon: MessageSquare, typeLabel: "Language", section: "/#languages" },
-                        { id: selectedPost.linked_activity_id, icon: Trophy, typeLabel: "Activity", section: "/#activities" },
-                        { id: selectedPost.linked_certification_id, icon: Award, typeLabel: "Certification", section: "/#certifications" }
+                        { id: selectedPost.linked_project_id, icon: FolderKanban, typeLabel: t("blog.entityType.work"), section: null },
+                        { id: selectedPost.linked_experience_id, icon: Briefcase, typeLabel: t("blog.entityType.experience"), section: "/#experience" },
+                        { id: selectedPost.linked_education_id, icon: GraduationCap, typeLabel: t("blog.entityType.education"), section: "/#education" },
+                        ...(selectedPost.linked_skill_category_ids || []).map((id: string) => ({ id, icon: Code, typeLabel: t("blog.entityType.skill"), section: "/#skills" })),
+                        { id: selectedPost.linked_language_id, icon: MessageSquare, typeLabel: t("blog.entityType.language"), section: "/#languages" },
+                        { id: selectedPost.linked_activity_id, icon: Trophy, typeLabel: t("blog.entityType.activity"), section: "/#activities" },
+                        { id: selectedPost.linked_certification_id, icon: Award, typeLabel: t("blog.entityType.certification"), section: "/#certifications" }
                       ].map(({ id, icon: Icon, typeLabel, section }) => {
                         if (!id) return null;
                         const entity = entitiesMap[id];
@@ -339,7 +339,7 @@ function BlogContent() {
                           <div key={id}>
                             <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-4">
                               <Icon className="h-4 w-4" />
-                              {t("blog.relatedWork") !== "blog.relatedWork" ? t("blog.relatedWork") : "Related"} {typeLabel}
+                              {t("blog.related")} {typeLabel}
                             </h3>
                             <div 
                               onClick={() => {
@@ -362,7 +362,7 @@ function BlogContent() {
                                     {entity.title}
                                   </h4>
                                   <p className="text-xs text-muted-foreground mt-0.5">
-                                    {entity.type === "project" ? "View Project Details" : `Linked ${entity.type}`}
+                                    {entity.type === "project" ? t("blog.viewProjectDetails") : t("blog.linkedEntity", { type: entity.type })}
                                   </p>
                                 </div>
                               </div>

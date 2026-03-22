@@ -110,4 +110,29 @@ export const es: Record<string, string> = {
   "social.redirect.message": "Serás redirigido a {platform}. ¿Aceptas?",
   "social.redirect.accept": "Aceptar",
   "social.redirect.cancel": "Cancelar",
+
+  // Certification details modal
+  "cert.details": "Detalles del Certificado",
+  "cert.viewCredential": "Ver Credencial",
+  "cert.skillsEvaluated": "Habilidades Evaluadas",
+  "cert.relatedProjects": "Proyectos Relacionados",
+  "cert.relatedArticles": "Artículos Relacionados",
+
+  // Works page
+  "works.relatedBlogs": "Publicaciones de Blog Relacionadas",
+
+  // Blog page
+  "blog.related": "Relacionado",
+  "blog.viewProjectDetails": "Ver Detalles del Proyecto",
+  "blog.linkedEntity": "Vinculado: {type}",
+  "blog.entityType.work": "Proyecto",
+  "blog.entityType.experience": "Experiencia",
+  "blog.entityType.education": "Educación",
+  "blog.entityType.skill": "Habilidad",
+  "blog.entityType.language": "Idioma",
+  "blog.entityType.activity": "Actividad",
+  "blog.entityType.certification": "Certificación",
+
+  // GitHub
+  "github.contributionsOn": "{count} contribuciones el {date}",
 };

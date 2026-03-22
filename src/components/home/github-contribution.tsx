@@ -119,7 +119,7 @@ export function GitHubContribution() {
                       <motion.div
                         whileHover={{ scale: 1.8, zIndex: 10 }}
                         key={day.date}
-                        title={`${day.contributionCount} contributions on ${day.date}`}
+                        title={t("github.contributionsOn", { count: day.contributionCount, date: day.date })}
                         className={`h-[10px] w-[10px] sm:h-2.5 sm:w-2.5 rounded-[2px] transition-colors duration-200 ${getLevel(day.contributionCount)}`}
                       />
                       );

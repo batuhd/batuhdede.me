@@ -110,4 +110,29 @@ export const de: Record<string, string> = {
     "Sie werden zu {platform} weitergeleitet. Akzeptieren Sie?",
   "social.redirect.accept": "Akzeptieren",
   "social.redirect.cancel": "Abbrechen",
+
+  // Certification details modal
+  "cert.details": "Zertifikatsdetails",
+  "cert.viewCredential": "Zertifikat anzeigen",
+  "cert.skillsEvaluated": "Bewertete Fähigkeiten",
+  "cert.relatedProjects": "Verwandte Projekte",
+  "cert.relatedArticles": "Verwandte Artikel",
+
+  // Works page
+  "works.relatedBlogs": "Verwandte Blogbeiträge",
+
+  // Blog page
+  "blog.related": "Verwandt",
+  "blog.viewProjectDetails": "Projektdetails anzeigen",
+  "blog.linkedEntity": "Verknüpft: {type}",
+  "blog.entityType.work": "Projekt",
+  "blog.entityType.experience": "Erfahrung",
+  "blog.entityType.education": "Ausbildung",
+  "blog.entityType.skill": "Fähigkeit",
+  "blog.entityType.language": "Sprache",
+  "blog.entityType.activity": "Aktivität",
+  "blog.entityType.certification": "Zertifikat",
+
+  // GitHub
+  "github.contributionsOn": "{count} Beiträge am {date}",
 };

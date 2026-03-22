@@ -507,7 +507,7 @@ export function Certifications() {
               className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl"
             >
               <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
-                <h2 className="text-sm font-medium text-muted-foreground">Certification Details</h2>
+                <h2 className="text-sm font-medium text-muted-foreground">{t("cert.details")}</h2>
                 <button
                   onClick={() => setSelectedCert(null)}
                   className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -526,7 +526,7 @@ export function Certifications() {
                     <p className="text-sm text-muted-foreground mt-1">{selectedCert.issuer} {selectedCert.issue_date && `· ${selectedCert.issue_date}`}</p>
                     {selectedCert.link_url && (
                       <a href={selectedCert.link_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2">
-                        View Credential <ExternalLink className="h-3.5 w-3.5" />
+                        {t("cert.viewCredential")} <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     )}
                   </div>
@@ -538,7 +538,7 @@ export function Certifications() {
                   if (relatedSkills.length > 0) {
                     return (
                       <div className="space-y-2">
-                        <h3 className="text-sm font-semibold text-muted-foreground">Skills Evaluated</h3>
+                        <h3 className="text-sm font-semibold text-muted-foreground">{t("cert.skillsEvaluated")}</h3>
                         <div className="flex flex-wrap gap-2">
                           {relatedSkills.map((skill: any) => (
                             <span key={skill.id} className="inline-flex rounded-md bg-secondary/50 px-2.5 py-1 text-xs font-medium text-secondary-foreground shadow-sm">
@@ -561,7 +561,7 @@ export function Certifications() {
                     <div className="pt-6 mt-6 border-t flex flex-col gap-4">
                       {relatedProjects.length > 0 && (
                         <div className="space-y-3">
-                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2"><FolderKanban className="h-4 w-4" /> Related Projects</h3>
+                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2"><FolderKanban className="h-4 w-4" /> {t("cert.relatedProjects")}</h3>
                           <div className="flex flex-col gap-2">
                             {relatedProjects.map((p: any) => (
                               <Link key={p.id} href={`/works?project=${p.id}`} className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors">
@@ -574,7 +574,7 @@ export function Certifications() {
                       )}
                       {relatedBlogs.length > 0 && (
                         <div className="space-y-3">
-                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2"><PenTool className="h-4 w-4" /> Related Articles</h3>
+                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2"><PenTool className="h-4 w-4" /> {t("cert.relatedArticles")}</h3>
                           <div className="flex flex-col gap-2">
                             {relatedBlogs.map((b: any) => (
                               <Link key={b.id} href={`/blog?post=${b.id}`} className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors">

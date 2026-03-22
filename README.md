@@ -90,6 +90,13 @@ Blog posts support optional **featured images** (cover photos):
 - **Staggered fade-in animations** on every section via a reusable `<FadeIn />` component
 - **Apple-style Dock navigation** with magnetic hover magnification effect
 - **Spring-animated modals** for blog posts, project details, and certifications
+- **Maintenance & Error Screens** - Enhanced maintenance mode with randomized dynamic media and local 401 Unauthorized fallbacks
+<br />
+<div align="center">
+  <img src="./public/media/401.jpg" width="45%" style="border-radius: 12px; margin-right: 4%;" alt="401 Unauthorized" />
+  <img src="./public/media/503.jpg" width="45%" style="border-radius: 12px;" alt="503 Maintenance" />
+</div>
+<br />
 - Smooth page transitions powered by Framer Motion
 
 ### 🌓 Dark & Light Theme
@@ -110,6 +117,7 @@ Auto-generated RSS feed at `/feed.xml` for blog syndication, built as a Next.js 
 - **Sign-up disabled** - no one can create accounts on your Supabase instance
 - **SQL injection impossible** - Supabase uses PostgREST with parameterized queries
 - **CHECK constraints** on URLs and content lengths to prevent XSS and DoS
+- **Strict Operation Validation** - Unauthorized mutations (including silent RLS blocks) instantly trigger a secure 401 lock-out screen
 - Public visitors get **read-only** access; all mutations require your admin session
 
 ### ⚡ Performance
@@ -438,7 +446,7 @@ npm run dev
 | **Section order**    | Admin → Page Layout          | Drag sections up/down or hide them        |
 | **Profile photo**    | Admin → About Me             | Toggle visibility on/off with checkbox    |
 | **Favorite quote**   | Admin → About Me             | Toggle visibility on/off with checkbox    |
-| **Maintenance mode** | Admin → Page Layout          | Toggle to temporarily block public access |
+| **Maintenance mode** | Admin → Page Layout          | Toggle to temporarily block public access (displays dynamic random images) |
 | **Link content**     | Admin → Works/Blogs edit     | Use "Link Related Items" accordion        |
 
 ---

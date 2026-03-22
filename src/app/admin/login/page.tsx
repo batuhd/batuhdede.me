@@ -67,10 +67,21 @@ export default function AdminLoginPage() {
       });
 
       if (authError) {
-        setError("Invalid credentials or access denied.");
+        // Track failed attempts
+        const currentAttempts = parseInt(sessionStorage.getItem("admin_failed_attempts") || "0") + 1;
+        sessionStorage.setItem("admin_failed_attempts", currentAttempts.toString());
+        
+        if (currentAttempts >= 5) {
+          router.push("/?unauthorized=true");
+          return;
+        }
+
+        setError(`Invalid credentials (${currentAttempts}/5 attempts). Access will be locked after 5 failures.`);
         generateCaptcha();
         setPassword("");
       } else {
+        // Reset on success
+        sessionStorage.removeItem("admin_failed_attempts");
         router.push("/admin");
       }
     } catch {

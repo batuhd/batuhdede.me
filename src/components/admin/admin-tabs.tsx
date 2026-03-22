@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Plus, Trash2, Pencil, X, Loader2, Globe, ChevronUp, ChevronDown, GripVertical, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminError } from "@/context/admin-error-context";
 
 const inputClass =
   "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
@@ -100,6 +101,7 @@ export function ImageInputWithRecent({ value, onChange, placeholder, className }
 // ──────── About Me Tab (name, role, tagline, bio, stats, quote) ────────
 
 export function AdminAboutTab() {
+  const { handleOperationError } = useAdminError();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [langTab, setLangTab] = useState<LangTab>("default");
@@ -146,8 +148,13 @@ export function AdminAboutTab() {
       else if (numFields.includes(k)) payload[k] = form[k] ? parseInt(form[k]) : null;
       else payload[k] = form[k] || null;
     });
-    if (data) await supabase.from("about_me").update(payload).eq("id", data.id);
-    else await supabase.from("about_me").insert(payload);
+    if (data) {
+      const { error, data: updateData } = await supabase.from("about_me").update(payload).eq("id", data.id).select();
+      if (handleOperationError(error || (!updateData || updateData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Profil Güncelleme")) return;
+    } else {
+      const { error } = await supabase.from("about_me").insert(payload);
+      if (handleOperationError(error, "Profil Ekleme")) return;
+    }
     await fetchData();
   };
 
@@ -294,6 +301,7 @@ export function AdminAboutTab() {
 // ──────── Skills Tab ────────
 
 export function AdminSkillsTab() {
+  const { handleOperationError } = useAdminError();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -315,11 +323,12 @@ export function AdminSkillsTab() {
     if (!supabase) return;
     const maxOrder = items.reduce((max, item) => Math.max(max, item.order_index ?? 0), -1);
     const skills = form.skills.split(",").map(s => s.trim()).filter(Boolean);
-    await supabase.from("skill_categories").insert({
+    const { error } = await supabase.from("skill_categories").insert({
       title: form.title, skills,
       title_tr: form.title_tr || null, title_de: form.title_de || null, title_es: form.title_es || null,
       order_index: maxOrder + 1,
     });
+    if (handleOperationError(error, "Yetenek Kategorisi Ekleme")) return;
     setForm({ title: "", skills: "", title_tr: "", title_de: "", title_es: "" });
     setIsAdding(false);
     setLangTab("default");
@@ -341,17 +350,19 @@ export function AdminSkillsTab() {
     e.preventDefault();
     if (!supabase || !editingId) return;
     const skills = form.skills.split(",").map(s => s.trim()).filter(Boolean);
-    await supabase.from("skill_categories").update({
+    const { error, data } = await supabase.from("skill_categories").update({
       title: form.title, skills,
       title_tr: form.title_tr || null, title_de: form.title_de || null, title_es: form.title_es || null,
-    }).eq("id", editingId);
+    }).eq("id", editingId).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Yetenek Kategorisi Güncelleme")) return;
     setEditingId(null);
     await fetchItems();
   };
 
   const handleDelete = async (id: string) => {
     if (!supabase || !confirm("Delete this category?")) return;
-    await supabase.from("skill_categories").delete().eq("id", id);
+    const { error, data } = await supabase.from("skill_categories").delete().eq("id", id).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Yetenek Kategorisi Silme")) return;
     if (editingId === id) setEditingId(null);
     await fetchItems();
   };
@@ -368,10 +379,10 @@ export function AdminSkillsTab() {
     const currentOrder = current.order_index ?? idx;
     const swapOrder = swap.order_index ?? swapIdx;
 
-    await Promise.all([
-      supabase.from("skill_categories").update({ order_index: swapOrder }).eq("id", current.id),
-      supabase.from("skill_categories").update({ order_index: currentOrder }).eq("id", swap.id),
-    ]);
+    const { error: err1 } = await supabase.from("skill_categories").update({ order_index: swapOrder }).eq("id", current.id);
+    const { error: err2 } = await supabase.from("skill_categories").update({ order_index: currentOrder }).eq("id", swap.id);
+    
+    if (handleOperationError(err1 || err2, "Yetenek Sıralama Değiştirme")) return;
     await fetchItems();
   };
 
@@ -510,6 +521,7 @@ interface CrudItem { id: string; [key: string]: any; }
 export function AdminCrudTab({ title, tableName, fields, displayField, subtitleField }: {
   title: string; tableName: string; fields: FieldConfig[]; displayField: string; subtitleField?: string;
 }) {
+  const { handleOperationError } = useAdminError();
   const [items, setItems] = useState<CrudItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -582,7 +594,8 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     e.preventDefault();
     if (!supabase) return;
     const maxOrder = items.reduce((max, item) => Math.max(max, item.order_index ?? 0), -1);
-    const { data: insertedData } = await supabase.from(tableName).insert({ ...buildPayload(), order_index: maxOrder + 1 }).select();
+    const { data: insertedData, error } = await supabase.from(tableName).insert({ ...buildPayload(), order_index: maxOrder + 1 }).select();
+    if (handleOperationError(error, `${title} Ekleme`)) return;
     
     if (insertedData && insertedData[0]) {
       const newId = insertedData[0].id;
@@ -595,7 +608,8 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
             [field.junctionForeignKey!]: newId,
             [field.junctionOtherKey!]: valId
           }));
-          await supabase.from(field.junctionTable).insert(inserts);
+          const { error: junctionError } = await supabase.from(field.junctionTable).insert(inserts);
+          if (handleOperationError(junctionError, `${title} İlişki Ekleme`)) return;
         }
       }
     }
@@ -620,13 +634,15 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase || !editingId) return;
-    await supabase.from(tableName).update(buildPayload()).eq("id", editingId);
+    const { error: updateError, data: updateData } = await supabase.from(tableName).update(buildPayload()).eq("id", editingId).select();
+    if (handleOperationError(updateError || (!updateData || updateData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), `${title} Güncelleme`)) return;
     
     const multiSelectFields = fields.filter(f => f.type === "multi_select" && f.junctionTable);
     for (const field of multiSelectFields) {
       if (!field.junctionTable || !field.junctionForeignKey || !field.junctionOtherKey) continue;
       // Delete existing relationships
-      await supabase.from(field.junctionTable).delete().eq(field.junctionForeignKey, editingId);
+      const { error: junctionDelError } = await supabase.from(field.junctionTable).delete().eq(field.junctionForeignKey, editingId);
+      if (handleOperationError(junctionDelError, `${title} İlişki Temizleme`)) return;
       
       const selectedIds = form[field.key] || [];
       if (selectedIds.length > 0) {
@@ -634,7 +650,8 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
           [field.junctionForeignKey!]: editingId,
           [field.junctionOtherKey!]: valId
         }));
-        await supabase.from(field.junctionTable).insert(inserts);
+        const { error: junctionInsError } = await supabase.from(field.junctionTable).insert(inserts);
+        if (handleOperationError(junctionInsError, `${title} İlişki Güncelleme`)) return;
       }
     }
     
@@ -643,7 +660,8 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
 
   const handleDelete = async (id: string) => {
     if (!supabase || !confirm("Delete this item?")) return;
-    await supabase.from(tableName).delete().eq("id", id);
+    const { error, data } = await supabase.from(tableName).delete().eq("id", id).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), `${title} Silme`)) return;
     if (editingId === id) setEditingId(null);
     await fetchItems();
   };
@@ -660,10 +678,10 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     const currentOrder = current.order_index ?? idx;
     const swapOrder = swap.order_index ?? swapIdx;
 
-    await Promise.all([
-      supabase.from(tableName).update({ order_index: swapOrder }).eq("id", current.id),
-      supabase.from(tableName).update({ order_index: currentOrder }).eq("id", swap.id),
-    ]);
+    const { error: err1 } = await supabase.from(tableName).update({ order_index: swapOrder }).eq("id", current.id);
+    const { error: err2 } = await supabase.from(tableName).update({ order_index: currentOrder }).eq("id", swap.id);
+    
+    if (handleOperationError(err1 || err2, `${title} Sıralama Değiştirme`)) return;
     await fetchItems();
   };
 
@@ -823,6 +841,7 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
 const PLATFORM_OPTIONS = ["LinkedIn", "GitHub", "Instagram", "Resume (CV)", "Twitter", "YouTube", "Dribbble", "Other"];
 
 export function AdminSocialLinksTab() {
+  const { handleOperationError } = useAdminError();
   const [items, setItems] = useState<CrudItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
@@ -842,7 +861,8 @@ export function AdminSocialLinksTab() {
     e.preventDefault();
     if (!supabase) return;
     const maxOrder = items.reduce((max, item) => Math.max(max, item.order_index ?? 0), -1);
-    await supabase.from("social_links").insert({ ...form, order_index: maxOrder + 1 });
+    const { error } = await supabase.from("social_links").insert({ ...form, order_index: maxOrder + 1 });
+    if (handleOperationError(error, "Sosyal Link Ekleme")) return;
     setForm({ platform: "", url: "" }); setIsAdding(false);
     await fetchItems();
   };
@@ -856,13 +876,15 @@ export function AdminSocialLinksTab() {
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase || !editingId) return;
-    await supabase.from("social_links").update(form).eq("id", editingId);
+    const { error, data } = await supabase.from("social_links").update(form).eq("id", editingId).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Sosyal Link Güncelleme")) return;
     setEditingId(null); await fetchItems();
   };
 
   const handleDelete = async (id: string) => {
     if (!supabase || !confirm("Delete this link?")) return;
-    await supabase.from("social_links").delete().eq("id", id);
+    const { error, data } = await supabase.from("social_links").delete().eq("id", id).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Sosyal Link Silme")) return;
     if (editingId === id) setEditingId(null);
     await fetchItems();
   };
@@ -879,10 +901,10 @@ export function AdminSocialLinksTab() {
     const currentOrder = current.order_index ?? idx;
     const swapOrder = swap.order_index ?? swapIdx;
 
-    await Promise.all([
-      supabase.from("social_links").update({ order_index: swapOrder }).eq("id", current.id),
-      supabase.from("social_links").update({ order_index: currentOrder }).eq("id", swap.id),
-    ]);
+    const { error: err1 } = await supabase.from("social_links").update({ order_index: swapOrder }).eq("id", current.id);
+    const { error: err2 } = await supabase.from("social_links").update({ order_index: currentOrder }).eq("id", swap.id);
+    
+    if (handleOperationError(err1 || err2, "Sosyal Link Sıralama Değiştirme")) return;
     await fetchItems();
   };
 
@@ -956,6 +978,7 @@ export function AdminSocialLinksTab() {
 // ──────── Layout Config Tab (order sections) ────────
 
 export function AdminLayoutTab() {
+  const { handleOperationError } = useAdminError();
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -1002,11 +1025,14 @@ export function AdminLayoutTab() {
     setSections(newSections);
 
     // Robust bulk update forces perfect 0-based indexing to correct any database errors
-    await Promise.all(
+    const results = await Promise.all(
       newSections.map((sec, i) =>
         supabase!.from("section_order").update({ order_index: i }).eq("section_id", sec.section_id)
       )
     );
+    
+    const firstError = results.find(r => r.error)?.error;
+    if (handleOperationError(firstError, "Bölüm Sıralama Değiştirme")) return;
     
     await fetchSections();
   };
@@ -1025,12 +1051,14 @@ export function AdminLayoutTab() {
     setSections(newSections);
 
     // Update DB
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from("section_order")
       .update({ section_id: newId })
-      .eq("section_id", sec.section_id);
+      .eq("section_id", sec.section_id)
+      .select();
 
-    if (error) {
+    if (error || (!data || data.length === 0)) {
+      if (handleOperationError(error || { code: "42501", message: "Yetkisiz işlem" }, "Bölüm Görünürlüğü Değiştirme")) return;
       console.error("Error toggling visibility:", error);
       await fetchSections();
     }
@@ -1043,10 +1071,10 @@ export function AdminLayoutTab() {
 
     if (newState) {
       const { error } = await supabase.from("section_order").insert({ section_id: "maintenance_mode", order_index: -1 });
-      if (error) setMaintenanceMode(false);
+      if (handleOperationError(error, "Bakım Modu Etkinleştirme")) { setMaintenanceMode(false); return; }
     } else {
-      const { error } = await supabase.from("section_order").delete().eq("section_id", "maintenance_mode");
-      if (error) setMaintenanceMode(true);
+      const { error, data } = await supabase.from("section_order").delete().eq("section_id", "maintenance_mode").select();
+      if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Bakım Modu Devre Dışı Bırakma")) { setMaintenanceMode(true); return; }
     }
   };
 

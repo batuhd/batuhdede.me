@@ -423,7 +423,7 @@ function WorksContent() {
                     <div className="mt-6 pt-6 border-t">
                       <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3">
                         <PenTool className="h-4 w-4" />
-                        {t("works.relatedBlogs") !== "works.relatedBlogs" ? t("works.relatedBlogs") : "Related Blog Posts"}
+                        {t("works.relatedBlogs")}
                       </h3>
                       <div className="space-y-2">
                         {relatedBlogs.map((blog) => (

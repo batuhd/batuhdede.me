@@ -111,4 +111,29 @@ export const tr: Record<string, string> = {
     "{platform} sayfasına yönlendirileceksiniz. Kabul ediyor musunuz?",
   "social.redirect.accept": "Kabul Et",
   "social.redirect.cancel": "İptal",
+
+  // Certification details modal
+  "cert.details": "Sertifika Detayları",
+  "cert.viewCredential": "Sertifikayı Görüntüle",
+  "cert.skillsEvaluated": "Değerlendirilen Yetenekler",
+  "cert.relatedProjects": "İlgili Projeler",
+  "cert.relatedArticles": "İlgili Yazılar",
+
+  // Works page
+  "works.relatedBlogs": "İlgili Blog Yazıları",
+
+  // Blog page
+  "blog.related": "İlgili",
+  "blog.viewProjectDetails": "Proje Detaylarını Görüntüle",
+  "blog.linkedEntity": "Bağlantılı {type}",
+  "blog.entityType.work": "Proje",
+  "blog.entityType.experience": "Deneyim",
+  "blog.entityType.education": "Eğitim",
+  "blog.entityType.skill": "Yetenek",
+  "blog.entityType.language": "Dil",
+  "blog.entityType.activity": "Etkinlik",
+  "blog.entityType.certification": "Sertifika",
+
+  // GitHub
+  "github.contributionsOn": "{date} tarihinde {count} katkı",
 };

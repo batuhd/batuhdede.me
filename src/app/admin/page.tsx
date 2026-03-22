@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { AdminErrorProvider, useAdminError } from "@/context/admin-error-context";
 import type { User } from "@supabase/supabase-js";
 import { AdminAboutTab, AdminCrudTab, AdminSocialLinksTab, AdminSkillsTab, AdminLayoutTab, ImageInputWithRecent } from "@/components/admin/admin-tabs";
 
@@ -122,7 +123,16 @@ function LangTabBar({
 }
 
 export default function AdminDashboardPage() {
+  return (
+    <AdminErrorProvider>
+      <AdminDashboardContent />
+    </AdminErrorProvider>
+  );
+}
+
+function AdminDashboardContent() {
   const router = useRouter();
+  const { handleOperationError } = useAdminError();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("works");
@@ -282,6 +292,7 @@ export default function AdminDashboardPage() {
     });
     
     const { data: insertedData, error } = await supabase.from("projects").insert(data).select();
+    if (handleOperationError(error, "Proje Ekleme")) return;
     
     if (insertedData && insertedData[0] && additional_images) {
       const newProjectId = insertedData[0].id;
@@ -293,7 +304,8 @@ export default function AdminDashboardPage() {
           image_url: url,
           order_index: i
         }));
-        await supabase.from("project_images").insert(inserts);
+        const { error: imgError } = await supabase.from("project_images").insert(inserts);
+        if (handleOperationError(imgError, "Proje Görselleri Ekleme")) return;
       }
     }
     
@@ -334,10 +346,12 @@ export default function AdminDashboardPage() {
       link, github, image,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     });
-    await supabase.from("projects").update(data).eq("id", editingWorkId);
+    const { error: updateError, data: updateData } = await supabase.from("projects").update(data).eq("id", editingWorkId).select();
+    if (handleOperationError(updateError || (!updateData || updateData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Proje Güncelleme")) return;
     
     // Manage additional images
-    await supabase.from("project_images").delete().eq("project_id", editingWorkId);
+    const { error: delImgError, data: delImgData } = await supabase.from("project_images").delete().eq("project_id", editingWorkId).select();
+    if (handleOperationError(delImgError || (!delImgData || delImgData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Proje Görselleri Silme")) return;
     if (additional_images) {
       const imageUrls = additional_images.split(",").map(url => url.trim()).filter(Boolean);
       if (imageUrls.length > 0) {
@@ -346,7 +360,8 @@ export default function AdminDashboardPage() {
           image_url: url,
           order_index: i
         }));
-        await supabase.from("project_images").insert(inserts);
+        const { error: insImgError } = await supabase.from("project_images").insert(inserts);
+        if (handleOperationError(insImgError, "Proje Görselleri Ekleme")) return;
       }
     }
     
@@ -356,7 +371,8 @@ export default function AdminDashboardPage() {
 
   const handleDeleteWork = async (id: string) => {
     if (!supabase || !confirm("Delete this project?")) return;
-    await supabase.from("projects").delete().eq("id", id);
+    const { error, data } = await supabase.from("projects").delete().eq("id", id).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Proje Silme")) return;
     if (editingWorkId === id) setEditingWorkId(null);
     await refreshWorks();
   };
@@ -389,7 +405,8 @@ export default function AdminDashboardPage() {
     const date = blogForm.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
     const maxOrder = blogs.reduce((max, b) => Math.max(max, b.order_index ?? 0), -1);
     const data = cleanObj({ ...blogForm, date, order_index: maxOrder + 1 });
-    await supabase.from("blogs").insert(data);
+    const { error } = await supabase.from("blogs").insert(data);
+    if (handleOperationError(error, "Blog Yazısı Ekleme")) return;
     setBlogForm({ 
       title: "", excerpt: "", content: "", date: "", read_time: "", image_url: "",
       linked_project_id: "", linked_experience_id: "", linked_education_id: "", linked_skill_category_ids: [], linked_language_id: "", linked_activity_id: "", linked_certification_id: "",
@@ -428,14 +445,16 @@ export default function AdminDashboardPage() {
     e.preventDefault();
     if (!supabase || !editingBlogId) return;
     const data = cleanObj(editBlogForm);
-    await supabase.from("blogs").update(data).eq("id", editingBlogId);
+    const { error, data: updateData } = await supabase.from("blogs").update(data).eq("id", editingBlogId).select();
+    if (handleOperationError(error || (!updateData || updateData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Blog Yazısı Güncelleme")) return;
     setEditingBlogId(null);
     await refreshBlogs();
   };
 
   const handleDeleteBlog = async (id: string) => {
     if (!supabase || !confirm("Delete this post?")) return;
-    await supabase.from("blogs").delete().eq("id", id);
+    const { error, data } = await supabase.from("blogs").delete().eq("id", id).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Blog Yazısı Silme")) return;
     if (editingBlogId === id) setEditingBlogId(null);
     await refreshBlogs();
   };

@@ -80,7 +80,7 @@ export default function RootLayout({
             <SiteDataProvider>
               <MaintenanceGuard>
                 <Link
-                  href="/"
+                  href="/admin"
                   className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 transition-transform hover:scale-105 duration-300"
                 >
                   <Image
