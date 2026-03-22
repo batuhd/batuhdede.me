@@ -350,8 +350,8 @@ function AdminDashboardContent() {
     if (handleOperationError(updateError || (!updateData || updateData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Proje Güncelleme")) return;
     
     // Manage additional images
-    const { error: delImgError, data: delImgData } = await supabase.from("project_images").delete().eq("project_id", editingWorkId).select();
-    if (handleOperationError(delImgError || (!delImgData || delImgData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Proje Görselleri Silme")) return;
+    const { error: delImgError } = await supabase.from("project_images").delete().eq("project_id", editingWorkId);
+    if (handleOperationError(delImgError, "Proje Görselleri Silme")) return;
     if (additional_images) {
       const imageUrls = additional_images.split(",").map(url => url.trim()).filter(Boolean);
       if (imageUrls.length > 0) {
