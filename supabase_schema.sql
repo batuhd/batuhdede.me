@@ -251,17 +251,17 @@ CREATE TABLE public.social_links (
 -- =============================================
 
 -- URL Validations to prevent stored XSS or bad links
-ALTER TABLE public.about_me ADD CONSTRAINT check_about_photo_url CHECK (profile_photo_url IS NULL OR profile_photo_url ~ '^https?://|^\/');
-ALTER TABLE public.experiences ADD CONSTRAINT check_exp_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^\/');
-ALTER TABLE public.educations ADD CONSTRAINT check_edu_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^\/');
-ALTER TABLE public.activities ADD CONSTRAINT check_act_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^\/');
-ALTER TABLE public.activities ADD CONSTRAINT check_act_link_url CHECK (link_url IS NULL OR link_url ~ '^https?://|^\/');
-ALTER TABLE public.certifications ADD CONSTRAINT check_cert_icon_url CHECK (icon_url IS NULL OR icon_url ~ '^https?://|^\/');
-ALTER TABLE public.certifications ADD CONSTRAINT check_cert_link_url CHECK (link_url IS NULL OR link_url ~ '^https?://|^\/');
-ALTER TABLE public.projects ADD CONSTRAINT check_project_link CHECK (link IS NULL OR link ~ '^https?://|^\/');
-ALTER TABLE public.projects ADD CONSTRAINT check_project_github CHECK (github IS NULL OR github ~ '^https?://|^\/');
-ALTER TABLE public.projects ADD CONSTRAINT check_project_image CHECK (image IS NULL OR image ~ '^https?://|^\/');
-ALTER TABLE public.project_images ADD CONSTRAINT check_project_images_url CHECK (image_url ~ '^https?://|^\/');
+ALTER TABLE public.about_me ADD CONSTRAINT check_about_photo_url CHECK (profile_photo_url IS NULL OR profile_photo_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.experiences ADD CONSTRAINT check_exp_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.educations ADD CONSTRAINT check_edu_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.activities ADD CONSTRAINT check_act_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.activities ADD CONSTRAINT check_act_link_url CHECK (link_url IS NULL OR link_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.certifications ADD CONSTRAINT check_cert_icon_url CHECK (icon_url IS NULL OR icon_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.certifications ADD CONSTRAINT check_cert_link_url CHECK (link_url IS NULL OR link_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.projects ADD CONSTRAINT check_project_link CHECK (link IS NULL OR link ~ '^https?://|^/[^/]');
+ALTER TABLE public.projects ADD CONSTRAINT check_project_github CHECK (github IS NULL OR github ~ '^https?://|^/[^/]');
+ALTER TABLE public.projects ADD CONSTRAINT check_project_image CHECK (image IS NULL OR image ~ '^https?://|^/[^/]');
+ALTER TABLE public.project_images ADD CONSTRAINT check_project_images_url CHECK (image_url ~ '^https?://|^/[^/]');
 ALTER TABLE public.social_links ADD CONSTRAINT check_social_url CHECK (url IS NULL OR url ~ '^https?://|^mailto:');
 
 -- Content Length Limits to prevent DoS (payload size)
@@ -375,3 +375,46 @@ CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING (auth.uid() = 'YOU
 CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
+-- =============================================
+-- FUNCTIONS & TRIGGERS
+-- =============================================
+
+-- Atomic Reordering (Fix #14)
+CREATE OR REPLACE FUNCTION reorder_items(
+  p_table text, p_ids uuid[], p_indices int[]
+) RETURNS void AS $$
+BEGIN
+  -- Basic table name validation to prevent SQL injection in dynamic query
+  IF p_table NOT IN ('projects', 'blogs', 'experiences', 'educations', 'skill_categories', 'languages', 'activities', 'certifications', 'project_images') THEN
+    RAISE EXCEPTION 'Invalid table name for reordering';
+  END IF;
+
+  FOR i IN 1..array_length(p_ids, 1) LOOP
+    EXECUTE format('UPDATE %I SET order_index = $1 WHERE id = $2', p_table)
+    USING p_indices[i], p_ids[i];
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Resource Creation Limits (Fix #16)
+CREATE OR REPLACE FUNCTION enforce_resource_limits()
+RETURNS trigger AS $$
+BEGIN
+  IF TG_TABLE_NAME = 'projects' AND (SELECT count(*) FROM projects) >= 100 THEN
+    RAISE EXCEPTION 'Maximum projects limit reached (100)';
+  END IF;
+  IF TG_TABLE_NAME = 'blogs' AND (SELECT count(*) FROM blogs) >= 200 THEN
+    RAISE EXCEPTION 'Maximum blogs limit reached (200)';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER check_projects_limit
+  BEFORE INSERT ON projects
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+CREATE TRIGGER check_blogs_limit
+  BEFORE INSERT ON blogs
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();

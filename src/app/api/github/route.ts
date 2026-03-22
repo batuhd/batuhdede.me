@@ -6,8 +6,8 @@ export async function GET(request: Request) {
 
   if (!token) {
     return NextResponse.json(
-      { error: "GitHub token is missing in .env" },
-      { status: 500 }
+      { error: "Service unavailable" },
+      { status: 503 }
     );
   }
 

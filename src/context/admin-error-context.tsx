@@ -52,7 +52,9 @@ export function AdminErrorProvider({ children }: { children: ReactNode }) {
           clearInterval(interval);
           if (supabase) {
             supabase.auth.signOut().then(() => {
-              router.push("/?unauthorized=true");
+              fetch("/api/auth/logout", { method: "POST" }).then(() => {
+                router.push("/?unauthorized=true");
+              });
             });
           } else {
             router.push("/?unauthorized=true");
@@ -95,11 +97,8 @@ export function AdminErrorProvider({ children }: { children: ReactNode }) {
                 <p className="text-sm font-semibold text-destructive mb-1">
                   İşlem başarısız: {errorInfo.operation}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Hata kodu: <span className="font-mono font-bold">{errorInfo.code}</span>
-                </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Sebep: {errorInfo.message}
+                  Bu işlemi gerçekleştirme yetkiniz yok.
                 </p>
               </div>
               <p className="text-sm text-muted-foreground">

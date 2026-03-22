@@ -18,6 +18,22 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           // Force HTTPS (1 year)
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          // Content Security Policy
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://challenges.cloudflare.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' data:",
+              "connect-src 'self' https://*.supabase.co https://api.github.com https://formspree.io https://va.vercel-scripts.com",
+              "frame-src 'self' https://challenges.cloudflare.com",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self' https://formspree.io",
+            ].join("; "),
+          },
         ],
       },
     ];

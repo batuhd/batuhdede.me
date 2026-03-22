@@ -79,9 +79,23 @@ const SIDEBAR_CATEGORIES = [
 const inputClass =
   "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
 
-function cleanObj(obj: Record<string, unknown>) {
+// Field whitelists to prevent mass assignment
+const PROJECT_FIELDS = [
+  "title", "description", "link", "github", "image", "tags", "order_index",
+  "title_tr", "description_tr", "title_de", "description_de", "title_es", "description_es",
+];
+const BLOG_FIELDS = [
+  "title", "excerpt", "content", "date", "read_time", "image_url", "order_index",
+  "linked_project_id", "linked_experience_id", "linked_education_id",
+  "title_tr", "excerpt_tr", "content_tr", "title_de", "excerpt_de", "content_de",
+  "title_es", "excerpt_es", "content_es",
+];
+
+function cleanObj(obj: Record<string, unknown>, allowedFields?: string[]) {
   const cleaned: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
+    // Skip fields not in whitelist (if provided)
+    if (allowedFields && !allowedFields.includes(k)) continue;
     if (typeof v === "string" && v.trim() === "") {
       if (k.startsWith("linked_") || k === "link" || k === "github" || k === "image" || k === "image_url") {
         cleaned[k] = null;
@@ -275,7 +289,11 @@ function AdminDashboardContent() {
   };
 
   const handleSignOut = async () => {
-    if (supabase) { await supabase.auth.signOut(); router.push("/admin/login"); }
+    if (supabase) {
+      await supabase.auth.signOut();
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/admin/login");
+    }
   };
 
   // ── Works CRUD ──
@@ -289,7 +307,7 @@ function AdminDashboardContent() {
       link, github, image,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
       order_index: maxOrder + 1,
-    });
+    }, PROJECT_FIELDS);
     
     const { data: insertedData, error } = await supabase.from("projects").insert(data).select();
     if (handleOperationError(error, "Proje Ekleme")) return;
@@ -345,7 +363,7 @@ function AdminDashboardContent() {
       ...rest,
       link, github, image,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
-    });
+    }, PROJECT_FIELDS);
     const { error: updateError, data: updateData } = await supabase.from("projects").update(data).eq("id", editingWorkId).select();
     if (handleOperationError(updateError || (!updateData || updateData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Proje Güncelleme")) return;
     
@@ -404,7 +422,7 @@ function AdminDashboardContent() {
     if (!supabase) return;
     const date = blogForm.date || new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
     const maxOrder = blogs.reduce((max, b) => Math.max(max, b.order_index ?? 0), -1);
-    const data = cleanObj({ ...blogForm, date, order_index: maxOrder + 1 });
+    const data = cleanObj({ ...blogForm, date, order_index: maxOrder + 1 }, BLOG_FIELDS);
     const { error } = await supabase.from("blogs").insert(data);
     if (handleOperationError(error, "Blog Yazısı Ekleme")) return;
     setBlogForm({ 
@@ -444,7 +462,7 @@ function AdminDashboardContent() {
   const handleSaveEditBlog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase || !editingBlogId) return;
-    const data = cleanObj(editBlogForm);
+    const data = cleanObj(editBlogForm, BLOG_FIELDS);
     const { error, data: updateData } = await supabase.from("blogs").update(data).eq("id", editingBlogId).select();
     if (handleOperationError(error || (!updateData || updateData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Blog Yazısı Güncelleme")) return;
     setEditingBlogId(null);
