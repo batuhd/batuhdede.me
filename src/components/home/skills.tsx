@@ -3,11 +3,10 @@
 import { userConfig } from "@/config/user";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
-import { FolderKanban, PenTool } from "lucide-react";
 
 export function Skills() {
   const { t, getLocalized } = useLanguage();
-  const { skillCategories, loaded, projects, blogs } = useSiteData();
+  const { skillCategories, loaded } = useSiteData();
 
   const displayCategories = skillCategories.length > 0
     ? skillCategories
@@ -34,28 +33,7 @@ export function Skills() {
                 </span>
               ))}
             </div>
-            {(() => {
-              const relatedProjects = projects ? projects.filter((p: any) => p.linked_skill_category_ids?.includes(category.id)) : [];
-              const relatedBlogs = blogs ? blogs.filter((b: any) => b.linked_skill_category_ids?.includes(category.id)) : [];
-              if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
-              
-              return (
-                <div className="pt-2 mt-2 border-t border-border/50 flex flex-wrap gap-2">
-                  {relatedProjects.map((p: any) => (
-                    <a key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors border shadow-sm group/link">
-                      <FolderKanban className="h-3 w-3 opacity-70" />
-                      <span>{getLocalized(p, "title")}</span>
-                    </a>
-                  ))}
-                  {relatedBlogs.map((b: any) => (
-                    <a key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors border shadow-sm group/link">
-                      <PenTool className="h-3 w-3 opacity-70" />
-                      <span>{getLocalized(b, "title")}</span>
-                    </a>
-                  ))}
-                </div>
-              );
-            })()}
+
           </div>
         ))}
       </div>
