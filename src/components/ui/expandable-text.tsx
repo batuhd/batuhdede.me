@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useLanguage } from "@/context/language-context";
 
 interface ExpandableTextProps {
   text: string;
@@ -18,6 +19,7 @@ export function ExpandableText({
   buttonClassName
 }: ExpandableTextProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useLanguage();
 
   if (!text) return null;
 
@@ -44,9 +46,9 @@ export function ExpandableText({
           )}
         >
           {isExpanded ? (
-            <>Show less <ChevronUp className="h-3 w-3" /></>
+            <>{t("common.showLess")} <ChevronUp className="h-3 w-3" /></>
           ) : (
-            <>Show more <ChevronDown className="h-3 w-3" /></>
+            <>{t("common.showMore")} <ChevronDown className="h-3 w-3" /></>
           )}
         </button>
       )}

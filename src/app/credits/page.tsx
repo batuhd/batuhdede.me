@@ -14,9 +14,10 @@ import {
 import { useLanguage } from "@/context/language-context";
 
 const techStack = [
-  { labelKey: "credits.tech.frontend", value: "React 19, Next.js 15, Tailwind CSS 4" },
-  { labelKey: "credits.tech.database", value: "Supabase (PostgreSQL)" },
+  { labelKey: "credits.tech.frontend", value: "Next.js 16, React 19, Tailwind CSS v4" },
+  { labelKey: "credits.tech.database", value: "Supabase (PostgreSQL) + RLS" },
   { labelKey: "credits.tech.auth", value: "Supabase Authentication" },
+  { labelKey: "credits.tech.security", value: "Cloudflare Turnstile, Rate Limiting, CSP" },
   { labelKey: "credits.tech.hosting", value: "Vercel" },
   { labelKey: "credits.tech.forms", value: "Formspree" },
   { labelKey: "credits.tech.icons", value: "Lucide React" },

@@ -1,4 +1,7 @@
 export const es: Record<string, string> = {
+  "common.showMore": "Mostrar más",
+  "common.showLess": "Mostrar menos",
+  "common.minRead": "min de lectura",
   // Navigation
   "nav.home": "Inicio",
   "nav.works": "Proyectos",
@@ -88,6 +91,7 @@ export const es: Record<string, string> = {
   "credits.tech.hosting": "Alojamiento",
   "credits.tech.forms": "Formularios",
   "credits.tech.icons": "Iconos",
+  "credits.tech.security": "Seguridad",
   "credits.typography": "Tipografía",
   "credits.typo.sans": "Sans",
   "credits.typo.mono": "Mono",

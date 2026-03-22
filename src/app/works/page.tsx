@@ -31,6 +31,7 @@ interface LinkedEntity {
   id: string;
   title: string;
   type: "experience" | "education" | "skill" | "language" | "activity" | "certification";
+  originalObj?: any;
 }
 
 interface RelatedBlog {
@@ -72,34 +73,34 @@ function WorksContent() {
         supabase.from("projects").select("*").order("order_index", { ascending: true }),
         supabase.from("project_images").select("*").order("order_index", { ascending: true }),
         supabase.from("blogs").select("id, title, excerpt, date, read_time, linked_project_id").not("linked_project_id", "is", null),
-        supabase.from("experiences").select("id, title, company"),
-        supabase.from("educations").select("id, university"),
-        supabase.from("skill_categories").select("id, title"),
-        supabase.from("languages").select("id, name"),
-        supabase.from("activities").select("id, organization"),
-        supabase.from("certifications").select("id, name"),
+        supabase.from("experiences").select("*"),
+        supabase.from("educations").select("*"),
+        supabase.from("skill_categories").select("*"),
+        supabase.from("languages").select("*"),
+        supabase.from("activities").select("*"),
+        supabase.from("certifications").select("*"),
       ]);
 
       if (!isMounted) return;
 
       const map: Record<string, LinkedEntity> = {};
       if (expRes?.data) {
-        expRes.data.forEach(e => map[e.id] = { id: e.id, title: `${e.title} at ${e.company}`, type: "experience" });
+        expRes.data.forEach(e => map[e.id] = { id: e.id, title: `${e.title} at ${e.company}`, type: "experience", originalObj: e });
       }
       if (eduRes?.data) {
-        eduRes.data.forEach(e => map[e.id] = { id: e.id, title: e.university, type: "education" });
+        eduRes.data.forEach(e => map[e.id] = { id: e.id, title: e.university, type: "education", originalObj: e });
       }
       if (skillsRes?.data) {
-        skillsRes.data.forEach(s => map[s.id] = { id: s.id, title: s.title, type: "skill" });
+        skillsRes.data.forEach(s => map[s.id] = { id: s.id, title: s.title, type: "skill", originalObj: s });
       }
       if (langsRes?.data) {
-        langsRes.data.forEach(l => map[l.id] = { id: l.id, title: l.name, type: "language" });
+        langsRes.data.forEach(l => map[l.id] = { id: l.id, title: l.name, type: "language", originalObj: l });
       }
       if (actsRes?.data) {
-        actsRes.data.forEach(a => map[a.id] = { id: a.id, title: a.organization, type: "activity" });
+        actsRes.data.forEach(a => map[a.id] = { id: a.id, title: a.organization, type: "activity", originalObj: a });
       }
       if (certsRes?.data) {
-        certsRes.data.forEach(c => map[c.id] = { id: c.id, title: c.name, type: "certification" });
+        certsRes.data.forEach(c => map[c.id] = { id: c.id, title: c.name, type: "certification", originalObj: c });
       }
       setEntitiesMap(map);
       if (projectsRes.error) {
@@ -146,6 +147,19 @@ function WorksContent() {
       document.body.style.overflow = "auto";
     };
   }, [selectedProject]);
+
+  const getEntityTitle = (entity: LinkedEntity) => {
+    if (!entity.originalObj) return entity.title;
+    switch (entity.type) {
+      case "experience": return `${getLocalized(entity.originalObj, "title")} - ${entity.originalObj.company}`;
+      case "education": return getLocalized(entity.originalObj, "university");
+      case "language": return getLocalized(entity.originalObj, "name");
+      case "activity": return getLocalized(entity.originalObj, "organization");
+      case "certification": return getLocalized(entity.originalObj, "name");
+      case "skill": return getLocalized(entity.originalObj, "title");
+      default: return entity.title;
+    }
+  };
 
   return (
     <>
@@ -381,7 +395,7 @@ function WorksContent() {
                             className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-3 py-1.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
                           >
                             <Icon className="h-3.5 w-3.5 opacity-70" />
-                            <span className="truncate max-w-[200px]">{entity.title}</span>
+                            <span className="truncate max-w-[200px]">{getEntityTitle(entity)}</span>
                             <ExternalLink className="h-3 w-3 opacity-50 ml-0.5" />
                           </Link>
                         );
@@ -448,7 +462,7 @@ function WorksContent() {
                                 {blog.read_time && (
                                   <>
                                     <span>·</span>
-                                    <span>{blog.read_time}</span>
+                                    <span>{String(blog.read_time).replace("min read", t("common.minRead"))}</span>
                                   </>
                                 )}
                               </div>

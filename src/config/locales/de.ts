@@ -1,4 +1,7 @@
 export const de: Record<string, string> = {
+  "common.showMore": "Mehr anzeigen",
+  "common.showLess": "Weniger anzeigen",
+  "common.minRead": "Min. Lesezeit",
   // Navigation
   "nav.home": "Startseite",
   "nav.works": "Projekte",
@@ -87,6 +90,7 @@ export const de: Record<string, string> = {
   "credits.tech.hosting": "Hosting",
   "credits.tech.forms": "Formulare",
   "credits.tech.icons": "Symbole",
+  "credits.tech.security": "Sicherheit",
   "credits.typography": "Typografie",
   "credits.typo.sans": "Sans",
   "credits.typo.mono": "Mono",

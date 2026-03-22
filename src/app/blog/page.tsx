@@ -30,6 +30,7 @@ interface LinkedEntity {
   title: string;
   type: "project" | "experience" | "education" | "skill" | "language" | "activity" | "certification";
   link?: string;
+  originalObj?: any;
 }
 
 function BlogContent() {
@@ -52,13 +53,13 @@ function BlogContent() {
       
       const [blogsRes, worksRes, expRes, eduRes, skillsRes, langsRes, actsRes, certsRes] = await Promise.all([
         supabase.from("blogs").select("*").order("order_index", { ascending: true }),
-        supabase.from("projects").select("id, title, link"),
-        supabase.from("experiences").select("id, title, company"),
-        supabase.from("educations").select("id, university"),
-        supabase.from("skill_categories").select("id, title"),
-        supabase.from("languages").select("id, name"),
-        supabase.from("activities").select("id, organization"),
-        supabase.from("certifications").select("id, name"),
+        supabase.from("projects").select("*"),
+        supabase.from("experiences").select("*"),
+        supabase.from("educations").select("*"),
+        supabase.from("skill_categories").select("*"),
+        supabase.from("languages").select("*"),
+        supabase.from("activities").select("*"),
+        supabase.from("certifications").select("*"),
       ]);
 
       if (!isMounted) return;
@@ -73,25 +74,25 @@ function BlogContent() {
       // Build entities map for fast lookup
       const map: Record<string, LinkedEntity> = {};
       if (worksRes.data) {
-        worksRes.data.forEach(w => map[w.id] = { id: w.id, title: w.title, type: "project", link: w.link });
+        worksRes.data.forEach(w => map[w.id] = { id: w.id, title: w.title, type: "project", link: w.link, originalObj: w });
       }
       if (expRes.data) {
-        expRes.data.forEach(e => map[e.id] = { id: e.id, title: `${e.title} at ${e.company}`, type: "experience" });
+        expRes.data.forEach(e => map[e.id] = { id: e.id, title: `${e.title} at ${e.company}`, type: "experience", originalObj: e });
       }
       if (eduRes.data) {
-        eduRes.data.forEach(e => map[e.id] = { id: e.id, title: e.university, type: "education" });
+        eduRes.data.forEach(e => map[e.id] = { id: e.id, title: e.university, type: "education", originalObj: e });
       }
       if (skillsRes.data) {
-        skillsRes.data.forEach(s => map[s.id] = { id: s.id, title: s.title, type: "skill" });
+        skillsRes.data.forEach(s => map[s.id] = { id: s.id, title: s.title, type: "skill", originalObj: s });
       }
       if (langsRes.data) {
-        langsRes.data.forEach(l => map[l.id] = { id: l.id, title: l.name, type: "language" });
+        langsRes.data.forEach(l => map[l.id] = { id: l.id, title: l.name, type: "language", originalObj: l });
       }
       if (actsRes.data) {
-        actsRes.data.forEach(a => map[a.id] = { id: a.id, title: a.organization, type: "activity" });
+        actsRes.data.forEach(a => map[a.id] = { id: a.id, title: a.organization, type: "activity", originalObj: a });
       }
       if (certsRes.data) {
-        certsRes.data.forEach(c => map[c.id] = { id: c.id, title: c.name, type: "certification" });
+        certsRes.data.forEach(c => map[c.id] = { id: c.id, title: c.name, type: "certification", originalObj: c });
       }
       setEntitiesMap(map);
       
@@ -122,6 +123,20 @@ function BlogContent() {
       document.body.style.overflow = "auto";
     };
   }, [selectedPost]);
+
+  const getEntityTitle = (entity: LinkedEntity) => {
+    if (!entity.originalObj) return entity.title;
+    switch (entity.type) {
+      case "project": return getLocalized(entity.originalObj, "title");
+      case "experience": return `${getLocalized(entity.originalObj, "title")} - ${entity.originalObj.company}`;
+      case "education": return getLocalized(entity.originalObj, "university");
+      case "language": return getLocalized(entity.originalObj, "name");
+      case "activity": return getLocalized(entity.originalObj, "organization");
+      case "certification": return getLocalized(entity.originalObj, "name");
+      case "skill": return getLocalized(entity.originalObj, "title");
+      default: return entity.title;
+    }
+  };
 
   return (
     <>
@@ -189,7 +204,7 @@ function BlogContent() {
                       </span>
                       <span className="hidden sm:inline">&middot;</span>
                       <span className="hidden sm:inline">
-                        {String(post.read_time || "5 min read")}
+                        {String(post.read_time || "5 min read").replace("min read", t("common.minRead"))}
                       </span>
                     </div>
                     <div className="flex justify-between items-start gap-4">
@@ -243,7 +258,7 @@ function BlogContent() {
                               <Icon className="h-3.5 w-3.5" />
                             </span>
                             <span className="truncate max-w-[200px]">
-                              {entity.type === "project" ? t("blog.entityType.work") : entity.title}
+                              {entity.type === "project" ? t("blog.entityType.work") : getEntityTitle(entity)}
                             </span>
                             <ExternalLink className="h-3 w-3 opacity-50 ml-0.5" />
                           </div>
@@ -286,7 +301,7 @@ function BlogContent() {
                     {String(selectedPost.date || "Unknown date")}
                   </span>
                   <span>&middot;</span>
-                  <span>{String(selectedPost.read_time || "5 min read")}</span>
+                  <span>{String(selectedPost.read_time || "5 min read").replace("min read", t("common.minRead"))}</span>
                 </div>
                 <button
                   onClick={() => setSelectedPost(null)}
@@ -359,7 +374,7 @@ function BlogContent() {
                                 </div>
                                 <div className="min-w-0">
                                   <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                                    {entity.title}
+                                    {getEntityTitle(entity)}
                                   </h4>
                                   <p className="text-xs text-muted-foreground mt-0.5">
                                     {entity.type === "project" ? t("blog.viewProjectDetails") : t("blog.linkedEntity", { type: entity.type })}

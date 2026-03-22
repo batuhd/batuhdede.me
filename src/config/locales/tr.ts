@@ -1,4 +1,7 @@
 export const tr: Record<string, string> = {
+  "common.showMore": "Daha fazla",
+  "common.showLess": "Daha az",
+  "common.minRead": "dk okuma",
   // Navigation
   "nav.home": "Ana Sayfa",
   "nav.works": "Projeler",
@@ -88,6 +91,7 @@ export const tr: Record<string, string> = {
   "credits.tech.hosting": "Barındırma",
   "credits.tech.forms": "Formlar",
   "credits.tech.icons": "İkonlar",
+  "credits.tech.security": "Güvenlik",
   "credits.typography": "Tipografi",
   "credits.typo.sans": "Sans",
   "credits.typo.mono": "Mono",
