@@ -42,14 +42,41 @@ This is **not** a static portfolio template. It's a production-grade **Content M
 
 A complete CMS dashboard with categorized sidebar navigation for managing every piece of your portfolio:
 
-| Category               | What You Can Manage                                                    |
-| ---------------------- | ---------------------------------------------------------------------- |
-| **Profile & Identity** | Name, role, tagline, bio, profile photo, favorite quote, custom stats  |
-| **Portfolio Content**  | Projects/works (with live links, GitHub, tags, images) and blog posts  |
-| **Resume Data**        | Experience, education, skills, languages, certifications, activities   |
-| **Configuration**      | Social links, section reordering, visibility toggles, maintenance mode |
+| Category               | What You Can Manage                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| **Profile & Identity** | Name, role, tagline, bio, profile photo, favorite quote, custom stats                 |
+| **Portfolio Content**  | Projects/works (with live links, GitHub, tags, multi-image galleries) and blog posts  |
+| **Resume Data**        | Experience, education, skills, languages, certifications, activities                  |
+| **Content Linking**    | Relationally link any work or blog to skills, experiences, education, certs, and more |
+| **Configuration**      | Social links, section reordering, visibility toggles, maintenance mode                |
 
 Every field supports **4 languages** (EN, TR, DE, ES) with an intuitive language tab switcher. Sections can be individually hidden/shown and reordered with drag-style up/down controls.
+
+### 🔗 Deep Content Linking System
+
+The CMS features a powerful **relational linking engine** that lets you connect content across all sections:
+
+- **Works & Blogs** can be linked to Experiences, Education, Skills, Languages, Activities, and Certifications
+- **Multi-select skill binding** - assign multiple skill categories to a single work or blog via interactive pill-tag checkboxes
+- **Bidirectional display** - linked content appears as interactive badges on both the source item and the target section's homepage card
+- All links are managed through a clean **"Link Related Items"** accordion in the admin forms
+
+### 🏆 Interactive Certification Modals
+
+Certifications on the homepage are fully interactive:
+
+- Click any certification card to open a **spring-animated detail modal**
+- The modal displays the certification name, issuer, date, credential link, and icon
+- **Related skills** (via junction table) are rendered as tags
+- **Linked projects and blog posts** appear as clickable navigation cards inside the modal
+
+### 🖼️ Blog Featured Images
+
+Blog posts support optional **featured images** (cover photos):
+
+- Add image URLs via the admin panel using the smart **"Recent Images"** selector that remembers previously used URLs
+- Images render as aspect-ratio cover photos on both the blog card grid and the expanded blog modal
+- Fully responsive with smooth hover-scale animations
 
 ### 🌍 Multilingual System (i18n)
 
@@ -62,7 +89,7 @@ Every field supports **4 languages** (EN, TR, DE, ES) with an intuitive language
 
 - **Staggered fade-in animations** on every section via a reusable `<FadeIn />` component
 - **Apple-style Dock navigation** with magnetic hover magnification effect
-- **Spring-animated modals** for blog posts and project details
+- **Spring-animated modals** for blog posts, project details, and certifications
 - Smooth page transitions powered by Framer Motion
 
 ### 🌓 Dark & Light Theme
@@ -82,6 +109,7 @@ Auto-generated RSS feed at `/feed.xml` for blog syndication, built as a Next.js 
 - **Row Level Security (RLS)** on every table - write access is locked to your specific user UUID
 - **Sign-up disabled** - no one can create accounts on your Supabase instance
 - **SQL injection impossible** - Supabase uses PostgREST with parameterized queries
+- **CHECK constraints** on URLs and content lengths to prevent XSS and DoS
 - Public visitors get **read-only** access; all mutations require your admin session
 
 ### ⚡ Performance
@@ -122,8 +150,8 @@ Auto-generated RSS feed at `/feed.xml` for blog syndication, built as a Next.js 
     │   ├── admin/
     │   │   ├── login/           # 🔐 Auth gate (email/password)
     │   │   └── page.tsx         # 📋 Admin dashboard (full CMS)
-    │   ├── blog/                # 📝 Blog feed with animated modals
-    │   ├── works/               # 💼 Portfolio feed with animated modals
+    │   ├── blog/                # 📝 Blog feed with animated modals + featured images
+    │   ├── works/               # 💼 Portfolio feed with animated modals + multi-image galleries
     │   ├── credits/             # 🏆 Tech credits & acknowledgments
     │   ├── api/github/          # 🔌 GitHub GraphQL API route handler
     │   └── feed.xml/            # 📡 RSS feed generator
@@ -134,8 +162,8 @@ Auto-generated RSS feed at `/feed.xml` for blog syndication, built as a Next.js 
     │   ├── home/
     │   │   ├── info.tsx         # Hero section (name, photo, tagline)
     │   │   ├── about.tsx        # Bio + custom stats
-    │   │   ├── skills.tsx       # Skill categories grid
-    │   │   ├── profile-sections.tsx  # Experience, Education, Languages, etc.
+    │   │   ├── skills.tsx       # Skill categories grid + linked works/blogs
+    │   │   ├── profile-sections.tsx  # Experience, Education, Languages, Activities, Certifications (with modals)
     │   │   ├── github-contribution.tsx  # Live GitHub heatmap
     │   │   └── contact-form.tsx # Contact section
     │   ├── motion/
@@ -161,58 +189,132 @@ Auto-generated RSS feed at `/feed.xml` for blog syndication, built as a Next.js 
 
 ## 🗄️ Database Schema
 
-The Supabase database consists of **11 tables**, all with Row Level Security enabled:
+The Supabase database consists of **13 tables**, all with Row Level Security enabled:
 
-| Table              | Purpose                       | Key Fields                                            |
-| ------------------ | ----------------------------- | ----------------------------------------------------- |
-| `about_me`         | Profile information           | name, role, bio, photo, stats, quote + translations   |
-| `skill_categories` | Grouped skills                | title, skills (JSON array) + translations             |
-| `experiences`      | Work history                  | title, company, dates, description + translations     |
-| `educations`       | Academic history              | university, degree, major, dates                      |
-| `languages`        | Language proficiencies        | name, level                                           |
-| `activities`       | Leadership & extracurriculars | organization, role, description + translations        |
-| `certifications`   | Professional certifications   | name, issuer, date, link + translations               |
-| `projects`         | Portfolio works               | title, description, links, tags (JSON) + translations |
-| `blogs`            | Blog posts                    | title, excerpt, content, date + translations          |
-| `social_links`     | Dock navigation links         | platform, URL                                         |
-| `section_order`    | Homepage section ordering     | section_id, order_index                               |
+| Table                  | Purpose                         | Key Fields                                                            |
+| ---------------------- | ------------------------------- | --------------------------------------------------------------------- |
+| `about_me`             | Profile information             | name, role, bio, photo, stats, quote + translations                   |
+| `skill_categories`     | Grouped skills                  | title, skills (JSON array) + translations                             |
+| `experiences`          | Work history                    | title, company, dates, description + translations                     |
+| `educations`           | Academic history                | university, degree, major, dates                                      |
+| `languages`            | Language proficiencies          | name, level (dropdown)                                                |
+| `activities`           | Leadership & extracurriculars   | organization, role, description + translations                        |
+| `certifications`       | Professional certifications     | name, issuer, date, link, icon + translations                         |
+| `certification_skills` | Junction: certs ↔ skills        | certification_id, skill_category_id                                   |
+| `projects`             | Portfolio works                 | title, description, links, tags, image, linked\_\* IDs + translations |
+| `project_images`       | Multi-image gallery per project | project_id, image_url, order_index                                    |
+| `blogs`                | Blog posts                      | title, excerpt, content, date, image*url, linked*\* IDs               |
+| `social_links`         | Dock navigation links           | platform, URL                                                         |
+| `section_order`        | Homepage section ordering       | section_id, order_index                                               |
+
+### Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+    projects ||--o| experiences : "linked_experience_id"
+    projects ||--o| educations : "linked_education_id"
+    projects ||--o| languages : "linked_language_id"
+    projects ||--o| activities : "linked_activity_id"
+    projects ||--o| certifications : "linked_certification_id"
+    projects }o--o{ skill_categories : "linked_skill_category_ids"
+    projects ||--|{ project_images : "has"
+
+    blogs ||--o| projects : "linked_project_id"
+    blogs ||--o| experiences : "linked_experience_id"
+    blogs ||--o| educations : "linked_education_id"
+    blogs ||--o| languages : "linked_language_id"
+    blogs ||--o| activities : "linked_activity_id"
+    blogs ||--o| certifications : "linked_certification_id"
+    blogs }o--o{ skill_categories : "linked_skill_category_ids"
+
+    certifications ||--|{ certification_skills : "has"
+    skill_categories ||--|{ certification_skills : "has"
+
+    projects { uuid id PK }
+    blogs { uuid id PK }
+    experiences { uuid id PK }
+    educations { uuid id PK }
+    skill_categories { uuid id PK }
+    languages { uuid id PK }
+    activities { uuid id PK }
+    certifications { uuid id PK }
+    project_images { uuid id PK }
+    certification_skills { uuid certification_id FK }
+    about_me { uuid id PK }
+    social_links { uuid id PK }
+    section_order { text section_id PK }
+```
+
+### Content Linking Columns
+
+Both `projects` and `blogs` tables support relational linking:
+
+| Column                      | Type     | Links To                      |
+| --------------------------- | -------- | ----------------------------- |
+| `linked_experience_id`      | `uuid`   | `experiences`                 |
+| `linked_education_id`       | `uuid`   | `educations`                  |
+| `linked_skill_category_ids` | `uuid[]` | `skill_categories` (multiple) |
+| `linked_language_id`        | `uuid`   | `languages`                   |
+| `linked_activity_id`        | `uuid`   | `activities`                  |
+| `linked_certification_id`   | `uuid`   | `certifications`              |
+| `linked_project_id`         | `uuid`   | `projects` (blogs only)       |
 
 Every content table supports **4-language translations** (EN, TR, DE, ES) with dedicated columns per language.
 
 ---
 
+## 🔄 Data Flow
+
+```mermaid
+flowchart LR
+    subgraph Browser["🖥️ Browser"]
+        A["Public Visitor"]
+        C["Admin User"]
+    end
+
+    subgraph Edge["⚡ Vercel Edge"]
+        B["Next.js App Router"]
+        D["Admin CMS Dashboard"]
+        G["SiteDataContext Cache"]
+    end
+
+    subgraph Supa["🗄️ Supabase"]
+        I["PostgreSQL + RLS"]
+        N["GitHub GraphQL API"]
+    end
+
+    A --> B --> G -->|"SELECT"| I
+    C --> D -->|"INSERT / UPDATE / DELETE"| I
+    B -->|"/api/github"| N
+```
+
+---
+
 ## 🔒 Security Architecture
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                    PUBLIC VISITORS                       │
-│              Can only READ data (SELECT)                 │
-└──────────────────────┬───────────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────────┐
-│              SUPABASE ROW LEVEL SECURITY                 │
-│                                                          │
-│  SELECT  →  Anyone (public portfolio)                    │
-│  INSERT  →  Only admin UUID                              │
-│  UPDATE  →  Only admin UUID                              │
-│  DELETE  →  Only admin UUID                              │
-└──────────────────────┬───────────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────────┐
-│                   ADMIN (you)                            │
-│         Authenticated via Supabase Email Auth            │
-│         Sign-ups disabled - only you can log in          │
-└──────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["🌐 Public Visitor"] -->|"SELECT only"| B["Supabase RLS"]
+    C["🔐 Admin"] -->|"Email + Password"| D["Supabase Auth"]
+    D -->|"Authenticated Session"| B
+
+    B --> E{"Operation Type"}
+    E -->|"SELECT"| F["✅ Allow - Public read"]
+    E -->|"INSERT / UPDATE / DELETE"| G{"auth.uid matches admin?"}
+    G -->|"Yes ✅"| H["Allow Write"]
+    G -->|"No ❌"| I["Block - 403"]
+
+    H --> J["CHECK Constraints"]
+    J --> K["✅ Data Saved"]
 ```
 
-| Layer              | Protection                                                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **RLS Policies**   | All 11 tables have RLS enabled. Write operations (INSERT, UPDATE, DELETE) are locked to your specific user UUID - hardcoded in the schema. |
-| **Authentication** | Supabase Email Auth. Sign-ups are disabled so no one else can create an account.                                                           |
-| **SQL Injection**  | Impossible. Supabase uses PostgREST which parameterizes all queries automatically.                                                         |
-| **API Keys**       | The `anon` key is safe to expose - it can only perform operations allowed by RLS policies (read-only for public).                          |
+| Layer               | Protection                                                                                                                              |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **RLS Policies**    | All tables have RLS enabled. Write operations (INSERT, UPDATE, DELETE) are locked to your specific user UUID - hardcoded in the schema. |
+| **Authentication**  | Supabase Email Auth. Sign-ups are disabled so no one else can create an account.                                                        |
+| **SQL Injection**   | Impossible. Supabase uses PostgREST which parameterizes all queries automatically.                                                      |
+| **Data Validation** | CHECK constraints enforce URL format validation and content length limits to prevent XSS and DoS attacks.                               |
+| **API Keys**        | The `anon` key is safe to expose - it can only perform operations allowed by RLS policies (read-only for public).                       |
 
 ---
 
@@ -289,11 +391,11 @@ with the UUID you copied. For example:
 + auth.uid() = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid
 ```
 
-> **💡 Tip:** Use `Ctrl+H` (Windows) or `Cmd+H` (Mac) to replace all 33 occurrences at once.
+> **💡 Tip:** Use `Ctrl+H` (Windows) or `Cmd+H` (Mac) to replace all occurrences at once.
 
 #### 3.4 - Execute the schema
 
-Copy the **entire** contents of your modified `supabase_schema.sql` and paste it into **Supabase SQL Editor → New Query**. Click **Run**. This creates all 11 tables, enables RLS, and sets up your security policies.
+Copy the **entire** contents of your modified `supabase_schema.sql` and paste it into **Supabase SQL Editor → New Query**. Click **Run**. This creates all tables, enables RLS, and sets up your security policies.
 
 #### 3.5 - Lock down sign-ups
 
@@ -337,6 +439,7 @@ npm run dev
 | **Profile photo**    | Admin → About Me             | Toggle visibility on/off with checkbox    |
 | **Favorite quote**   | Admin → About Me             | Toggle visibility on/off with checkbox    |
 | **Maintenance mode** | Admin → Page Layout          | Toggle to temporarily block public access |
+| **Link content**     | Admin → Works/Blogs edit     | Use "Link Related Items" accordion        |
 
 ---
 

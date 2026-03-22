@@ -11,7 +11,10 @@ interface SiteData {
   languages: any[];
   activities: any[];
   certifications: any[];
+  certificationSkills: any[];
   sectionOrder: any[];
+  projects: any[];
+  blogs: any[];
   loaded: boolean;
   isMaintenance: boolean;
 }
@@ -24,7 +27,10 @@ const defaultData: SiteData = {
   languages: [],
   activities: [],
   certifications: [],
+  certificationSkills: [],
   sectionOrder: [],
+  projects: [],
+  blogs: [],
   loaded: false,
   isMaintenance: false,
 };
@@ -42,7 +48,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
 
     const fetchAll = async () => {
       const sb = supabase!;
-      const [aboutRes, skillsRes, expRes, eduRes, langRes, actRes, certRes, sectionRes] = await Promise.all([
+      const [aboutRes, skillsRes, expRes, eduRes, langRes, actRes, certRes, certSkillsRes, sectionRes, projectsRes, blogsRes] = await Promise.all([
         sb.from("about_me").select("*").limit(1),
         sb.from("skill_categories").select("*").order("order_index", { ascending: true }),
         sb.from("experiences").select("*").order("order_index", { ascending: true }),
@@ -50,7 +56,10 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         sb.from("languages").select("*").order("order_index", { ascending: true }),
         sb.from("activities").select("*").order("order_index", { ascending: true }),
         sb.from("certifications").select("*").order("order_index", { ascending: true }),
+        sb.from("certification_skills").select("*"),
         sb.from("section_order").select("*").order("order_index", { ascending: true }),
+        sb.from("projects").select("id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id").order("order_index", { ascending: true }),
+        sb.from("blogs").select("id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id").order("order_index", { ascending: true }),
       ]);
 
       setData({
@@ -61,7 +70,10 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         languages: langRes.data || [],
         activities: actRes.data || [],
         certifications: certRes.data || [],
+        certificationSkills: certSkillsRes.data || [],
         sectionOrder: sectionRes?.data || [],
+        projects: projectsRes?.data || [],
+        blogs: blogsRes?.data || [],
         loaded: true,
         isMaintenance: sectionRes?.data?.some((s: any) => s.section_id === "maintenance_mode") || false,
       });

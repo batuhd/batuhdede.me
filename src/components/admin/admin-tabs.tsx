@@ -495,11 +495,14 @@ export function MonthYearInput({ value, onChange, className, disabled }: { value
 interface FieldConfig {
   key: string;
   label: string;
-  type?: "text" | "textarea" | "number" | "checkbox" | "month_year" | "select";
+  type?: "text" | "textarea" | "number" | "checkbox" | "month_year" | "select" | "multi_select";
   options?: { label: string; value: string }[];
   placeholder?: string;
   required?: boolean;
   translatable?: boolean;
+  junctionTable?: string;
+  junctionForeignKey?: string;
+  junctionOtherKey?: string;
 }
 
 interface CrudItem { id: string; [key: string]: any; }
@@ -519,7 +522,11 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
 
   const emptyForm = () => {
     const f: Record<string, any> = {};
-    fields.forEach(field => { f[field.key] = field.type === "checkbox" ? false : ""; });
+    fields.forEach(field => { 
+      if (field.type === "checkbox") f[field.key] = false;
+      else if (field.type === "multi_select") f[field.key] = [];
+      else f[field.key] = "";
+    });
     if (hasTranslatable) translatableFields.forEach(field => { ["tr", "de", "es"].forEach(lang => { f[`${field.key}_${lang}`] = ""; }); });
     return f;
   };
@@ -527,6 +534,23 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
   const fetchItems = async () => {
     if (!supabase) return;
     const { data } = await supabase.from(tableName).select("*").order("order_index", { ascending: true });
+    
+    // If there are multi_select fields, we need to fetch their relationships
+    const multiSelectFields = fields.filter(f => f.type === "multi_select" && f.junctionTable);
+    
+    if (data && multiSelectFields.length > 0) {
+      for (const field of multiSelectFields) {
+        if (!field.junctionTable || !field.junctionForeignKey || !field.junctionOtherKey) continue;
+        const { data: relData } = await supabase.from(field.junctionTable).select("*");
+        if (relData) {
+          data.forEach(item => {
+            const rels = relData.filter(r => r[field.junctionForeignKey!] === item.id);
+            item[field.key] = rels.map(r => r[field.junctionOtherKey!]);
+          });
+        }
+      }
+    }
+    
     if (data) setItems(data);
     setLoading(false);
   };
@@ -536,6 +560,8 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
   const buildPayload = () => {
     const payload: Record<string, any> = {};
     fields.forEach(field => {
+      if (field.type === "multi_select") return; // Handled separately
+      
       const val = form[field.key];
       if (field.type === "number" && val !== "") payload[field.key] = parseInt(val);
       else if (field.type === "checkbox") payload[field.key] = !!val;
@@ -556,7 +582,24 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     e.preventDefault();
     if (!supabase) return;
     const maxOrder = items.reduce((max, item) => Math.max(max, item.order_index ?? 0), -1);
-    await supabase.from(tableName).insert({ ...buildPayload(), order_index: maxOrder + 1 });
+    const { data: insertedData } = await supabase.from(tableName).insert({ ...buildPayload(), order_index: maxOrder + 1 }).select();
+    
+    if (insertedData && insertedData[0]) {
+      const newId = insertedData[0].id;
+      const multiSelectFields = fields.filter(f => f.type === "multi_select" && f.junctionTable);
+      for (const field of multiSelectFields) {
+        if (!field.junctionTable || !field.junctionForeignKey || !field.junctionOtherKey) continue;
+        const selectedIds = form[field.key] || [];
+        if (selectedIds.length > 0) {
+          const inserts = selectedIds.map((valId: string) => ({
+            [field.junctionForeignKey!]: newId,
+            [field.junctionOtherKey!]: valId
+          }));
+          await supabase.from(field.junctionTable).insert(inserts);
+        }
+      }
+    }
+    
     setForm(emptyForm()); setIsAdding(false); setLangTab("default");
     await fetchItems();
   };
@@ -565,7 +608,9 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     setEditingId(item.id);
     const f: Record<string, any> = {};
     fields.forEach(field => {
-      f[field.key] = item[field.key] ?? (field.type === "checkbox" ? false : "");
+      if (field.type === "multi_select") f[field.key] = item[field.key] || [];
+      else f[field.key] = item[field.key] ?? (field.type === "checkbox" ? false : "");
+      
       if (field.type === "number" && f[field.key] !== "" && f[field.key] !== false) f[field.key] = f[field.key]?.toString() || "";
     });
     if (hasTranslatable) translatableFields.forEach(field => { ["tr", "de", "es"].forEach(lang => { f[`${field.key}_${lang}`] = item[`${field.key}_${lang}`] || ""; }); });
@@ -576,6 +621,23 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     e.preventDefault();
     if (!supabase || !editingId) return;
     await supabase.from(tableName).update(buildPayload()).eq("id", editingId);
+    
+    const multiSelectFields = fields.filter(f => f.type === "multi_select" && f.junctionTable);
+    for (const field of multiSelectFields) {
+      if (!field.junctionTable || !field.junctionForeignKey || !field.junctionOtherKey) continue;
+      // Delete existing relationships
+      await supabase.from(field.junctionTable).delete().eq(field.junctionForeignKey, editingId);
+      
+      const selectedIds = form[field.key] || [];
+      if (selectedIds.length > 0) {
+        const inserts = selectedIds.map((valId: string) => ({
+          [field.junctionForeignKey!]: editingId,
+          [field.junctionOtherKey!]: valId
+        }));
+        await supabase.from(field.junctionTable).insert(inserts);
+      }
+    }
+    
     setEditingId(null); await fetchItems();
   };
 
@@ -657,6 +719,30 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
+            ) : field.type === "multi_select" ? (
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {field.options?.map((opt) => {
+                  const isChecked = (form[field.key] || []).includes(opt.value);
+                  return (
+                    <label key={opt.value} className="flex items-center gap-2 cursor-pointer p-2 rounded-md hover:bg-muted/50 border bg-background">
+                      <input 
+                        type="checkbox" 
+                        className="h-4 w-4 rounded border accent-primary"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const currentValues = form[field.key] || [];
+                          if (e.target.checked) {
+                            setForm({ ...form, [field.key]: [...currentValues, opt.value] });
+                          } else {
+                            setForm({ ...form, [field.key]: currentValues.filter((v: string) => v !== opt.value) });
+                          }
+                        }}
+                      />
+                      <span className="text-xs">{opt.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
             ) : (field.key.includes("logo") || field.key.includes("icon") || field.key.includes("image")) ? (
               <ImageInputWithRecent value={form[field.key] || ""} onChange={(val) => setForm({ ...form, [field.key]: val })} className={inputClass} placeholder={field.placeholder} />
             ) : (

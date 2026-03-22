@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FolderKanban, PenTool, X } from "lucide-react";
 import { ExpandableText } from "@/components/ui/expandable-text";
+import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 
 function parseDate(dateStr: string | null): Date | null {
   if (!dateStr || dateStr.toLowerCase().includes("present") || dateStr.toLowerCase().includes("devam") || dateStr.toLowerCase().includes("heute") || dateStr.toLowerCase().includes("actual")) {
@@ -95,7 +98,7 @@ function calculateDuration(start: string | null, end: string | null, isCurrent: 
 
 export function Experience() {
   const { locale, getLocalized, t } = useLanguage();
-  const { experiences } = useSiteData();
+  const { experiences, projects, blogs } = useSiteData();
 
   if (experiences.length === 0) return null;
 
@@ -135,6 +138,31 @@ export function Experience() {
                       <ExpandableText text={getLocalized(exp, "description")} />
                     </div>
                   )}
+                  
+                  {(() => {
+                    const relatedProjects = projects.filter(p => p.linked_experience_id === exp.id);
+                    const relatedBlogs = blogs.filter(b => b.linked_experience_id === exp.id);
+                    if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
+                    
+                    return (
+                      <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
+                        {relatedProjects.map(p => (
+                          <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                            <FolderKanban className="h-3 w-3 opacity-70" />
+                            <span>{getLocalized(p, "title")}</span>
+                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+                          </Link>
+                        ))}
+                        {relatedBlogs.map(b => (
+                          <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                            <PenTool className="h-3 w-3 opacity-70" />
+                            <span>{getLocalized(b, "title")}</span>
+                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+                          </Link>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -147,7 +175,7 @@ export function Experience() {
 
 export function Education() {
   const { locale, getLocalized, t } = useLanguage();
-  const { educations } = useSiteData();
+  const { educations, projects, blogs } = useSiteData();
 
   if (educations.length === 0) return null;
 
@@ -193,6 +221,31 @@ export function Education() {
                       </>
                     )}
                   </p>
+                  
+                  {(() => {
+                    const relatedProjects = projects.filter(p => p.linked_education_id === edu.id);
+                    const relatedBlogs = blogs.filter(b => b.linked_education_id === edu.id);
+                    if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
+                    
+                    return (
+                      <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
+                        {relatedProjects.map(p => (
+                          <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                            <FolderKanban className="h-3 w-3 opacity-70" />
+                            <span>{getLocalized(p, "title")}</span>
+                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+                          </Link>
+                        ))}
+                        {relatedBlogs.map(b => (
+                          <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                            <PenTool className="h-3 w-3 opacity-70" />
+                            <span>{getLocalized(b, "title")}</span>
+                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+                          </Link>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -205,7 +258,7 @@ export function Education() {
 
 export function Languages() {
   const { locale, getLocalized, t } = useLanguage();
-  const { languages } = useSiteData();
+  const { languages, projects, blogs } = useSiteData();
 
   if (languages.length === 0) return null;
 
@@ -248,6 +301,30 @@ export function Languages() {
                   </span>
                 </>
               )}
+              {(() => {
+                const relatedProjects = projects.filter((p: any) => p.linked_language_id === lang.id);
+                const relatedBlogs = blogs.filter((b: any) => b.linked_language_id === lang.id);
+                if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
+                
+                return (
+                  <div className="w-full mt-2 pt-2 border-t border-border/50 flex flex-wrap gap-2">
+                    {relatedProjects.map((p: any) => (
+                      <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border shadow-sm">
+                        <FolderKanban className="h-3 w-3 opacity-70" />
+                        <span>{getLocalized(p, "title")}</span>
+                        <ExternalLink className="h-2 w-2 opacity-0 group-hover/link:opacity-50 -ml-0.5" />
+                      </Link>
+                    ))}
+                    {relatedBlogs.map((b: any) => (
+                      <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border shadow-sm">
+                        <PenTool className="h-3 w-3 opacity-70" />
+                        <span>{getLocalized(b, "title")}</span>
+                        <ExternalLink className="h-2 w-2 opacity-0 group-hover/link:opacity-50 -ml-0.5" />
+                      </Link>
+                    ))}
+                  </div>
+                );
+              })()}
             </span>
           );
         })}
@@ -258,7 +335,7 @@ export function Languages() {
 
 export function Activities() {
   const { locale, getLocalized, t } = useLanguage();
-  const { activities } = useSiteData();
+  const { activities, projects, blogs } = useSiteData();
 
   if (activities.length === 0) return null;
 
@@ -302,6 +379,30 @@ export function Activities() {
                       <ExpandableText text={getLocalized(act, "description")} />
                     </div>
                   )}
+                  {(() => {
+                    const relatedProjects = projects.filter((p: any) => p.linked_activity_id === act.id);
+                    const relatedBlogs = blogs.filter((b: any) => b.linked_activity_id === act.id);
+                    if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
+                    
+                    return (
+                      <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
+                        {relatedProjects.map((p: any) => (
+                          <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                            <FolderKanban className="h-3 w-3 opacity-70" />
+                            <span>{getLocalized(p, "title")}</span>
+                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+                          </Link>
+                        ))}
+                        {relatedBlogs.map((b: any) => (
+                          <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                            <PenTool className="h-3 w-3 opacity-70" />
+                            <span>{getLocalized(b, "title")}</span>
+                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
+                          </Link>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -314,7 +415,8 @@ export function Activities() {
 
 export function Certifications() {
   const { getLocalized, t } = useLanguage();
-  const { certifications } = useSiteData();
+  const { certifications, certificationSkills, skillCategories, projects, blogs } = useSiteData();
+  const [selectedCert, setSelectedCert] = useState<any | null>(null);
 
   if (certifications.length === 0) return null;
 
@@ -322,25 +424,175 @@ export function Certifications() {
     <section className="space-y-6">
       <h2 className="text-lg font-semibold tracking-tight">{t("home.certifications")}</h2>
       <div className="grid gap-3 sm:grid-cols-2">
-        {certifications.map((cert: any) => (
-          <div key={cert.id} className="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/30">
-            {cert.icon_url && (
-              <img src={cert.icon_url} alt={cert.name} className="h-8 w-8 rounded object-cover flex-shrink-0" />
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-sm font-medium min-w-0 break-words pr-2">{getLocalized(cert, "name")}</h3>
-                {cert.link_url && (
-                  <a href={cert.link_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1">
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+        {certifications.map((cert: any) => {
+          // Find skills for this cert
+          const relatedSkillIds = certificationSkills?.filter(cs => cs.certification_id === cert.id).map(cs => cs.skill_category_id) || [];
+          const relatedSkills = skillCategories?.filter(sc => relatedSkillIds.includes(sc.id)) || [];
+
+          return (
+            <div 
+              key={cert.id} 
+              onClick={() => setSelectedCert(cert)}
+              className="flex flex-col justify-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/30 cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                {cert.icon_url && (
+                  <img src={cert.icon_url} alt={cert.name} className="h-8 w-8 rounded object-cover flex-shrink-0" />
                 )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-medium min-w-0 break-words pr-2">{getLocalized(cert, "name")}</h3>
+                    {cert.link_url && (
+                      <a href={cert.link_url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1">
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{cert.issuer}{cert.issue_date ? ` · ${cert.issue_date}` : ""}</p>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">{cert.issuer}{cert.issue_date ? ` · ${cert.issue_date}` : ""}</p>
+              
+              {relatedSkills.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1 pl-11">
+                  {relatedSkills.map(skill => (
+                    <span key={skill.id} className="inline-flex rounded-md bg-secondary/50 px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
+                      {getLocalized(skill, "title")}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {(() => {
+                const relatedProjects = projects.filter((p: any) => p.linked_certification_id === cert.id);
+                const relatedBlogs = blogs.filter((b: any) => b.linked_certification_id === cert.id);
+                if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
+                
+                return (
+                  <div className="mt-3 border-t border-border/50 pt-3 flex flex-wrap gap-2 pl-11">
+                    {relatedProjects.map((p: any) => (
+                      <Link key={p.id} href={`/works?project=${p.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 rounded-md bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border">
+                        <FolderKanban className="h-2.5 w-2.5 opacity-70" />
+                        <span>{getLocalized(p, "title")}</span>
+                      </Link>
+                    ))}
+                    {relatedBlogs.map((b: any) => (
+                      <Link key={b.id} href={`/blog?post=${b.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 rounded-md bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border">
+                        <PenTool className="h-2.5 w-2.5 opacity-70" />
+                        <span>{getLocalized(b, "title")}</span>
+                      </Link>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      <AnimatePresence>
+        {selectedCert && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 px-0 sm:px-6 backdrop-blur-sm"
+            onClick={() => setSelectedCert(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
+                <h2 className="text-sm font-medium text-muted-foreground">Certification Details</h2>
+                <button
+                  onClick={() => setSelectedCert(null)}
+                  className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto p-4 sm:p-8 space-y-6">
+                <div className="flex items-center gap-4">
+                  {selectedCert.icon_url && (
+                    <img src={selectedCert.icon_url} alt={selectedCert.name} className="h-16 w-16 rounded-xl object-cover bg-muted/50 p-2 border" />
+                  )}
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{getLocalized(selectedCert, "name")}</h1>
+                    <p className="text-sm text-muted-foreground mt-1">{selectedCert.issuer} {selectedCert.issue_date && `· ${selectedCert.issue_date}`}</p>
+                    {selectedCert.link_url && (
+                      <a href={selectedCert.link_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2">
+                        View Credential <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {(() => {
+                  const relatedSkillIds = certificationSkills?.filter((cs: any) => cs.certification_id === selectedCert.id).map((cs: any) => cs.skill_category_id) || [];
+                  const relatedSkills = skillCategories?.filter((sc: any) => relatedSkillIds.includes(sc.id)) || [];
+                  if (relatedSkills.length > 0) {
+                    return (
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-semibold text-muted-foreground">Skills Evaluated</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {relatedSkills.map((skill: any) => (
+                            <span key={skill.id} className="inline-flex rounded-md bg-secondary/50 px-2.5 py-1 text-xs font-medium text-secondary-foreground shadow-sm">
+                              {getLocalized(skill, "title")}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {(() => {
+                  const relatedProjects = projects.filter((p: any) => p.linked_certification_id === selectedCert.id);
+                  const relatedBlogs = blogs.filter((b: any) => b.linked_certification_id === selectedCert.id);
+                  if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
+                  
+                  return (
+                    <div className="pt-6 mt-6 border-t flex flex-col gap-4">
+                      {relatedProjects.length > 0 && (
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2"><FolderKanban className="h-4 w-4" /> Related Projects</h3>
+                          <div className="flex flex-col gap-2">
+                            {relatedProjects.map((p: any) => (
+                              <Link key={p.id} href={`/works?project=${p.id}`} className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors">
+                                <span className="text-sm font-medium group-hover:text-primary transition-colors">{getLocalized(p, "title")}</span>
+                                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {relatedBlogs.length > 0 && (
+                        <div className="space-y-3">
+                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2"><PenTool className="h-4 w-4" /> Related Articles</h3>
+                          <div className="flex flex-col gap-2">
+                            {relatedBlogs.map((b: any) => (
+                              <Link key={b.id} href={`/blog?post=${b.id}`} className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors">
+                                <span className="text-sm font-medium group-hover:text-primary transition-colors">{getLocalized(b, "title")}</span>
+                                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

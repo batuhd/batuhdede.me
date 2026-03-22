@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { FadeIn } from "@/components/motion/fade-in";
-import { PenTool, Loader2, Calendar, X, ExternalLink, Rss } from "lucide-react";
+import { PenTool, Loader2, Calendar, X, ExternalLink, Rss, FolderKanban, Briefcase, GraduationCap, MessageSquare, Trophy, Award, Code } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
@@ -14,12 +15,28 @@ interface BlogPost {
   content: string;
   date: string;
   read_time: string;
+  image_url?: string;
+  linked_project_id?: string;
+  linked_experience_id?: string;
+  linked_education_id?: string;
+  linked_skill_category_ids?: string[];
+  linked_language_id?: string;
+  linked_activity_id?: string;
+  linked_certification_id?: string;
 }
 
-export default function BlogPage() {
+interface LinkedEntity {
+  id: string;
+  title: string;
+  type: "project" | "experience" | "education" | "skill" | "language" | "activity" | "certification";
+  link?: string;
+}
+
+function BlogContent() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [entitiesMap, setEntitiesMap] = useState<Record<string, LinkedEntity>>({});
   const { t, getLocalized } = useLanguage();
 
   useEffect(() => {
@@ -30,29 +47,74 @@ export default function BlogPage() {
       return;
     }
 
-    const fetchPosts = async () => {
+    const fetchPostsAndRelations = async () => {
       if (!supabase) return;
-      const { data, error } = await supabase
-        .from("blogs")
-        .select("*")
-        .order("order_index", { ascending: true });
+      
+      const [blogsRes, worksRes, expRes, eduRes, skillsRes, langsRes, actsRes, certsRes] = await Promise.all([
+        supabase.from("blogs").select("*").order("order_index", { ascending: true }),
+        supabase.from("projects").select("id, title, link"),
+        supabase.from("experiences").select("id, title, company"),
+        supabase.from("educations").select("id, university"),
+        supabase.from("skill_categories").select("id, title"),
+        supabase.from("languages").select("id, name"),
+        supabase.from("activities").select("id, organization"),
+        supabase.from("certifications").select("id, name"),
+      ]);
 
       if (!isMounted) return;
-      if (error) {
-        console.error("Error fetching blog posts:", error);
+      
+      if (blogsRes.error) {
+        console.error("Error fetching blog posts:", blogsRes.error);
         setPosts([]);
       } else {
-        setPosts(data || []);
+        setPosts(blogsRes.data || []);
       }
+
+      // Build entities map for fast lookup
+      const map: Record<string, LinkedEntity> = {};
+      if (worksRes.data) {
+        worksRes.data.forEach(w => map[w.id] = { id: w.id, title: w.title, type: "project", link: w.link });
+      }
+      if (expRes.data) {
+        expRes.data.forEach(e => map[e.id] = { id: e.id, title: `${e.title} at ${e.company}`, type: "experience" });
+      }
+      if (eduRes.data) {
+        eduRes.data.forEach(e => map[e.id] = { id: e.id, title: e.university, type: "education" });
+      }
+      if (skillsRes.data) {
+        skillsRes.data.forEach(s => map[s.id] = { id: s.id, title: s.title, type: "skill" });
+      }
+      if (langsRes.data) {
+        langsRes.data.forEach(l => map[l.id] = { id: l.id, title: l.name, type: "language" });
+      }
+      if (actsRes.data) {
+        actsRes.data.forEach(a => map[a.id] = { id: a.id, title: a.organization, type: "activity" });
+      }
+      if (certsRes.data) {
+        certsRes.data.forEach(c => map[c.id] = { id: c.id, title: c.name, type: "certification" });
+      }
+      setEntitiesMap(map);
+      
       setLoading(false);
     };
 
-    fetchPosts();
+    fetchPostsAndRelations();
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  // Auto-open blog post from URL parameter (?post=ID)
+  const searchParams = useSearchParams();
+  const postIdFromUrl = searchParams.get("post");
+
+  useEffect(() => {
+    if (postIdFromUrl && posts.length > 0 && !selectedPost) {
+      const target = posts.find(p => p.id === postIdFromUrl);
+      if (target) setSelectedPost(target);
+    }
+  }, [postIdFromUrl, posts]);
 
   useEffect(() => {
     document.body.style.overflow = selectedPost ? "hidden" : "auto";
@@ -136,6 +198,59 @@ export default function BlogPage() {
                       </h2>
                       <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary flex-shrink-0 mt-1 hidden sm:block" />
                     </div>
+                    
+                    {post.image_url && typeof post.image_url === "string" && (
+                      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted mt-2 mb-2">
+                        <img
+                          src={post.image_url.startsWith("http") || post.image_url.startsWith("/") ? post.image_url : `/${post.image_url}`}
+                          alt={String(post.title || "")}
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Render Linked Entity Badges */}
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {[
+                        { id: post.linked_project_id, icon: FolderKanban, section: null },
+                        { id: post.linked_experience_id, icon: Briefcase, section: "/#experience" },
+                        { id: post.linked_education_id, icon: GraduationCap, section: "/#education" },
+                        ...(post.linked_skill_category_ids || []).map((id: string) => ({ id, icon: Code, section: "/#skills" })),
+                        { id: post.linked_language_id, icon: MessageSquare, section: "/#languages" },
+                        { id: post.linked_activity_id, icon: Trophy, section: "/#activities" },
+                        { id: post.linked_certification_id, icon: Award, section: "/#certifications" }
+                      ].map(({ id, icon: Icon, section }) => {
+                        if (!id) return null;
+                        const entity = entitiesMap[id];
+                        if (!entity) return null;
+                        
+                        return (
+                          <div 
+                            key={id}
+                            className="inline-flex w-fit items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground cursor-pointer hover:bg-secondary/70 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (entity.type === "project") {
+                                const searchParams = new URLSearchParams(window.location.search);
+                                searchParams.set("project", entity.id);
+                                window.location.href = `/works?${searchParams.toString()}`;
+                              } else {
+                                window.location.href = section || "#";
+                              }
+                            }}
+                          >
+                            <span className="opacity-70 flex items-center">
+                              <Icon className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="truncate max-w-[200px]">
+                              {entity.type === "project" ? "Work" : entity.title}
+                            </span>
+                            <ExternalLink className="h-3 w-3 opacity-50 ml-0.5" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
                     <p className="text-sm sm:text-base text-muted-foreground line-clamp-3 leading-relaxed">
                       {getLocalized(post, "excerpt")}
                     </p>
@@ -182,17 +297,98 @@ export default function BlogPage() {
               </div>
 
               <div className="overflow-y-auto p-4 sm:p-8">
+                {selectedPost.image_url && typeof selectedPost.image_url === "string" && (
+                  <div className="mb-6 relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
+                    <img
+                      src={selectedPost.image_url.startsWith("http") || selectedPost.image_url.startsWith("/") ? selectedPost.image_url : `/${selectedPost.image_url}`}
+                      alt={String(selectedPost.title || "")}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  </div>
+                )}
                 <h1 className="mb-6 text-xl sm:text-3xl font-bold tracking-tight">
                   {getLocalized(selectedPost, "title", "Untitled")}
                 </h1>
                 <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
                   {getLocalized(selectedPost, "content")}
                 </div>
+
+                {/* Related Work/Entity Section */}
+                {(() => {
+                  const hasEntities = selectedPost.linked_project_id || selectedPost.linked_experience_id || 
+                    selectedPost.linked_education_id || (selectedPost.linked_skill_category_ids && selectedPost.linked_skill_category_ids.length > 0) || 
+                    selectedPost.linked_language_id || selectedPost.linked_activity_id || selectedPost.linked_certification_id;
+                  if (!hasEntities) return null;
+
+                  return (
+                    <div className="mt-8 pt-6 border-t space-y-6">
+                      {[
+                        { id: selectedPost.linked_project_id, icon: FolderKanban, typeLabel: "Work", section: null },
+                        { id: selectedPost.linked_experience_id, icon: Briefcase, typeLabel: "Experience", section: "/#experience" },
+                        { id: selectedPost.linked_education_id, icon: GraduationCap, typeLabel: "Education", section: "/#education" },
+                        ...(selectedPost.linked_skill_category_ids || []).map((id: string) => ({ id, icon: Code, typeLabel: "Skill", section: "/#skills" })),
+                        { id: selectedPost.linked_language_id, icon: MessageSquare, typeLabel: "Language", section: "/#languages" },
+                        { id: selectedPost.linked_activity_id, icon: Trophy, typeLabel: "Activity", section: "/#activities" },
+                        { id: selectedPost.linked_certification_id, icon: Award, typeLabel: "Certification", section: "/#certifications" }
+                      ].map(({ id, icon: Icon, typeLabel, section }) => {
+                        if (!id) return null;
+                        const entity = entitiesMap[id];
+                        if (!entity) return null;
+
+                        return (
+                          <div key={id}>
+                            <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-4">
+                              <Icon className="h-4 w-4" />
+                              {t("blog.relatedWork") !== "blog.relatedWork" ? t("blog.relatedWork") : "Related"} {typeLabel}
+                            </h3>
+                            <div 
+                              onClick={() => {
+                                if (entity.type === "project") {
+                                  const searchParams = new URLSearchParams(window.location.search);
+                                  searchParams.set("project", entity.id);
+                                  window.location.href = `/works?${searchParams.toString()}`;
+                                } else {
+                                  window.location.href = section || "#";
+                                }
+                              }}
+                              className="flex items-center justify-between rounded-xl border p-4 transition-all hover:bg-muted/50 hover:border-primary/30 cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                  <Icon className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                                    {entity.title}
+                                  </h4>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {entity.type === "project" ? "View Project Details" : `Linked ${entity.type}`}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="shrink-0 ml-4 flex h-8 w-8 items-center justify-center rounded-full bg-background border shadow-sm group-hover:border-primary/30 group-hover:bg-primary/5 transition-all">
+                                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+export default function BlogPage() {
+  return (
+    <Suspense fallback={<div className="flex h-64 flex-col items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
+      <BlogContent />
+    </Suspense>
   );
 }

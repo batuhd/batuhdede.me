@@ -81,7 +81,12 @@ const inputClass =
 function cleanObj(obj: Record<string, unknown>) {
   const cleaned: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
-    if (typeof v === "string" && v.trim() === "") continue;
+    if (typeof v === "string" && v.trim() === "") {
+      if (k.startsWith("linked_") || k === "link" || k === "github" || k === "image" || k === "image_url") {
+        cleaned[k] = null;
+      }
+      continue;
+    }
     cleaned[k] = v;
   }
   return cleaned;
@@ -124,11 +129,18 @@ export default function AdminDashboardPage() {
 
   const [works, setWorks] = useState<any[]>([]);
   const [blogs, setBlogs] = useState<any[]>([]);
+  const [experiences, setExperiences] = useState<any[]>([]);
+  const [educations, setEducations] = useState<any[]>([]);
+  const [skillCategories, setSkillCategories] = useState<any[]>([]);
+  const [languages, setLanguages] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [certifications, setCertifications] = useState<any[]>([]);
 
   const [isAddingWork, setIsAddingWork] = useState(false);
   const [workLangTab, setWorkLangTab] = useState<LangTab>("default");
   const [workForm, setWorkForm] = useState({
-    title: "", description: "", link: "", github: "", image: "", tags: "",
+    title: "", description: "", link: "", github: "", image: "", tags: "", additional_images: "",
+    linked_experience_id: "", linked_education_id: "", linked_skill_category_ids: [] as string[], linked_language_id: "", linked_activity_id: "", linked_certification_id: "",
     title_tr: "", description_tr: "",
     title_de: "", description_de: "",
     title_es: "", description_es: "",
@@ -137,7 +149,8 @@ export default function AdminDashboardPage() {
   const [editingWorkId, setEditingWorkId] = useState<string | null>(null);
   const [editWorkLangTab, setEditWorkLangTab] = useState<LangTab>("default");
   const [editWorkForm, setEditWorkForm] = useState({
-    title: "", description: "", link: "", github: "", image: "", tags: "",
+    title: "", description: "", link: "", github: "", image: "", tags: "", additional_images: "",
+    linked_experience_id: "", linked_education_id: "", linked_skill_category_ids: [] as string[], linked_language_id: "", linked_activity_id: "", linked_certification_id: "",
     title_tr: "", description_tr: "",
     title_de: "", description_de: "",
     title_es: "", description_es: "",
@@ -146,7 +159,8 @@ export default function AdminDashboardPage() {
   const [isAddingBlog, setIsAddingBlog] = useState(false);
   const [blogLangTab, setBlogLangTab] = useState<LangTab>("default");
   const [blogForm, setBlogForm] = useState({
-    title: "", excerpt: "", content: "", date: "", read_time: "",
+    title: "", excerpt: "", content: "", date: "", read_time: "", image_url: "",
+    linked_project_id: "", linked_experience_id: "", linked_education_id: "", linked_skill_category_ids: [] as string[], linked_language_id: "", linked_activity_id: "", linked_certification_id: "",
     title_tr: "", excerpt_tr: "", content_tr: "",
     title_de: "", excerpt_de: "", content_de: "",
     title_es: "", excerpt_es: "", content_es: "",
@@ -155,7 +169,8 @@ export default function AdminDashboardPage() {
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [editBlogLangTab, setEditBlogLangTab] = useState<LangTab>("default");
   const [editBlogForm, setEditBlogForm] = useState({
-    title: "", excerpt: "", content: "", date: "", read_time: "",
+    title: "", excerpt: "", content: "", date: "", read_time: "", image_url: "",
+    linked_project_id: "", linked_experience_id: "", linked_education_id: "", linked_skill_category_ids: [] as string[], linked_language_id: "", linked_activity_id: "", linked_certification_id: "",
     title_tr: "", excerpt_tr: "", content_tr: "",
     title_de: "", excerpt_de: "", content_de: "",
     title_es: "", excerpt_es: "", content_es: "",
@@ -185,20 +200,62 @@ export default function AdminDashboardPage() {
     if (!supabase) return;
     const sb = supabase;
     const fetchData = async () => {
-      const [worksRes, blogsRes] = await Promise.all([
+      const [worksRes, projectImagesRes, blogsRes, expRes, eduRes, skillsRes, langRes, actRes, certRes] = await Promise.all([
         sb.from("projects").select("*").order("order_index", { ascending: true }),
+        sb.from("project_images").select("*").order("order_index", { ascending: true }),
         sb.from("blogs").select("*").order("order_index", { ascending: true }),
+        sb.from("experiences").select("id, title, company"),
+        sb.from("educations").select("id, university, degree"),
+        sb.from("skill_categories").select("id, title"),
+        sb.from("languages").select("id, name"),
+        sb.from("activities").select("id, organization"),
+        sb.from("certifications").select("id, name"),
       ]);
-      if (worksRes.data) setWorks(worksRes.data);
+      
+      if (worksRes.data) {
+        let projectsData = worksRes.data;
+        if (projectImagesRes.data) {
+          projectsData = projectsData.map((project: any) => {
+            const extraImages = projectImagesRes.data.filter((img: any) => img.project_id === project.id);
+            return {
+              ...project,
+              additional_images: extraImages.map((img: any) => img.image_url).join(", ")
+            };
+          });
+        }
+        setWorks(projectsData);
+      }
       if (blogsRes.data) setBlogs(blogsRes.data);
+      if (expRes.data) setExperiences(expRes.data);
+      if (eduRes.data) setEducations(eduRes.data);
+      if (skillsRes.data) setSkillCategories(skillsRes.data);
+      if (langRes.data) setLanguages(langRes.data);
+      if (actRes.data) setActivities(actRes.data);
+      if (certRes.data) setCertifications(certRes.data);
     };
     fetchData();
   }, []);
 
   const refreshWorks = async () => {
     if (!supabase) return;
-    const { data } = await supabase.from("projects").select("*").order("order_index", { ascending: true });
-    if (data) setWorks(data);
+    const [worksRes, projectImagesRes] = await Promise.all([
+      supabase.from("projects").select("*").order("order_index", { ascending: true }),
+      supabase.from("project_images").select("*").order("order_index", { ascending: true }),
+    ]);
+
+    if (worksRes.data) {
+      let projectsData = worksRes.data;
+      if (projectImagesRes.data) {
+        projectsData = projectsData.map((project: any) => {
+          const extraImages = projectImagesRes.data.filter((img: any) => img.project_id === project.id);
+          return {
+            ...project,
+            additional_images: extraImages.map((img: any) => img.image_url).join(", ")
+          };
+        });
+      }
+      setWorks(projectsData);
+    }
   };
 
   const refreshBlogs = async () => {
@@ -215,7 +272,7 @@ export default function AdminDashboardPage() {
   const handleAddWork = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) return;
-    const { link, github, image, tags, ...rest } = workForm;
+    const { link, github, image, tags, additional_images, ...rest } = workForm;
     const maxOrder = works.reduce((max, w) => Math.max(max, w.order_index ?? 0), -1);
     const data = cleanObj({
       ...rest,
@@ -223,8 +280,24 @@ export default function AdminDashboardPage() {
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
       order_index: maxOrder + 1,
     });
-    await supabase.from("projects").insert(data);
-    setWorkForm({ title: "", description: "", link: "", github: "", image: "", tags: "", title_tr: "", description_tr: "", title_de: "", description_de: "", title_es: "", description_es: "" });
+    
+    const { data: insertedData, error } = await supabase.from("projects").insert(data).select();
+    
+    if (insertedData && insertedData[0] && additional_images) {
+      const newProjectId = insertedData[0].id;
+      const imageUrls = additional_images.split(",").map(url => url.trim()).filter(Boolean);
+      
+      if (imageUrls.length > 0) {
+        const inserts = imageUrls.map((url, i) => ({
+          project_id: newProjectId,
+          image_url: url,
+          order_index: i
+        }));
+        await supabase.from("project_images").insert(inserts);
+      }
+    }
+    
+    setWorkForm({ title: "", description: "", link: "", github: "", image: "", tags: "", additional_images: "", linked_experience_id: "", linked_education_id: "", linked_skill_category_ids: [], linked_language_id: "", linked_activity_id: "", linked_certification_id: "", title_tr: "", description_tr: "", title_de: "", description_de: "", title_es: "", description_es: "" });
     setIsAddingWork(false);
     setWorkLangTab("default");
     await refreshWorks();
@@ -237,6 +310,13 @@ export default function AdminDashboardPage() {
       link: work.link || "", github: work.github || "",
       image: work.image || "",
       tags: Array.isArray(work.tags) ? work.tags.join(", ") : work.tags || "",
+      additional_images: work.additional_images || "",
+      linked_experience_id: work.linked_experience_id || "",
+      linked_education_id: work.linked_education_id || "",
+      linked_skill_category_ids: work.linked_skill_category_ids || [],
+      linked_language_id: work.linked_language_id || "",
+      linked_activity_id: work.linked_activity_id || "",
+      linked_certification_id: work.linked_certification_id || "",
       title_tr: work.title_tr || "", description_tr: work.description_tr || "",
       title_de: work.title_de || "", description_de: work.description_de || "",
       title_es: work.title_es || "", description_es: work.description_es || "",
@@ -248,13 +328,28 @@ export default function AdminDashboardPage() {
   const handleSaveEditWork = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase || !editingWorkId) return;
-    const { link, github, image, tags, ...rest } = editWorkForm;
+    const { link, github, image, tags, additional_images, ...rest } = editWorkForm;
     const data = cleanObj({
       ...rest,
       link, github, image,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     });
     await supabase.from("projects").update(data).eq("id", editingWorkId);
+    
+    // Manage additional images
+    await supabase.from("project_images").delete().eq("project_id", editingWorkId);
+    if (additional_images) {
+      const imageUrls = additional_images.split(",").map(url => url.trim()).filter(Boolean);
+      if (imageUrls.length > 0) {
+        const inserts = imageUrls.map((url, i) => ({
+          project_id: editingWorkId,
+          image_url: url,
+          order_index: i
+        }));
+        await supabase.from("project_images").insert(inserts);
+      }
+    }
+    
     setEditingWorkId(null);
     await refreshWorks();
   };
@@ -295,7 +390,13 @@ export default function AdminDashboardPage() {
     const maxOrder = blogs.reduce((max, b) => Math.max(max, b.order_index ?? 0), -1);
     const data = cleanObj({ ...blogForm, date, order_index: maxOrder + 1 });
     await supabase.from("blogs").insert(data);
-    setBlogForm({ title: "", excerpt: "", content: "", date: "", read_time: "", title_tr: "", excerpt_tr: "", content_tr: "", title_de: "", excerpt_de: "", content_de: "", title_es: "", excerpt_es: "", content_es: "" });
+    setBlogForm({ 
+      title: "", excerpt: "", content: "", date: "", read_time: "", image_url: "",
+      linked_project_id: "", linked_experience_id: "", linked_education_id: "", linked_skill_category_ids: [], linked_language_id: "", linked_activity_id: "", linked_certification_id: "",
+      title_tr: "", excerpt_tr: "", content_tr: "", 
+      title_de: "", excerpt_de: "", content_de: "", 
+      title_es: "", excerpt_es: "", content_es: "" 
+    });
     setIsAddingBlog(false);
     setBlogLangTab("default");
     await refreshBlogs();
@@ -307,6 +408,14 @@ export default function AdminDashboardPage() {
       title: blog.title || "", excerpt: blog.excerpt || "",
       content: blog.content || "", date: blog.date || "",
       read_time: blog.read_time || "",
+      image_url: blog.image_url || "",
+      linked_project_id: blog.linked_project_id || "",
+      linked_experience_id: blog.linked_experience_id || "",
+      linked_education_id: blog.linked_education_id || "",
+      linked_skill_category_ids: blog.linked_skill_category_ids || [],
+      linked_language_id: blog.linked_language_id || "",
+      linked_activity_id: blog.linked_activity_id || "",
+      linked_certification_id: blog.linked_certification_id || "",
       title_tr: blog.title_tr || "", excerpt_tr: blog.excerpt_tr || "", content_tr: blog.content_tr || "",
       title_de: blog.title_de || "", excerpt_de: blog.excerpt_de || "", content_de: blog.content_de || "",
       title_es: blog.title_es || "", excerpt_es: blog.excerpt_es || "", content_es: blog.content_es || "",
@@ -460,9 +569,82 @@ export default function AdminDashboardPage() {
                               <input value={workForm.github} onChange={(e) => setWorkForm({ ...workForm, github: e.target.value })} className={inputClass} placeholder="https://github.com/..." />
                             </div>
                           </div>
+                          <details className="group rounded-xl border bg-card overflow-hidden">
+                            <summary className="flex cursor-pointer items-center justify-between bg-muted/40 px-4 py-3 text-sm font-medium hover:bg-muted/60 transition-colors">
+                              <span>Link Related Items</span>
+                              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                            </summary>
+                            <div className="p-4 space-y-4 border-t border-border/50">
+                              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Experience</label>
+                                  <select value={workForm.linked_experience_id} onChange={(e) => setWorkForm({ ...workForm, linked_experience_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {experiences.map(e => <option key={e.id} value={e.id}>{e.title} at {e.company}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Education</label>
+                                  <select value={workForm.linked_education_id} onChange={(e) => setWorkForm({ ...workForm, linked_education_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {educations.map(e => <option key={e.id} value={e.id}>{e.university}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Skill Categories</label>
+                                  <div className="flex flex-wrap gap-2 p-2 rounded-md border bg-background/50 max-h-40 overflow-y-auto">
+                                    {skillCategories.map(s => {
+                                      const isSelected = workForm.linked_skill_category_ids?.includes(s.id);
+                                      return (
+                                        <label key={s.id} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors border select-none", isSelected ? "bg-primary/10 border-primary/50 text-primary" : "bg-muted/50 hover:bg-muted border-transparent")}>
+                                          <input 
+                                            type="checkbox" 
+                                            className="hidden" 
+                                            checked={isSelected || false}
+                                            onChange={(e) => {
+                                              let ids = workForm.linked_skill_category_ids || [];
+                                              if (e.target.checked) ids = [...ids, s.id];
+                                              else ids = ids.filter(id => id !== s.id);
+                                              setWorkForm({...workForm, linked_skill_category_ids: ids});
+                                            }}
+                                          />
+                                          {s.title}
+                                        </label>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Language</label>
+                                  <select value={workForm.linked_language_id} onChange={(e) => setWorkForm({ ...workForm, linked_language_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {languages.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Activity</label>
+                                  <select value={workForm.linked_activity_id} onChange={(e) => setWorkForm({ ...workForm, linked_activity_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {activities.map(a => <option key={a.id} value={a.id}>{a.organization}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Certification</label>
+                                  <select value={workForm.linked_certification_id} onChange={(e) => setWorkForm({ ...workForm, linked_certification_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {certifications.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          </details>
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Tags (comma separated)</label>
                             <input value={workForm.tags} onChange={(e) => setWorkForm({ ...workForm, tags: e.target.value })} className={inputClass} placeholder="React, Tailwind" />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Additional Images (comma separated URLs)</label>
+                            <input value={workForm.additional_images} onChange={(e) => setWorkForm({ ...workForm, additional_images: e.target.value })} className={inputClass} placeholder="https://image1.com, https://image2.com" />
                           </div>
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Description *</label>
@@ -517,9 +699,82 @@ export default function AdminDashboardPage() {
                               <input value={editWorkForm.github} onChange={(e) => setEditWorkForm({ ...editWorkForm, github: e.target.value })} className={inputClass} />
                             </div>
                           </div>
+                          <details className="group rounded-xl border bg-card overflow-hidden">
+                            <summary className="flex cursor-pointer items-center justify-between bg-muted/40 px-4 py-3 text-sm font-medium hover:bg-muted/60 transition-colors">
+                              <span>Link Related Items</span>
+                              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                            </summary>
+                            <div className="p-4 space-y-4 border-t border-border/50">
+                              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Experience</label>
+                                  <select value={editWorkForm.linked_experience_id} onChange={(e) => setEditWorkForm({ ...editWorkForm, linked_experience_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {experiences.map(e => <option key={e.id} value={e.id}>{e.title} at {e.company}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Education</label>
+                                  <select value={editWorkForm.linked_education_id} onChange={(e) => setEditWorkForm({ ...editWorkForm, linked_education_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {educations.map(e => <option key={e.id} value={e.id}>{e.university}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Skill Categories</label>
+                                  <div className="flex flex-wrap gap-2 p-2 rounded-md border bg-background/50 max-h-40 overflow-y-auto">
+                                    {skillCategories.map(s => {
+                                      const isSelected = editWorkForm.linked_skill_category_ids?.includes(s.id);
+                                      return (
+                                        <label key={s.id} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors border select-none", isSelected ? "bg-primary/10 border-primary/50 text-primary" : "bg-muted/50 hover:bg-muted border-transparent")}>
+                                          <input 
+                                            type="checkbox" 
+                                            className="hidden" 
+                                            checked={isSelected || false}
+                                            onChange={(e) => {
+                                              let ids = editWorkForm.linked_skill_category_ids || [];
+                                              if (e.target.checked) ids = [...ids, s.id];
+                                              else ids = ids.filter(id => id !== s.id);
+                                              setEditWorkForm({...editWorkForm, linked_skill_category_ids: ids});
+                                            }}
+                                          />
+                                          {s.title}
+                                        </label>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Language</label>
+                                  <select value={editWorkForm.linked_language_id} onChange={(e) => setEditWorkForm({ ...editWorkForm, linked_language_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {languages.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Activity</label>
+                                  <select value={editWorkForm.linked_activity_id} onChange={(e) => setEditWorkForm({ ...editWorkForm, linked_activity_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {activities.map(a => <option key={a.id} value={a.id}>{a.organization}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Certification</label>
+                                  <select value={editWorkForm.linked_certification_id} onChange={(e) => setEditWorkForm({ ...editWorkForm, linked_certification_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {certifications.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          </details>
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Tags</label>
                             <input value={editWorkForm.tags} onChange={(e) => setEditWorkForm({ ...editWorkForm, tags: e.target.value })} className={inputClass} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Additional Images (comma separated URLs)</label>
+                            <input value={editWorkForm.additional_images} onChange={(e) => setEditWorkForm({ ...editWorkForm, additional_images: e.target.value })} className={inputClass} />
                           </div>
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Description *</label>
@@ -631,7 +886,7 @@ export default function AdminDashboardPage() {
 
                       {blogLangTab === "default" ? (
                         <>
-                          <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="grid gap-4 sm:grid-cols-3">
                             <div className="space-y-1">
                               <label className="text-xs font-medium text-muted-foreground">Title *</label>
                               <input required value={blogForm.title} onChange={(e) => setBlogForm({ ...blogForm, title: e.target.value })} className={inputClass} placeholder="Post Title" />
@@ -640,7 +895,89 @@ export default function AdminDashboardPage() {
                               <label className="text-xs font-medium text-muted-foreground">Read Time</label>
                               <input value={blogForm.read_time} onChange={(e) => setBlogForm({ ...blogForm, read_time: e.target.value })} className={inputClass} placeholder="5 min read" />
                             </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Image URL</label>
+                              <ImageInputWithRecent value={blogForm.image_url} onChange={(val) => setBlogForm({ ...blogForm, image_url: val })} className={inputClass} placeholder="https://..." />
+                            </div>
                           </div>
+                          
+                          <details className="group rounded-xl border bg-card overflow-hidden">
+                            <summary className="flex cursor-pointer items-center justify-between bg-muted/40 px-4 py-3 text-sm font-medium hover:bg-muted/60 transition-colors">
+                              <span>Link Related Items</span>
+                              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                            </summary>
+                            <div className="p-4 space-y-4 border-t border-border/50">
+                              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Project</label>
+                                  <select value={blogForm.linked_project_id} onChange={(e) => setBlogForm({ ...blogForm, linked_project_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {works.map(w => <option key={w.id} value={w.id}>{w.title}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Experience</label>
+                                  <select value={blogForm.linked_experience_id} onChange={(e) => setBlogForm({ ...blogForm, linked_experience_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {experiences.map(e => <option key={e.id} value={e.id}>{e.title} at {e.company}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Education</label>
+                                  <select value={blogForm.linked_education_id} onChange={(e) => setBlogForm({ ...blogForm, linked_education_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {educations.map(e => <option key={e.id} value={e.id}>{e.university}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Skill Categories</label>
+                                  <div className="flex flex-wrap gap-2 p-2 rounded-md border bg-background/50 max-h-40 overflow-y-auto">
+                                    {skillCategories.map(s => {
+                                      const isSelected = blogForm.linked_skill_category_ids?.includes(s.id);
+                                      return (
+                                        <label key={s.id} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors border select-none", isSelected ? "bg-primary/10 border-primary/50 text-primary" : "bg-muted/50 hover:bg-muted border-transparent")}>
+                                          <input 
+                                            type="checkbox" 
+                                            className="hidden" 
+                                            checked={isSelected || false}
+                                            onChange={(e) => {
+                                              let ids = blogForm.linked_skill_category_ids || [];
+                                              if (e.target.checked) ids = [...ids, s.id];
+                                              else ids = ids.filter(id => id !== s.id);
+                                              setBlogForm({...blogForm, linked_skill_category_ids: ids});
+                                            }}
+                                          />
+                                          {s.title}
+                                        </label>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Language</label>
+                                  <select value={blogForm.linked_language_id} onChange={(e) => setBlogForm({ ...blogForm, linked_language_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {languages.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Activity</label>
+                                  <select value={blogForm.linked_activity_id} onChange={(e) => setBlogForm({ ...blogForm, linked_activity_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {activities.map(a => <option key={a.id} value={a.id}>{a.organization}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Certification</label>
+                                  <select value={blogForm.linked_certification_id} onChange={(e) => setBlogForm({ ...blogForm, linked_certification_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {certifications.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          </details>
+
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Excerpt *</label>
                             <input required value={blogForm.excerpt} onChange={(e) => setBlogForm({ ...blogForm, excerpt: e.target.value })} className={inputClass} placeholder="Short summary" />
@@ -684,7 +1021,7 @@ export default function AdminDashboardPage() {
 
                       {editBlogLangTab === "default" ? (
                         <>
-                          <div className="grid gap-4 sm:grid-cols-2">
+                          <div className="grid gap-4 sm:grid-cols-3">
                             <div className="space-y-1">
                               <label className="text-xs font-medium text-muted-foreground">Title *</label>
                               <input required value={editBlogForm.title} onChange={(e) => setEditBlogForm({ ...editBlogForm, title: e.target.value })} className={inputClass} />
@@ -693,7 +1030,89 @@ export default function AdminDashboardPage() {
                               <label className="text-xs font-medium text-muted-foreground">Read Time</label>
                               <input value={editBlogForm.read_time} onChange={(e) => setEditBlogForm({ ...editBlogForm, read_time: e.target.value })} className={inputClass} />
                             </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">Image URL</label>
+                              <ImageInputWithRecent value={editBlogForm.image_url} onChange={(val) => setEditBlogForm({ ...editBlogForm, image_url: val })} className={inputClass} />
+                            </div>
                           </div>
+
+                          <details className="group rounded-xl border bg-card overflow-hidden">
+                            <summary className="flex cursor-pointer items-center justify-between bg-muted/40 px-4 py-3 text-sm font-medium hover:bg-muted/60 transition-colors">
+                              <span>Link Related Items</span>
+                              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                            </summary>
+                            <div className="p-4 space-y-4 border-t border-border/50">
+                              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Project</label>
+                                  <select value={editBlogForm.linked_project_id} onChange={(e) => setEditBlogForm({ ...editBlogForm, linked_project_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {works.map(w => <option key={w.id} value={w.id}>{w.title}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Experience</label>
+                                  <select value={editBlogForm.linked_experience_id} onChange={(e) => setEditBlogForm({ ...editBlogForm, linked_experience_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {experiences.map(e => <option key={e.id} value={e.id}>{e.title} at {e.company}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Education</label>
+                                  <select value={editBlogForm.linked_education_id} onChange={(e) => setEditBlogForm({ ...editBlogForm, linked_education_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {educations.map(e => <option key={e.id} value={e.id}>{e.university}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1 sm:col-span-2 lg:col-span-3">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Skill Categories</label>
+                                  <div className="flex flex-wrap gap-2 p-2 rounded-md border bg-background/50 max-h-40 overflow-y-auto">
+                                    {skillCategories.map(s => {
+                                      const isSelected = editBlogForm.linked_skill_category_ids?.includes(s.id);
+                                      return (
+                                        <label key={s.id} className={cn("flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-colors border select-none", isSelected ? "bg-primary/10 border-primary/50 text-primary" : "bg-muted/50 hover:bg-muted border-transparent")}>
+                                          <input 
+                                            type="checkbox" 
+                                            className="hidden" 
+                                            checked={isSelected || false}
+                                            onChange={(e) => {
+                                              let ids = editBlogForm.linked_skill_category_ids || [];
+                                              if (e.target.checked) ids = [...ids, s.id];
+                                              else ids = ids.filter(id => id !== s.id);
+                                              setEditBlogForm({...editBlogForm, linked_skill_category_ids: ids});
+                                            }}
+                                          />
+                                          {s.title}
+                                        </label>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Language</label>
+                                  <select value={editBlogForm.linked_language_id} onChange={(e) => setEditBlogForm({ ...editBlogForm, linked_language_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {languages.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Activity</label>
+                                  <select value={editBlogForm.linked_activity_id} onChange={(e) => setEditBlogForm({ ...editBlogForm, linked_activity_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {activities.map(a => <option key={a.id} value={a.id}>{a.organization}</option>)}
+                                  </select>
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-xs font-medium text-muted-foreground">Link Certification</label>
+                                  <select value={editBlogForm.linked_certification_id} onChange={(e) => setEditBlogForm({ ...editBlogForm, linked_certification_id: e.target.value })} className={inputClass}>
+                                    <option value="">(None)</option>
+                                    {certifications.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          </details>
+
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Date</label>
                             <input value={editBlogForm.date} onChange={(e) => setEditBlogForm({ ...editBlogForm, date: e.target.value })} className={inputClass} />
@@ -900,6 +1319,15 @@ export default function AdminDashboardPage() {
                     { key: "issue_date", label: "Issue Date", placeholder: "Jan 2024" },
                     { key: "icon_url", label: "Icon URL", placeholder: "https://..." },
                     { key: "link_url", label: "Certificate Link", placeholder: "https://..." },
+                    { 
+                      key: "skills", 
+                      label: "Related Skill Categories", 
+                      type: "multi_select",
+                      options: skillCategories.map(s => ({ label: s.title, value: s.id })),
+                      junctionTable: "certification_skills",
+                      junctionForeignKey: "certification_id",
+                      junctionOtherKey: "skill_category_id"
+                    },
                   ]}
                 />
               )}

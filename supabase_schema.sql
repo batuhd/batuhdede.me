@@ -105,6 +105,21 @@ CREATE TABLE public.educations (
     start_date text,
     end_date text,
     logo_url text,
+    is_current boolean DEFAULT false,
+    gpa text,
+    -- Translations
+    university_tr text,
+    university_de text,
+    university_es text,
+    degree_tr text,
+    degree_de text,
+    degree_es text,
+    major_tr text,
+    major_de text,
+    major_es text,
+    location_tr text,
+    location_de text,
+    location_es text,
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -114,6 +129,9 @@ CREATE TABLE public.languages (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     name text NOT NULL,
     level text,
+    name_tr text,
+    name_de text,
+    name_es text,
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -158,6 +176,13 @@ CREATE TABLE public.certifications (
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Certification Skills (Junction Table)
+CREATE TABLE public.certification_skills (
+    certification_id uuid NOT NULL REFERENCES public.certifications(id) ON DELETE CASCADE,
+    skill_category_id uuid NOT NULL REFERENCES public.skill_categories(id) ON DELETE CASCADE,
+    CONSTRAINT certification_skills_pkey PRIMARY KEY (certification_id, skill_category_id)
+);
+
 -- Projects (Works)
 CREATE TABLE public.projects (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -173,6 +198,16 @@ CREATE TABLE public.projects (
     description_de text,
     title_es text,
     description_es text,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Project Images
+CREATE TABLE public.project_images (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+    image_url text NOT NULL,
+    caption text,
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -194,6 +229,9 @@ CREATE TABLE public.blogs (
     title_es text,
     excerpt_es text,
     content_es text,
+    linked_project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
+    linked_experience_id uuid REFERENCES public.experiences(id) ON DELETE SET NULL,
+    linked_education_id uuid REFERENCES public.educations(id) ON DELETE SET NULL,
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -223,13 +261,30 @@ ALTER TABLE public.certifications ADD CONSTRAINT check_cert_link_url CHECK (link
 ALTER TABLE public.projects ADD CONSTRAINT check_project_link CHECK (link IS NULL OR link ~ '^https?://|^\/');
 ALTER TABLE public.projects ADD CONSTRAINT check_project_github CHECK (github IS NULL OR github ~ '^https?://|^\/');
 ALTER TABLE public.projects ADD CONSTRAINT check_project_image CHECK (image IS NULL OR image ~ '^https?://|^\/');
+ALTER TABLE public.project_images ADD CONSTRAINT check_project_images_url CHECK (image_url ~ '^https?://|^\/');
 ALTER TABLE public.social_links ADD CONSTRAINT check_social_url CHECK (url IS NULL OR url ~ '^https?://|^mailto:');
 
 -- Content Length Limits to prevent DoS (payload size)
 ALTER TABLE public.about_me ADD CONSTRAINT check_bio_length CHECK (char_length(bio) <= 5000);
+ALTER TABLE public.about_me ADD CONSTRAINT check_bio_tr_length CHECK (bio_tr IS NULL OR char_length(bio_tr) <= 5000);
+ALTER TABLE public.about_me ADD CONSTRAINT check_bio_de_length CHECK (bio_de IS NULL OR char_length(bio_de) <= 5000);
+ALTER TABLE public.about_me ADD CONSTRAINT check_bio_es_length CHECK (bio_es IS NULL OR char_length(bio_es) <= 5000);
+
 ALTER TABLE public.experiences ADD CONSTRAINT check_exp_desc_length CHECK (char_length(description) <= 5000);
+ALTER TABLE public.experiences ADD CONSTRAINT check_exp_desc_tr_length CHECK (description_tr IS NULL OR char_length(description_tr) <= 5000);
+ALTER TABLE public.experiences ADD CONSTRAINT check_exp_desc_de_length CHECK (description_de IS NULL OR char_length(description_de) <= 5000);
+ALTER TABLE public.experiences ADD CONSTRAINT check_exp_desc_es_length CHECK (description_es IS NULL OR char_length(description_es) <= 5000);
+
 ALTER TABLE public.activities ADD CONSTRAINT check_act_desc_length CHECK (char_length(description) <= 5000);
+ALTER TABLE public.activities ADD CONSTRAINT check_act_desc_tr_length CHECK (description_tr IS NULL OR char_length(description_tr) <= 5000);
+ALTER TABLE public.activities ADD CONSTRAINT check_act_desc_de_length CHECK (description_de IS NULL OR char_length(description_de) <= 5000);
+ALTER TABLE public.activities ADD CONSTRAINT check_act_desc_es_length CHECK (description_es IS NULL OR char_length(description_es) <= 5000);
+
 ALTER TABLE public.projects ADD CONSTRAINT check_project_desc_length CHECK (char_length(description) <= 5000);
+ALTER TABLE public.projects ADD CONSTRAINT check_project_desc_tr_length CHECK (description_tr IS NULL OR char_length(description_tr) <= 5000);
+ALTER TABLE public.projects ADD CONSTRAINT check_project_desc_de_length CHECK (description_de IS NULL OR char_length(description_de) <= 5000);
+ALTER TABLE public.projects ADD CONSTRAINT check_project_desc_es_length CHECK (description_es IS NULL OR char_length(description_es) <= 5000);
+
 ALTER TABLE public.blogs ADD CONSTRAINT check_blog_excerpt_length CHECK (char_length(excerpt) <= 2000);
 ALTER TABLE public.blogs ADD CONSTRAINT check_blog_content_length CHECK (char_length(content) <= 100000);
 
@@ -245,7 +300,9 @@ ALTER TABLE public.educations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.languages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.certifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.certification_skills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.project_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
 
@@ -258,15 +315,14 @@ CREATE POLICY "Public read" ON public.educations FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.languages FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.activities FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.certifications FOR SELECT USING (true);
+CREATE POLICY "Public read" ON public.certification_skills FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.projects FOR SELECT USING (true);
+CREATE POLICY "Public read" ON public.project_images FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.blogs FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.social_links FOR SELECT USING (true);
 
 -- ADMIN-ONLY WRITE (locked to site owner)
 -- ⚠️ SETUP REQUIRED: Replace YOUR-USER-UUID-HERE with your Supabase Auth user ID.
--- To find your user ID, run this query after creating your account:
---   SELECT id FROM auth.users;
--- Then replace every occurrence of YOUR-USER-UUID-HERE below with that UUID.
 
 CREATE POLICY "Admin insert" ON public.section_order FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin update" ON public.section_order FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
@@ -300,9 +356,17 @@ CREATE POLICY "Admin insert" ON public.certifications FOR INSERT WITH CHECK (aut
 CREATE POLICY "Admin update" ON public.certifications FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin delete" ON public.certifications FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
+CREATE POLICY "Admin insert" ON public.certification_skills FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.certification_skills FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.certification_skills FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
 CREATE POLICY "Admin insert" ON public.projects FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin update" ON public.projects FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin delete" ON public.projects FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
+CREATE POLICY "Admin insert" ON public.project_images FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.project_images FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.project_images FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
 CREATE POLICY "Admin insert" ON public.blogs FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin update" ON public.blogs FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
@@ -311,6 +375,3 @@ CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING (auth.uid() = 'YOU
 CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
-
-
-
