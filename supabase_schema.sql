@@ -246,6 +246,34 @@ CREATE TABLE public.social_links (
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Contact Emails (for contact popup)
+-- Migration: Add translation columns if table already exists without them
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'contact_emails') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contact_emails' AND column_name = 'label_tr') THEN
+            ALTER TABLE public.contact_emails ADD COLUMN label_tr text;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contact_emails' AND column_name = 'label_de') THEN
+            ALTER TABLE public.contact_emails ADD COLUMN label_de text;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contact_emails' AND column_name = 'label_es') THEN
+            ALTER TABLE public.contact_emails ADD COLUMN label_es text;
+        END IF;
+    END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS public.contact_emails (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    label text NOT NULL,
+    label_tr text,
+    label_de text,
+    label_es text,
+    email text NOT NULL,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- =============================================
 -- DATA VALIDATION CONSTRAINTS (Security Hardening)
 -- =============================================
@@ -305,6 +333,7 @@ ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.contact_emails ENABLE ROW LEVEL SECURITY;
 
 -- PUBLIC READ
 CREATE POLICY "Public read" ON public.section_order FOR SELECT USING (true);
@@ -320,6 +349,7 @@ CREATE POLICY "Public read" ON public.projects FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.project_images FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.blogs FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.social_links FOR SELECT USING (true);
+CREATE POLICY "Public read" ON public.contact_emails FOR SELECT USING (true);
 
 -- ADMIN-ONLY WRITE (locked to site owner)
 -- ⚠️ SETUP REQUIRED: Replace YOUR-USER-UUID-HERE with your Supabase Auth user ID.
@@ -375,6 +405,10 @@ CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING (auth.uid() = 'YOU
 CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
+CREATE POLICY "Admin insert" ON public.contact_emails FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.contact_emails FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.contact_emails FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
 -- =============================================
 -- FUNCTIONS & TRIGGERS

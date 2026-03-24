@@ -21,15 +21,20 @@ export default function AdminLoginPage() {
   const renderTurnstile = () => {
     if ((window as any).turnstile && turnstileRef.current && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
       try {
-        // Clear it if it already has contents (hot-reload)
-        turnstileRef.current.innerHTML = "";
+        // Clear previous content safely (XSS prevention)
+        while (turnstileRef.current.firstChild) {
+          turnstileRef.current.removeChild(turnstileRef.current.firstChild);
+        }
         (window as any).turnstile.render(turnstileRef.current, {
           sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
           callback: (token: string) => setCaptchaToken(token),
           theme: "light",
         });
       } catch (e) {
-        console.error("Turnstile render error", e);
+        // Silent fail for production, log only in development
+        if (process.env.NODE_ENV === "development") {
+          console.error("Turnstile render error", e);
+        }
       }
     }
   };

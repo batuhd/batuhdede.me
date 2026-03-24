@@ -23,6 +23,9 @@ import {
   Youtube,
   Dribbble,
   Link2,
+  Mail,
+  Copy,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { userConfig } from "@/config/user";
@@ -131,13 +134,18 @@ export function Dock() {
   const [mounted, setMounted] = useState(false);
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const [langModalOpen, setLangModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const [socialItems, setSocialItems] = useState<NavItem[]>(FALLBACK_SOCIAL);
+  const [emailItems, setEmailItems] = useState<{ label: string; email: string }[]>([]);
 
   // Social redirect warning state
   const [pendingLink, setPendingLink] = useState<string | null>(null);
   const [pendingLabel, setPendingLabel] = useState<string>("");
+
+  // Copy feedback state
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -158,8 +166,26 @@ export function Dock() {
     fetchLinks();
   }, []);
 
+  useEffect(() => {
+    if (!supabase) return;
+    const fetchEmails = async () => {
+      if (!supabase) return;
+      const { data } = await supabase.from("contact_emails").select("*").order("order_index", { ascending: true });
+      if (data) {
+        setEmailItems(
+          data.map((item: any) => ({
+            label: item[`label_${locale}`] || item.label,
+            email: item.email,
+          }))
+        );
+      }
+    };
+    fetchEmails();
+  }, [locale]);
+
   const closeMenus = useCallback(() => {
     setLangModalOpen(false);
+    setContactModalOpen(false);
     setMoreMenuOpen(false);
   }, []);
 
@@ -183,6 +209,19 @@ export function Dock() {
     setPendingLink(href);
     setPendingLabel(label);
     setMoreMenuOpen(false);
+    setContactModalOpen(false);
+  };
+
+  const handleCopyEmail = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiedEmail(email);
+      setTimeout(() => setCopiedEmail(null), 2000);
+    } catch (err) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to copy email:", err);
+      }
+    }
   };
 
   const confirmRedirect = () => {
@@ -220,29 +259,24 @@ export function Dock() {
                 />
               </Link>
             ))}
+            {/* Contact - opens modal */}
+            <button
+              onClick={() => {
+                setContactModalOpen(true);
+                setMoreMenuOpen(false);
+              }}
+            >
+              <DockIcon
+                icon={Mail}
+                label={t("nav.contact")}
+                isActive={false}
+                hoveredLabel={hoveredLabel}
+                onHover={setHoveredLabel}
+              />
+            </button>
           </div>
 
           <div className="h-6 sm:h-8 w-px bg-border flex-shrink-0" />
-
-          {/* Socials - desktop only */}
-          <div className="hidden sm:flex items-center gap-2">
-            {socialItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => handleSocialClick(item.href, item.label)}
-              >
-                <DockIcon
-                  icon={item.icon}
-                  label={item.label}
-                  isActive={false}
-                  hoveredLabel={hoveredLabel}
-                  onHover={setHoveredLabel}
-                />
-              </button>
-            ))}
-          </div>
-
-          <div className="hidden sm:block h-8 w-px bg-border flex-shrink-0" />
 
           {/* Credits - desktop only */}
           <div className="hidden sm:flex items-center gap-2">
@@ -308,18 +342,18 @@ export function Dock() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute -top-[260px] right-0 w-48 rounded-xl border border-border/50 bg-background/95 p-2 shadow-xl backdrop-blur-xl"
+                  className="absolute -top-[140px] right-0 w-48 rounded-xl border border-border/50 bg-background/95 p-2 shadow-xl backdrop-blur-xl"
                 >
-                  {socialItems.map((item) => (
-                    <button
-                      key={item.label}
-                      onClick={() => handleSocialClick(item.href, item.label)}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => {
+                      setContactModalOpen(true);
+                      setMoreMenuOpen(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Mail className="h-4 w-4" />
+                    {t("nav.contact")}
+                  </button>
                   <div className="my-1 h-px bg-border" />
                   <Link
                     href="/credits"
@@ -396,6 +430,98 @@ export function Dock() {
                     <span>{item.name}</span>
                   </button>
                 ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Contact Modal */}
+      <AnimatePresence>
+        {contactModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-background/60 backdrop-blur-sm px-4"
+            onClick={() => setContactModalOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <Mail className="h-5 w-5 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold tracking-tight">
+                    {t("nav.contact")}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setContactModalOpen(false)}
+                  className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto space-y-4">
+                {/* Email Addresses Section */}
+                {emailItems.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Addresses</h4>
+                    <div className="space-y-2">
+                      {emailItems.map((item) => (
+                        <div
+                          key={item.email}
+                          className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-sm bg-muted/50"
+                        >
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span className="font-medium text-foreground truncate">{item.label}</span>
+                            <span className="text-xs text-muted-foreground truncate">{item.email}</span>
+                          </div>
+                          <button
+                            onClick={() => handleCopyEmail(item.email)}
+                            className="flex-shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                            title="Copy email address"
+                          >
+                            {copiedEmail === item.email ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Social Links Section */}
+                {socialItems.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Social Links</h4>
+                    <div className="space-y-2">
+                      {socialItems.map((item) => (
+                        <button
+                          key={item.label}
+                          onClick={() => handleSocialClick(item.href, item.label)}
+                          className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all active:scale-[0.98] bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>

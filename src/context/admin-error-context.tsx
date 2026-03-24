@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useRef, useEffect, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { ShieldX } from "lucide-react";
+import { toast } from "sonner";
 
 interface AdminErrorContextType {
   /** Call this after any Supabase operation to check for errors. If unauthorized, shows the 401 screen. */
@@ -22,6 +23,17 @@ export function AdminErrorProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [errorInfo, setErrorInfo] = useState<{ operation: string; message: string; code: string } | null>(null);
   const [countdown, setCountdown] = useState(5);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   const handleOperationError = useCallback((error: any, operationName: string): boolean => {
     if (!error) return false;
@@ -41,15 +53,25 @@ export function AdminErrorProvider({ children }: { children: ReactNode }) {
       message.toLowerCase().includes("new row violates row-level security");
 
     if (isUnauthorized) {
+      // Clear any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      
+      setCountdown(5);
       setErrorInfo({ operation: operationName, message, code: String(code) });
 
       // Start countdown and auto-logout
       let count = 5;
-      const interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         count--;
         setCountdown(count);
         if (count <= 0) {
-          clearInterval(interval);
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
           if (supabase) {
             supabase.auth.signOut().then(() => {
               fetch("/api/auth/logout", { method: "POST" }).then(() => {
@@ -65,7 +87,9 @@ export function AdminErrorProvider({ children }: { children: ReactNode }) {
       return true;
     }
 
-    return false;
+    // Show error toast for non-auth errors
+    toast.error(`${operationName} başarısız: ${message}`);
+    return true;
   }, [router]);
 
   return (

@@ -124,8 +124,51 @@ Unlike typical starter templates, this project implements a rigorous, multi-laye
 - **Sign-up disabled** - no one can create accounts on your Supabase instance.
 - **PostgreSQL Triggers & Limits**: Database resource quotas prevent spam creation and URL validation constraints block cross-site exploits.
 
-### ⚡ Performance
+### 🔔 Smart Toast Notification System
 
+Real-time visual feedback for all admin operations with a polished, non-intrusive notification system:
+
+- **Success/Error Feedback**: Instant confirmation for saves, updates, and deletions
+- **Fixed Positioning**: Bottom-right corner with 3-second auto-dismiss
+- **Solid Design**: Non-transparent backgrounds matching your theme
+- **Multilingual**: Toast messages in your selected language
+
+### 📝 Advanced Markdown Editor
+
+A full-featured WYSIWYG markdown editor for blog posts with live preview and comprehensive help:
+
+- **Rich Toolbar**: Bold, italic, headings, lists, links, inline code, code blocks, tables, horizontal rules
+- **Live Preview**: Side-by-side editing mode to see rendered output instantly
+- **Built-in Help Guide**: Comprehensive syntax reference with examples for all supported formats
+- **XSS Protection**: Automatic sanitization via `rehype-sanitize`
+- **Full Multilingual Support**: Available in EN/TR/DE/ES tabs for both create and edit modes
+
+### 📧 Contact Email Management
+
+Manage multiple contact emails directly from the admin panel with smart organization:
+
+- **Multiple Email Types**: Personal, School, Work, Club, and custom labels
+- **Multilingual Labels**: Each email label can be translated (label_tr, label_de, label_es)
+- **Integrated Contact Modal**: Reorganized dock navigation with Contact button opening a popup
+- **Smart Display**: Shows both social links and contact emails in the modal
+- **One-Click Copy**: Copy email addresses with visual feedback
+
+### 🔒 Enhanced Security Layer
+
+Additional security measures beyond the enterprise-grade foundation:
+
+- **Input Validation**: Zod schemas validate all API inputs and form submissions
+- **URL Sanitization**: `sanitizeUrl` helper prevents XSS via malicious URLs
+- **Safe Image Loading**: All image URLs validated before rendering (info.tsx, blog, etc.)
+- **Production Logging**: Console logs hidden in production, visible only in development
+- **Type Safety**: Centralized TypeScript interfaces prevent runtime errors
+
+### ⚡ Performance Optimizations
+
+- **Eliminated IIFEs**: Replaced immediately-invoked functions with `useMemo` for better performance
+- **Pre-calculated Maps**: Related items cached to avoid repeated filtering on every render
+- **Type Safety**: Specific types (Project[], Blog[]) instead of any[] for faster operations
+- **Memory Management**: Proper cleanup in admin-error-context prevents memory leaks
 - Server/Client component splitting with Next.js App Router
 - Vercel Speed Insights & Analytics integration
 - Optimized image loading with `next/image`
@@ -144,6 +187,9 @@ Unlike typical starter templates, this project implements a rigorous, multi-laye
 | **Animations**      | [Framer Motion](https://www.framer.com/motion/)                      | 12      |
 | **Database & Auth** | [Supabase](https://supabase.com/) (PostgreSQL + Auth + RLS)          | Latest  |
 | **Security**        | Cloudflare Turnstile, Next.js Middleware, CSP                        | Latest  |
+| **Validation**      | [Zod](https://zod.dev/)                                              | 3.23+   |
+| **Notifications**   | [Sonner](https://sonner.emilkowal.ski/)                              | Latest  |
+| **Markdown**        | [react-markdown](https://github.com/remarkjs/react-markdown) + [rehype-sanitize](https://github.com/rehypejs/rehype-sanitize) | Latest |
 | **Hosting**         | [Vercel](https://vercel.com/)                                        | -       |
 
 ---
@@ -169,7 +215,8 @@ Unlike typical starter templates, this project implements a rigorous, multi-laye
     │
     ├── components/
     │   ├── admin/
-    │   │   └── admin-tabs.tsx   # CMS forms: About, Skills, CRUD, Social, Layout
+    │   │   ├── admin-tabs.tsx   # CMS forms: About, Skills, CRUD, Social, Layout, Contact Emails
+    │   │   └── markdown-editor.tsx  # 🆕 Rich markdown editor with toolbar & preview
     │   ├── home/
     │   │   ├── info.tsx         # Hero section (name, photo, tagline)
     │   │   ├── about.tsx        # Bio + custom stats
@@ -191,16 +238,19 @@ Unlike typical starter templates, this project implements a rigorous, multi-laye
     │   ├── language-context.tsx # Global language provider with getLocalized()
     │   └── site-data-context.tsx  # Supabase data cache (fetches all tables once)
     │
+    ├── types/
+    │   └── index.ts             # 🆕 Centralized TypeScript interfaces (Project, Blog, etc.)
+    │
     └── lib/
         ├── supabase.ts          # Supabase client singleton
-        └── utils.ts             # cn() helper for Tailwind class merging
+        └── utils.ts             # cn() + 🆕 sanitizeUrl(), isValidEmail(), stripHtml()
 ```
 
 ---
 
 ## 🗄️ Database Schema
 
-The Supabase database consists of **13 tables**, all with Row Level Security enabled:
+The Supabase database consists of **14 tables**, all with Row Level Security enabled:
 
 | Table                  | Purpose                         | Key Fields                                                            |
 | ---------------------- | ------------------------------- | --------------------------------------------------------------------- |
@@ -214,8 +264,9 @@ The Supabase database consists of **13 tables**, all with Row Level Security ena
 | `certification_skills` | Junction: certs ↔ skills        | certification_id, skill_category_id                                   |
 | `projects`             | Portfolio works                 | title, description, links, tags, image, linked\_\* IDs + translations |
 | `project_images`       | Multi-image gallery per project | project_id, image_url, order_index                                    |
-| `blogs`                | Blog posts                      | title, excerpt, content, date, image_url, linked\_\* IDs              |
+| `blogs`                | Blog posts (Markdown)           | title, excerpt, content, content_tr/de/es, date, image_url, linked\_\* IDs |
 | `social_links`         | Dock navigation links           | platform, URL                                                         |
+| `contact_emails`       | Contact email addresses         | label, email, label_tr/de/es, order_index                            |
 | `section_order`        | Homepage section ordering       | section_id, order_index                                               |
 
 ### Entity-Relationship Diagram
@@ -322,12 +373,15 @@ flowchart TD
 | Layer               | Protection                                                                                                                              |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | **RLS Policies**    | All tables have RLS enabled. Write operations (INSERT, UPDATE, DELETE) are locked to your specific user UUID.                           |
+| **Input Validation**| Zod schemas validate all API inputs and form data, preventing malformed requests.                                                       |
 | **Turnstile Protection**| Invisible captchas prevent automated script brute-forcing against the Next.js login API logic.                                |
 | **Rate Limiting**   | Track failed authentication requests by IP. Lock out abusive attackers instantly.                                                       |
 | **Authentication**  | Supabase Email Auth. Sign-ups are disabled so no one else can create an account. Admin API routes are protected by Next.js middleware using secure HttpOnly cookies. |
 | **SQL Injection**   | Impossible. Supabase uses PostgREST which parameterizes all queries automatically.                                                      |
+| **XSS Protection**  | `rehype-sanitize` sanitizes all markdown content. `sanitizeUrl()` validates all user-generated URLs before rendering.                  |
 | **Data Validation** | CHECK constraints enforce URL format validation and content length limits to prevent cross-site payload execution and DoS.              |
 | **CSP Headers**     | Mitigate XSS, script-injections, and unapproved external embeds centrally in `next.config.ts`.                                          |
+| **Safe Logging**    | Console error logs hidden in production (NODE_ENV check), visible only in development.                                                  |
 
 ---
 

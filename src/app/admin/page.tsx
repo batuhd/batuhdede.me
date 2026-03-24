@@ -24,15 +24,78 @@ import {
   MessageSquare,
   Award,
   Trophy,
+  Mail,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { AdminErrorProvider, useAdminError } from "@/context/admin-error-context";
 import type { User } from "@supabase/supabase-js";
-import { AdminAboutTab, AdminCrudTab, AdminSocialLinksTab, AdminSkillsTab, AdminLayoutTab, ImageInputWithRecent } from "@/components/admin/admin-tabs";
+import { AdminAboutTab, AdminCrudTab, AdminSocialLinksTab, AdminContactEmailsTab, AdminSkillsTab, AdminLayoutTab, ImageInputWithRecent } from "@/components/admin/admin-tabs";
+import { MarkdownEditor } from "@/components/admin/markdown-editor";
+import { Toaster, toast } from "sonner";
 
-type Tab = "works" | "blog" | "about" | "skills" | "experience" | "education" | "languages" | "activities" | "certifications" | "social" | "settings" | "section_layout";
+type Tab = "works" | "blog" | "about" | "skills" | "experience" | "education" | "languages" | "activities" | "certifications" | "social" | "contact_emails" | "settings" | "section_layout";
 type LangTab = "default" | "tr" | "de" | "es";
+
+// Type definitions for better type safety
+interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  link?: string;
+  github?: string;
+  image?: string;
+  tags?: string[];
+  title_tr?: string;
+  description_tr?: string;
+  title_de?: string;
+  description_de?: string;
+  title_es?: string;
+  description_es?: string;
+  order_index?: number;
+  linked_experience_id?: string;
+  linked_education_id?: string;
+  linked_skill_category_ids?: string[];
+  linked_language_id?: string;
+  linked_activity_id?: string;
+  linked_certification_id?: string;
+  additional_images?: string;
+}
+
+interface ProjectImage {
+  id: string;
+  project_id: string;
+  image_url: string;
+  caption?: string;
+  order_index?: number;
+}
+
+interface Blog {
+  id: string;
+  title: string;
+  excerpt?: string;
+  content?: string;
+  date?: string;
+  read_time?: string;
+  image_url?: string;
+  title_tr?: string;
+  excerpt_tr?: string;
+  content_tr?: string;
+  title_de?: string;
+  excerpt_de?: string;
+  content_de?: string;
+  title_es?: string;
+  excerpt_es?: string;
+  content_es?: string;
+  order_index?: number;
+  linked_project_id?: string;
+  linked_experience_id?: string;
+  linked_education_id?: string;
+  linked_skill_category_ids?: string[];
+  linked_language_id?: string;
+  linked_activity_id?: string;
+  linked_certification_id?: string;
+}
 
 const LANG_TABS: { key: LangTab; label: string }[] = [
   { key: "default", label: "EN (Default)" },
@@ -47,6 +110,7 @@ const SIDEBAR_CATEGORIES = [
     tabs: [
       { key: "about", icon: UserCircle, label: "About Me" },
       { key: "social", icon: Globe, label: "Social Links" },
+      { key: "contact_emails", icon: Mail, label: "Contact Emails" },
     ]
   },
   {
@@ -83,6 +147,8 @@ const inputClass =
 const PROJECT_FIELDS = [
   "title", "description", "link", "github", "image", "tags", "order_index",
   "title_tr", "description_tr", "title_de", "description_de", "title_es", "description_es",
+  "linked_experience_id", "linked_education_id", "linked_skill_category_ids",
+  "linked_language_id", "linked_activity_id", "linked_certification_id",
 ];
 const BLOG_FIELDS = [
   "title", "excerpt", "content", "date", "read_time", "image_url", "order_index",
@@ -239,11 +305,11 @@ function AdminDashboardContent() {
       if (worksRes.data) {
         let projectsData = worksRes.data;
         if (projectImagesRes.data) {
-          projectsData = projectsData.map((project: any) => {
-            const extraImages = projectImagesRes.data.filter((img: any) => img.project_id === project.id);
+          projectsData = projectsData.map((project: Project) => {
+            const extraImages = projectImagesRes.data?.filter((img: ProjectImage) => img.project_id === project.id) || [];
             return {
               ...project,
-              additional_images: extraImages.map((img: any) => img.image_url).join(", ")
+              additional_images: extraImages.map((img: ProjectImage) => img.image_url).join(", ")
             };
           });
         }
@@ -270,11 +336,11 @@ function AdminDashboardContent() {
     if (worksRes.data) {
       let projectsData = worksRes.data;
       if (projectImagesRes.data) {
-        projectsData = projectsData.map((project: any) => {
-          const extraImages = projectImagesRes.data.filter((img: any) => img.project_id === project.id);
+        projectsData = projectsData.map((project: Project) => {
+          const extraImages = projectImagesRes.data?.filter((img: ProjectImage) => img.project_id === project.id) || [];
           return {
             ...project,
-            additional_images: extraImages.map((img: any) => img.image_url).join(", ")
+            additional_images: extraImages.map((img: ProjectImage) => img.image_url).join(", ")
           };
         });
       }
@@ -331,9 +397,10 @@ function AdminDashboardContent() {
     setIsAddingWork(false);
     setWorkLangTab("default");
     await refreshWorks();
+    toast.success("Proje başarıyla eklendi");
   };
 
-  const handleEditWork = (work: any) => {
+  const handleEditWork = (work: Project) => {
     setEditingWorkId(work.id);
     setEditWorkForm({
       title: work.title || "", description: work.description || "",
@@ -385,6 +452,7 @@ function AdminDashboardContent() {
     
     setEditingWorkId(null);
     await refreshWorks();
+    toast.success("Proje başarıyla güncellendi");
   };
 
   const handleDeleteWork = async (id: string) => {
@@ -393,6 +461,7 @@ function AdminDashboardContent() {
     if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Proje Silme")) return;
     if (editingWorkId === id) setEditingWorkId(null);
     await refreshWorks();
+    toast.success("Proje başarıyla silindi");
   };
 
   const handleMoveWork = async (id: string, direction: "up" | "down") => {
@@ -435,9 +504,10 @@ function AdminDashboardContent() {
     setIsAddingBlog(false);
     setBlogLangTab("default");
     await refreshBlogs();
+    toast.success("Blog yazısı başarıyla eklendi");
   };
 
-  const handleEditBlog = (blog: any) => {
+  const handleEditBlog = (blog: Blog) => {
     setEditingBlogId(blog.id);
     setEditBlogForm({
       title: blog.title || "", excerpt: blog.excerpt || "",
@@ -467,6 +537,7 @@ function AdminDashboardContent() {
     if (handleOperationError(error || (!updateData || updateData.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Blog Yazısı Güncelleme")) return;
     setEditingBlogId(null);
     await refreshBlogs();
+    toast.success("Blog yazısı başarıyla güncellendi");
   };
 
   const handleDeleteBlog = async (id: string) => {
@@ -475,6 +546,7 @@ function AdminDashboardContent() {
     if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Blog Yazısı Silme")) return;
     if (editingBlogId === id) setEditingBlogId(null);
     await refreshBlogs();
+    toast.success("Blog yazısı başarıyla silindi");
   };
 
   const handleMoveBlog = async (id: string, direction: "up" | "down") => {
@@ -1020,8 +1092,12 @@ function AdminDashboardContent() {
                             <input required value={blogForm.excerpt} onChange={(e) => setBlogForm({ ...blogForm, excerpt: e.target.value })} className={inputClass} placeholder="Short summary" />
                           </div>
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground">Content *</label>
-                            <textarea required value={blogForm.content} onChange={(e) => setBlogForm({ ...blogForm, content: e.target.value })} className={`${inputClass} min-h-[150px]`} placeholder="Full blog post content..." />
+                            <label className="text-xs font-medium text-muted-foreground">Content * (Markdown supported)</label>
+                            <MarkdownEditor
+                              value={blogForm.content}
+                              onChange={(value) => setBlogForm({ ...blogForm, content: value })}
+                              placeholder="Write your blog post in Markdown... Use **bold**, *italic*, `code`, [links](url), etc."
+                            />
                           </div>
                         </>
                       ) : (
@@ -1036,8 +1112,12 @@ function AdminDashboardContent() {
                             <input value={(blogForm as any)[`excerpt_${blogLangTab}`]} onChange={(e) => setBlogForm({ ...blogForm, [`excerpt_${blogLangTab}`]: e.target.value })} className={inputClass} placeholder={blogForm.excerpt || "Translation..."} />
                           </div>
                           <div className="space-y-1">
-                            <label className="text-xs font-medium text-muted-foreground">Content ({blogLangTab.toUpperCase()})</label>
-                            <textarea value={(blogForm as any)[`content_${blogLangTab}`]} onChange={(e) => setBlogForm({ ...blogForm, [`content_${blogLangTab}`]: e.target.value })} className={`${inputClass} min-h-[150px]`} placeholder={blogForm.content || "Translation..."} />
+                            <label className="text-xs font-medium text-muted-foreground">Content ({blogLangTab.toUpperCase()}) - Markdown destekler</label>
+                            <MarkdownEditor
+                              value={(blogForm as any)[`content_${blogLangTab}`] || ""}
+                              onChange={(value) => setBlogForm({ ...blogForm, [`content_${blogLangTab}`]: value })}
+                              placeholder={blogForm.content || "Çeviriyi buraya yazın... Markdown kullanabilirsiniz."}
+                            />
                           </div>
                         </div>
                       )}
@@ -1160,7 +1240,11 @@ function AdminDashboardContent() {
                           </div>
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Content *</label>
-                            <textarea required value={editBlogForm.content} onChange={(e) => setEditBlogForm({ ...editBlogForm, content: e.target.value })} className={`${inputClass} min-h-[150px]`} />
+                            <MarkdownEditor
+                              value={editBlogForm.content}
+                              onChange={(value) => setEditBlogForm({ ...editBlogForm, content: value })}
+                              placeholder="Blog içeriğini yazın..."
+                            />
                           </div>
                         </>
                       ) : (
@@ -1176,7 +1260,11 @@ function AdminDashboardContent() {
                           </div>
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">Content ({editBlogLangTab.toUpperCase()})</label>
-                            <textarea value={(editBlogForm as any)[`content_${editBlogLangTab}`]} onChange={(e) => setEditBlogForm({ ...editBlogForm, [`content_${editBlogLangTab}`]: e.target.value })} className={`${inputClass} min-h-[150px]`} placeholder={editBlogForm.content || "Translation..."} />
+                            <MarkdownEditor
+                              value={(editBlogForm as any)[`content_${editBlogLangTab}`] || ""}
+                              onChange={(value) => setEditBlogForm({ ...editBlogForm, [`content_${editBlogLangTab}`]: value })}
+                              placeholder={editBlogForm.content || "Çeviriyi buraya yazın..."}
+                            />
                           </div>
                         </div>
                       )}
@@ -1372,6 +1460,9 @@ function AdminDashboardContent() {
               {/* ───── SOCIAL LINKS TAB ───── */}
               {activeTab === "social" && <AdminSocialLinksTab />}
 
+              {/* ───── CONTACT EMAILS TAB ───── */}
+              {activeTab === "contact_emails" && <AdminContactEmailsTab />}
+
               {/* ───── SETTINGS TAB ───── */}
               {activeTab === "settings" && (
                 <div className="space-y-6">
@@ -1392,6 +1483,24 @@ function AdminDashboardContent() {
           </div>
         </div>
       </FadeIn>
+      
+      {/* Toast notifications */}
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#1a1a1a',
+            color: '#ffffff',
+            border: '1px solid #333333',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            boxShadow: '0 20px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+            fontSize: '14px',
+            fontWeight: '500',
+          },
+        }}
+      />
     </div>
   );
 }

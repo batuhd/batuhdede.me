@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Plus, Trash2, Pencil, X, Loader2, Globe, ChevronUp, ChevronDown, GripVertical, Image as ImageIcon } from "lucide-react";
+import { Plus, Trash2, Pencil, X, Loader2, Globe, ChevronUp, ChevronDown, GripVertical, Image as ImageIcon, Eye, EyeOff, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAdminError } from "@/context/admin-error-context";
+import { toast } from "sonner";
 
 const inputClass =
   "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
@@ -156,6 +157,7 @@ export function AdminAboutTab() {
       if (handleOperationError(error, "Profil Ekleme")) return;
     }
     await fetchData();
+    toast.success("Profil bilgileri başarıyla kaydedildi");
   };
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -333,6 +335,7 @@ export function AdminSkillsTab() {
     setIsAdding(false);
     setLangTab("default");
     await fetchItems();
+    toast.success("Yetenek kategorisi başarıyla eklendi");
   };
 
   const handleEdit = (item: any) => {
@@ -357,6 +360,7 @@ export function AdminSkillsTab() {
     if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Yetenek Kategorisi Güncelleme")) return;
     setEditingId(null);
     await fetchItems();
+    toast.success("Yetenek kategorisi başarıyla güncellendi");
   };
 
   const handleDelete = async (id: string) => {
@@ -365,6 +369,7 @@ export function AdminSkillsTab() {
     if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Yetenek Kategorisi Silme")) return;
     if (editingId === id) setEditingId(null);
     await fetchItems();
+    toast.success("Yetenek kategorisi başarıyla silindi");
   };
 
   const handleMove = async (id: string, direction: "up" | "down") => {
@@ -616,6 +621,7 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     
     setForm(emptyForm()); setIsAdding(false); setLangTab("default");
     await fetchItems();
+    toast.success(`${title} başarıyla eklendi`);
   };
 
   const handleEdit = (item: CrudItem) => {
@@ -656,6 +662,7 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     }
     
     setEditingId(null); await fetchItems();
+    toast.success(`${title} başarıyla güncellendi`);
   };
 
   const handleDelete = async (id: string) => {
@@ -664,6 +671,7 @@ export function AdminCrudTab({ title, tableName, fields, displayField, subtitleF
     if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), `${title} Silme`)) return;
     if (editingId === id) setEditingId(null);
     await fetchItems();
+    toast.success(`${title} başarıyla silindi`);
   };
 
   const handleMove = async (id: string, direction: "up" | "down") => {
@@ -865,6 +873,7 @@ export function AdminSocialLinksTab() {
     if (handleOperationError(error, "Sosyal Link Ekleme")) return;
     setForm({ platform: "", url: "" }); setIsAdding(false);
     await fetchItems();
+    toast.success("Sosyal link başarıyla eklendi");
   };
 
   const handleEdit = (item: CrudItem) => {
@@ -879,6 +888,7 @@ export function AdminSocialLinksTab() {
     const { error, data } = await supabase.from("social_links").update(form).eq("id", editingId).select();
     if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Sosyal Link Güncelleme")) return;
     setEditingId(null); await fetchItems();
+    toast.success("Sosyal link başarıyla güncellendi");
   };
 
   const handleDelete = async (id: string) => {
@@ -887,6 +897,7 @@ export function AdminSocialLinksTab() {
     if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Sosyal Link Silme")) return;
     if (editingId === id) setEditingId(null);
     await fetchItems();
+    toast.success("Sosyal link başarıyla silindi");
   };
 
   const handleMove = async (id: string, direction: "up" | "down") => {
@@ -982,7 +993,6 @@ export function AdminLayoutTab() {
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const { Eye, EyeOff, Wrench } = require("lucide-react");
 
   const fetchSections = async () => {
     if (!supabase) return;
@@ -1035,6 +1045,7 @@ export function AdminLayoutTab() {
     if (handleOperationError(firstError, "Bölüm Sıralama Değiştirme")) return;
     
     await fetchSections();
+    toast.success("Bölüm sıralaması güncellendi");
   };
 
   const handleToggleVisibility = async (sec: any) => {
@@ -1059,8 +1070,13 @@ export function AdminLayoutTab() {
 
     if (error || (!data || data.length === 0)) {
       if (handleOperationError(error || { code: "42501", message: "Yetkisiz işlem" }, "Bölüm Görünürlüğü Değiştirme")) return;
-      console.error("Error toggling visibility:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error toggling visibility:", error);
+      }
       await fetchSections();
+    } else {
+      const isHidden = newId.endsWith("_hidden");
+      toast.success(isHidden ? "Bölüm gizlendi" : "Bölüm görünür yapıldı");
     }
   };
 
@@ -1072,9 +1088,11 @@ export function AdminLayoutTab() {
     if (newState) {
       const { error } = await supabase.from("section_order").insert({ section_id: "maintenance_mode", order_index: -1 });
       if (handleOperationError(error, "Bakım Modu Etkinleştirme")) { setMaintenanceMode(false); return; }
+      toast.success("Bakım modu etkinleştirildi");
     } else {
       const { error, data } = await supabase.from("section_order").delete().eq("section_id", "maintenance_mode").select();
       if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "Bakım Modu Devre Dışı Bırakma")) { setMaintenanceMode(true); return; }
+      toast.success("Bakım modu devre dışı bırakıldı");
     }
   };
 
@@ -1162,6 +1180,165 @@ export function AdminLayoutTab() {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ──────── Contact Emails Tab ────────
+
+export function AdminContactEmailsTab() {
+  const { handleOperationError } = useAdminError();
+  const [items, setItems] = useState<CrudItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [langTab, setLangTab] = useState<LangTab>("default");
+  const [form, setForm] = useState({ label: "", label_tr: "", label_de: "", label_es: "", email: "" });
+
+  const fetchItems = async () => {
+    if (!supabase) return;
+    const { data } = await supabase.from("contact_emails").select("*").order("order_index", { ascending: true });
+    if (data) setItems(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchItems(); }, []);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    const maxOrder = items.reduce((max, item) => Math.max(max, item.order_index ?? 0), -1);
+    const { error } = await supabase.from("contact_emails").insert({ ...form, order_index: maxOrder + 1 });
+    if (handleOperationError(error, "E-posta Ekleme")) return;
+    setForm({ label: "", label_tr: "", label_de: "", label_es: "", email: "" }); setIsAdding(false); setLangTab("default");
+    await fetchItems();
+    toast.success("E-posta adresi başarıyla eklendi");
+  };
+
+  const handleEdit = (item: CrudItem) => {
+    setEditingId(item.id);
+    setForm({ 
+      label: item.label || "", 
+      label_tr: item.label_tr || "",
+      label_de: item.label_de || "",
+      label_es: item.label_es || "",
+      email: item.email || "" 
+    });
+    setIsAdding(false);
+    setLangTab("default");
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase || !editingId) return;
+    const { error, data } = await supabase.from("contact_emails").update(form).eq("id", editingId).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "E-posta Güncelleme")) return;
+    setEditingId(null); await fetchItems();
+    toast.success("E-posta adresi başarıyla güncellendi");
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!supabase || !confirm("Delete this email?")) return;
+    const { error, data } = await supabase.from("contact_emails").delete().eq("id", id).select();
+    if (handleOperationError(error || (!data || data.length === 0 ? { code: "42501", message: "Yetkisiz işlem" } : null), "E-posta Silme")) return;
+    if (editingId === id) setEditingId(null);
+    await fetchItems();
+    toast.success("E-posta adresi başarıyla silindi");
+  };
+
+  const handleMove = async (id: string, direction: "up" | "down") => {
+    if (!supabase) return;
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= items.length) return;
+
+    const current = items[idx];
+    const swap = items[swapIdx];
+    const currentOrder = current.order_index ?? idx;
+    const swapOrder = swap.order_index ?? swapIdx;
+
+    const { error: err1 } = await supabase.from("contact_emails").update({ order_index: swapOrder }).eq("id", current.id);
+    const { error: err2 } = await supabase.from("contact_emails").update({ order_index: currentOrder }).eq("id", swap.id);
+    
+    if (handleOperationError(err1 || err2, "E-posta Sıralama Değiştirme")) return;
+    await fetchItems();
+  };
+
+  const renderForm = (onSubmit: (e: React.FormEvent) => void, submitLabel: string, isEdit = false) => (
+    <form onSubmit={onSubmit} className={cn("space-y-4 rounded-xl border p-4", isEdit ? "border-primary/30 bg-primary/5" : "bg-muted/30")}>
+      {isEdit && (
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-primary">Editing</h3>
+          <button type="button" onClick={() => setEditingId(null)} className="rounded-md p-1 hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+      )}
+      
+      <LangTabBar active={langTab} onChange={setLangTab} />
+      
+      {langTab === "default" ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Label *</label>
+            <input required value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} className={inputClass} placeholder="e.g., Personal Email, School Email" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Email *</label>
+            <input required type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} placeholder="email@example.com" />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Label ({langTab.toUpperCase()})</label>
+            <input value={form[`label_${langTab}` as keyof typeof form] || ""} onChange={(e) => setForm({ ...form, [`label_${langTab}`]: e.target.value })} className={inputClass} placeholder={form.label || "Translation..."} />
+          </div>
+          <p className="text-xs text-muted-foreground">Email address is the same across all languages.</p>
+        </div>
+      )}
+      
+      <div className="flex justify-end gap-2">
+        {isEdit && <button type="button" onClick={() => setEditingId(null)} className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted">Cancel</button>}
+        <button type="submit" className={cn("rounded-md px-4 py-2 text-sm font-medium", isEdit ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-foreground text-background hover:bg-foreground/90")}>{submitLabel}</button>
+      </div>
+    </form>
+  );
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between border-b pb-4">
+        <h2 className="text-lg sm:text-xl font-semibold">Contact Emails</h2>
+        <button onClick={() => { setIsAdding(!isAdding); setEditingId(null); setForm({ label: "", label_tr: "", label_de: "", label_es: "", email: "" }); setLangTab("default"); }}
+          className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90">
+          <Plus className={`h-4 w-4 transition-transform ${isAdding ? "rotate-45" : ""}`} />
+          <span className="hidden sm:inline">{isAdding ? "Cancel" : "Add Email"}</span>
+        </button>
+      </div>
+      {isAdding && renderForm(handleAdd, "Save")}
+      {editingId && renderForm(handleSaveEdit, "Update", true)}
+      <div className="space-y-2">
+        {items.length === 0 && !isAdding ? (
+          <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground"><p className="text-sm">No contact emails yet.</p></div>
+        ) : items.map((item, idx) => (
+          <div key={item.id} className={cn("flex items-center gap-2 sm:gap-3 rounded-lg border p-3 sm:p-4 transition-colors", editingId === item.id ? "border-primary/50 bg-primary/5" : "hover:bg-muted/30")}>
+            <div className="flex flex-col gap-0.5 flex-shrink-0">
+              <button type="button" disabled={idx === 0} onClick={() => handleMove(item.id, "up")} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"><ChevronUp className="h-3.5 w-3.5" /></button>
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 mx-auto" />
+              <button type="button" disabled={idx === items.length - 1} onClick={() => handleMove(item.id, "down")} className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"><ChevronDown className="h-3.5 w-3.5" /></button>
+            </div>
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <h3 className="font-medium truncate">{item.label}</h3>
+              <p className="text-xs text-muted-foreground truncate">{item.email}</p>
+            </div>
+            <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+              <button onClick={() => handleEdit(item)} className="rounded-md p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"><Pencil className="h-4 w-4" /></button>
+              <button onClick={() => handleDelete(item.id)} className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"><Trash2 className="h-4 w-4" /></button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

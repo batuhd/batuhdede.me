@@ -7,6 +7,10 @@ import { PenTool, Loader2, Calendar, X, ExternalLink, Rss, FolderKanban, Briefca
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
+import { sanitizeUrl } from "@/lib/utils";
 
 interface BlogPost {
   id: string;
@@ -65,7 +69,9 @@ function BlogContent() {
       if (!isMounted) return;
       
       if (blogsRes.error) {
-        console.error("Error fetching blog posts:", blogsRes.error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching blog posts:", blogsRes.error);
+        }
         setPosts([]);
       } else {
         setPosts(blogsRes.data || []);
@@ -324,8 +330,25 @@ function BlogContent() {
                 <h1 className="mb-6 text-xl sm:text-3xl font-bold tracking-tight">
                   {getLocalized(selectedPost, "title", "Untitled")}
                 </h1>
-                <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none whitespace-pre-wrap leading-relaxed">
-                  {getLocalized(selectedPost, "content")}
+                <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed">
+                  <ReactMarkdown 
+                    rehypePlugins={[rehypeSanitize]} 
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      a: ({node, ...props}) => {
+                        const href = props.href || "";
+                        const safeHref = sanitizeUrl(href);
+                        return safeHref ? <a {...props} href={safeHref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" /> : <>{props.children}</>;
+                      },
+                      img: ({node, src, ...props}) => {
+                        const srcStr = typeof src === "string" ? src : "";
+                        const safeSrc = sanitizeUrl(srcStr);
+                        return safeSrc ? <img {...props} src={safeSrc} className="rounded-lg my-4 max-w-full" /> : null;
+                      },
+                    }}
+                  >
+                    {getLocalized(selectedPost, "content") || ""}
+                  </ReactMarkdown>
                 </div>
 
                 {/* Related Work/Entity Section */}

@@ -9,6 +9,7 @@ export const tr: Record<string, string> = {
   "nav.credits": "Credits",
   "nav.theme": "Tema",
   "nav.language": "Dil",
+  "nav.contact": "İletişim",
 
   // User / Hero
   "user.heroTagline":

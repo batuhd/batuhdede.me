@@ -6,6 +6,7 @@ import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { sanitizeUrl } from "@/lib/utils";
 
 export function Info() {
   const { getLocalized } = useLanguage();
@@ -33,10 +34,10 @@ export function Info() {
       <div className="flex items-center gap-4 sm:gap-6">
         {aboutMe?.show_profile_photo !== false && (
           <div onClick={handlePhotoClick} className="cursor-pointer select-none relative group transition-transform active:scale-95">
-            {aboutMe?.profile_photo_url ? (
+            {aboutMe?.profile_photo_url && sanitizeUrl(aboutMe.profile_photo_url) ? (
               <img
-                src={aboutMe.profile_photo_url}
-                alt="Profile Photo"
+                src={sanitizeUrl(aboutMe.profile_photo_url) || ""}
+                alt={`${name} - Profile Photo`}
                 className="rounded-2xl object-cover w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-transparent group-hover:ring-primary/20 transition-all shadow-md"
               />
             ) : (

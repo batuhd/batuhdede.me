@@ -61,3 +61,7 @@ desktop.ini
 
 # todo list
 /todo
+
+#agents
+AGENTS.md
+.opencode/

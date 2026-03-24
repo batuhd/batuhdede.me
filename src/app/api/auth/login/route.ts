@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
+import { z } from "zod";
+
+// Input validation schema
+const loginSchema = z.object({
+  email: z.string().email("Invalid email format").max(255, "Email too long"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128, "Password too long"),
+  captchaToken: z.string().optional(),
+});
+
+type LoginInput = z.infer<typeof loginSchema>;
 
 // In-memory rate limiting store (resets on cold start — acceptable for serverless)
 const attempts = new Map<
@@ -59,29 +69,30 @@ export async function POST(request: Request) {
     }
   }
 
-  // Parse request body
-  let email: string;
-  let password: string;
-  let captchaToken: string | undefined;
+  // Parse and validate request body
+  let validatedData: LoginInput;
 
   try {
     const body = await request.json();
-    email = body.email;
-    password = body.password;
-    captchaToken = body.captchaToken;
-
-    if (!email || !password) {
+    const result = loginSchema.safeParse(body);
+    
+    if (!result.success) {
+      const errors = result.error.errors.map(e => e.message).join(", ");
       return NextResponse.json(
-        { error: "Email and password are required." },
+        { error: `Validation failed: ${errors}` },
         { status: 400 }
       );
     }
+    
+    validatedData = result.data;
   } catch {
     return NextResponse.json(
       { error: "Invalid request body." },
       { status: 400 }
     );
   }
+
+  const { email, password, captchaToken } = validatedData;
 
   // Create a server-side Supabase client
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -107,7 +118,10 @@ export async function POST(request: Request) {
     });
 
   if (authError) {
-    console.error("Supabase Auth Error:", authError.message);
+    // Log only in development, never in production
+    if (process.env.NODE_ENV === "development") {
+      console.error("Supabase Auth Error:", authError.message);
+    }
     
     // Record failed attempt
     const existing = attempts.get(ip);

@@ -104,7 +104,9 @@ function WorksContent() {
       }
       setEntitiesMap(map);
       if (projectsRes.error) {
-        console.error("Error fetching projects:", projectsRes.error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching projects:", projectsRes.error);
+        }
         setProjects([]);
       } else {
         const data = projectsRes.data || [];

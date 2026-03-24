@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
 import { ExternalLink, FolderKanban, PenTool, X } from "lucide-react";
 import { ExpandableText } from "@/components/ui/expandable-text";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
+import { sanitizeUrl } from "@/lib/utils";
+import type { Project, Blog, Experience, Education, Activity, Certification } from "@/types";
 
 function parseDate(dateStr: string | null): Date | null {
   if (!dateStr || dateStr.toLowerCase().includes("present") || dateStr.toLowerCase().includes("devam") || dateStr.toLowerCase().includes("heute") || dateStr.toLowerCase().includes("actual")) {
@@ -100,60 +102,71 @@ export function Experience() {
   const { locale, getLocalized, t } = useLanguage();
   const { experiences, projects, blogs } = useSiteData();
 
+  // Optimize: Pre-calculate related items to avoid IIFE in render
+  const relatedItemsMap = useMemo(() => {
+    const map: Record<string, { projects: Project[]; blogs: Blog[] }> = {};
+    experiences.forEach((exp: Experience) => {
+      map[exp.id] = {
+        projects: projects.filter((p: Project) => p.linked_experience_id === exp.id),
+        blogs: blogs.filter((b: Blog) => b.linked_experience_id === exp.id),
+      };
+    });
+    return map;
+  }, [experiences, projects, blogs]);
+
   if (experiences.length === 0) return null;
 
   return (
     <section className="space-y-6">
       <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.experience")}</h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
-        {experiences.map((exp: any) => (
-          <div key={exp.id} className="relative pl-6 sm:pl-8 group">
-            <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
-            <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
-              <div className="flex gap-4">
-                {exp.logo_url ? (
-                  <img src={exp.logo_url} alt={exp.company} className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0" />
-                ) : (
-                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
-                    <span className="text-sm font-semibold text-muted-foreground">{exp.company?.[0]?.toUpperCase()}</span>
-                  </div>
-                )}
-                <div className="space-y-1 min-w-0 flex-1">
-                  <h3 className="font-semibold text-base">{getLocalized(exp, "title")}</h3>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {exp.company}
-                    {exp.location ? ` · ${exp.location}` : ""}
-                  </p>
-                  <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span>{formatDate(exp.start_date, locale)}{exp.end_date || exp.is_current ? ` - ${formatDate(exp.end_date || "Present", locale)}` : ""}</span>
-                    {calculateDuration(exp.start_date, exp.end_date, exp.is_current, locale) && (
-                      <>
-                        <span>·</span>
-                        <span>{calculateDuration(exp.start_date, exp.end_date, exp.is_current, locale)}</span>
-                      </>
-                    )}
-                  </p>
-                  {exp.description && (
-                    <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
-                      <ExpandableText text={getLocalized(exp, "description")} />
+        {experiences.map((exp: Experience) => {
+          const related = relatedItemsMap[exp.id];
+          const hasRelated = related.projects.length > 0 || related.blogs.length > 0;
+          
+          return (
+            <div key={exp.id} className="relative pl-6 sm:pl-8 group">
+              <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
+              <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
+                <div className="flex gap-4">
+                  {exp.logo_url ? (
+                    <img src={exp.logo_url} alt={exp.company} className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0" />
+                  ) : (
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
+                      <span className="text-sm font-semibold text-muted-foreground">{exp.company?.[0]?.toUpperCase()}</span>
                     </div>
                   )}
-                  
-                  {(() => {
-                    const relatedProjects = projects.filter(p => p.linked_experience_id === exp.id);
-                    const relatedBlogs = blogs.filter(b => b.linked_experience_id === exp.id);
-                    if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <h3 className="font-semibold text-base">{getLocalized(exp, "title")}</h3>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {exp.company}
+                      {exp.location ? ` · ${exp.location}` : ""}
+                    </p>
+                    <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span>{formatDate(exp.start_date, locale)}{exp.end_date || exp.is_current ? ` - ${formatDate(exp.end_date || "Present", locale)}` : ""}</span>
+                      {calculateDuration(exp.start_date, exp.end_date, exp.is_current, locale) && (
+                        <>
+                          <span>·</span>
+                          <span>{calculateDuration(exp.start_date, exp.end_date, exp.is_current, locale)}</span>
+                        </>
+                      )}
+                    </p>
+                    {exp.description && (
+                      <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
+                        <ExpandableText text={getLocalized(exp, "description")} />
+                      </div>
+                    )}
                     
-                    return (
+                    {hasRelated && (
                       <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
-                        {relatedProjects.map(p => (
+                        {related.projects.map((p: Project) => (
                           <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
                             <FolderKanban className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(p, "title")}</span>
                             <ExternalLink className="h-2.5 w-2.5 opacity-50" />
                           </Link>
                         ))}
-                        {relatedBlogs.map(b => (
+                        {related.blogs.map((b: Blog) => (
                           <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
                             <PenTool className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(b, "title")}</span>
@@ -161,13 +174,13 @@ export function Experience() {
                           </Link>
                         ))}
                       </div>
-                    );
-                  })()}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
@@ -177,66 +190,77 @@ export function Education() {
   const { locale, getLocalized, t } = useLanguage();
   const { educations, projects, blogs } = useSiteData();
 
+  // Optimize: Pre-calculate related items to avoid IIFE in render
+  const relatedItemsMap = useMemo(() => {
+    const map: Record<string, { projects: Project[]; blogs: Blog[] }> = {};
+    educations.forEach((edu: Education) => {
+      map[edu.id] = {
+        projects: projects.filter((p: Project) => p.linked_education_id === edu.id),
+        blogs: blogs.filter((b: Blog) => b.linked_education_id === edu.id),
+      };
+    });
+    return map;
+  }, [educations, projects, blogs]);
+
   if (educations.length === 0) return null;
 
   return (
     <section className="space-y-6">
       <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.education")}</h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
-        {educations.map((edu: any) => (
-          <div key={edu.id} className="relative pl-6 sm:pl-8 group">
-            <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
-            <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
-              <div className="flex gap-4">
-                {edu.logo_url ? (
-                  <img src={edu.logo_url} alt={edu.university} className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0" />
-                ) : (
-                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
-                    <span className="text-sm font-semibold text-muted-foreground">{edu.university?.[0]?.toUpperCase()}</span>
-                  </div>
-                )}
-                <div className="space-y-1 min-w-0 flex-1">
-                  <h3 className="font-semibold text-base">{getLocalized(edu, "university")}</h3>
-                  {(edu.degree || edu.major || edu.gpa) && (
-                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                      <p className="text-sm font-medium text-muted-foreground">
-                        {getLocalized(edu, "degree")}{getLocalized(edu, "degree") && getLocalized(edu, "major") ? ` - ` : ""}{getLocalized(edu, "major")}
-                      </p>
-                      {edu.gpa && (
-                        <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-primary ring-1 ring-inset ring-primary/20 uppercase">
-                          {locale === "tr" ? "GANO" : "GPA"}: {edu.gpa}
-                        </span>
-                      )}
+        {educations.map((edu: Education) => {
+          const related = relatedItemsMap[edu.id];
+          const hasRelated = related.projects.length > 0 || related.blogs.length > 0;
+
+          return (
+            <div key={edu.id} className="relative pl-6 sm:pl-8 group">
+              <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
+              <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
+                <div className="flex gap-4">
+                  {edu.logo_url ? (
+                    <img src={edu.logo_url} alt={edu.university} className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0" />
+                  ) : (
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
+                      <span className="text-sm font-semibold text-muted-foreground">{edu.university?.[0]?.toUpperCase()}</span>
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span>
-                      {formatDate(edu.start_date, locale)}{edu.end_date || edu.is_current ? ` - ${formatDate(edu.end_date || "Present", locale)}` : ""}
-                      {getLocalized(edu, "location") ? ` · ${getLocalized(edu, "location")}` : ""}
-                    </span>
-                    {calculateDuration(edu.start_date, edu.end_date, !!edu.is_current, locale) && (
-                      <>
-                        <span>·</span>
-                        <span>{calculateDuration(edu.start_date, edu.end_date, !!edu.is_current, locale)}</span>
-                      </>
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <h3 className="font-semibold text-base">{getLocalized(edu, "university")}</h3>
+                    {(edu.degree || edu.major || edu.gpa) && (
+                      <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {getLocalized(edu, "degree")}{getLocalized(edu, "degree") && getLocalized(edu, "major") ? ` - ` : ""}{getLocalized(edu, "major")}
+                        </p>
+                        {edu.gpa && (
+                          <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-primary ring-1 ring-inset ring-primary/20 uppercase">
+                            {locale === "tr" ? "GANO" : "GPA"}: {edu.gpa}
+                          </span>
+                        )}
+                      </div>
                     )}
-                  </p>
-                  
-                  {(() => {
-                    const relatedProjects = projects.filter(p => p.linked_education_id === edu.id);
-                    const relatedBlogs = blogs.filter(b => b.linked_education_id === edu.id);
-                    if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
+                    <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
+                      <span>
+                        {formatDate(edu.start_date, locale)}{edu.end_date || edu.is_current ? ` - ${formatDate(edu.end_date || "Present", locale)}` : ""}
+                        {getLocalized(edu, "location") ? ` · ${getLocalized(edu, "location")}` : ""}
+                      </span>
+                      {calculateDuration(edu.start_date, edu.end_date, !!edu.is_current, locale) && (
+                        <>
+                          <span>·</span>
+                          <span>{calculateDuration(edu.start_date, edu.end_date, !!edu.is_current, locale)}</span>
+                        </>
+                      )}
+                    </p>
                     
-                    return (
+                    {hasRelated && (
                       <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
-                        {relatedProjects.map(p => (
+                        {related.projects.map((p: Project) => (
                           <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
                             <FolderKanban className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(p, "title")}</span>
                             <ExternalLink className="h-2.5 w-2.5 opacity-50" />
                           </Link>
                         ))}
-                        {relatedBlogs.map(b => (
+                        {related.blogs.map((b: Blog) => (
                           <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
                             <PenTool className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(b, "title")}</span>
@@ -244,13 +268,13 @@ export function Education() {
                           </Link>
                         ))}
                       </div>
-                    );
-                  })()}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
