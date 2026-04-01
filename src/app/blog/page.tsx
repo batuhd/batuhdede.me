@@ -17,8 +17,8 @@ import { sanitizeUrl } from "@/lib/utils";
 const customSchema = {
   ...defaultSchema,
   attributes: {
-    ...defaultSchema.attributes,
-    '*': [...(defaultSchema.attributes['*'] || []), 'className'],
+    ...(defaultSchema.attributes || {}),
+    '*': [...(defaultSchema.attributes?.['*'] || []), 'className'],
   },
 };
 

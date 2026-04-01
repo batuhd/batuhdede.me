@@ -12,8 +12,8 @@ import { HelpCircle, X } from "lucide-react";
 const customSchema = {
   ...defaultSchema,
   attributes: {
-    ...defaultSchema.attributes,
-    '*': [...(defaultSchema.attributes['*'] || []), 'className'],
+    ...(defaultSchema.attributes || {}),
+    '*': [...(defaultSchema.attributes?.['*'] || []), 'className'],
   },
 };
 
