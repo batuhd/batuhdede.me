@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { FadeIn } from "@/components/motion/fade-in";
-import { LogIn, Loader2, ShieldCheck } from "lucide-react";
+import { LogIn, Loader2, ShieldCheck, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
@@ -101,6 +101,7 @@ export default function AdminLoginPage() {
             refresh_token: data.session.refresh_token,
           });
         }
+        setIsLoggedIn(true);
         router.push("/admin");
       }
     } catch {
@@ -113,7 +114,20 @@ export default function AdminLoginPage() {
 
   if (isLoggedIn) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4">
+      <div className="relative flex min-h-[60vh] flex-col items-center justify-center space-y-4">
+        <button
+          onClick={async () => {
+            if (supabase) {
+              await supabase.auth.signOut();
+              await fetch("/api/auth/logout", { method: "POST" });
+            }
+            setIsLoggedIn(false);
+            router.push("/admin/login");
+          }}
+          className="absolute top-4 right-4 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground"
+        >
+          <LogOut className="h-4 w-4" /> Log Out
+        </button>
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">Redirecting to Dashboard...</p>
       </div>
