@@ -3,9 +3,19 @@
 import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
-import rehypeSanitize from "rehype-sanitize";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { HelpCircle, X } from "lucide-react";
+
+// Custom schema - className attribute izni ver
+const customSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    '*': [...(defaultSchema.attributes['*'] || []), 'className'],
+  },
+};
 
 const inputClass =
   "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
@@ -21,6 +31,7 @@ const markdownGuide = [
   { syntax: "*metin*", description: "İtalik yazı", example: "*italik*" },
   { syntax: "# Başlık", description: "Büyük başlık (H1)", example: "# Ana Başlık" },
   { syntax: "## Başlık", description: "Orta başlık (H2)", example: "## Alt Başlık" },
+  { syntax: "### Başlık", description: "Küçük başlık (H3)", example: "### Alt Başlık" },
   { syntax: "- eleman", description: "Sırasız liste", example: "- Birinci\n- İkinci" },
   { syntax: "1. eleman", description: "Sıralı liste", example: "1. Birinci\n2. İkinci" },
   { syntax: "[yazı](url)", description: "Link ekleme", example: "[GitHub](https://github.com)" },
@@ -30,6 +41,8 @@ const markdownGuide = [
   { syntax: "---", description: "Yatay çizgi", example: "---" },
   { syntax: "> alıntı", description: "Alıntı bloğu", example: "> Bu bir alıntıdır" },
   { syntax: "![alt](url)", description: "Resim ekleme", example: "![Logo](https://ornek.com/logo.png)" },
+  { syntax: "<br>", description: "Yeni satır (boşluk)", example: "Satır 1<br>Satır 2" },
+  { syntax: "İki boşluk + Enter", description: "Alt satıra geç", example: "Satır 1\nSatır 2" },
 ];
 
 export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorProps) {
@@ -71,6 +84,7 @@ export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorP
     { icon: '```', title: 'Code Block', action: () => insertMarkdown('```\n', '\n```') },
     { icon: '|', title: 'Table', action: () => insertMarkdown('| Header 1 | Header 2 |\n|----------|----------|\n| Cell 1 | Cell 2 |') },
     { icon: '---', title: 'Horizontal Rule', action: () => insertMarkdown('\n---\n') },
+    { icon: '↵', title: 'New Line (BR)', action: () => insertMarkdown('<br>\n') },
   ];
 
   return (
@@ -124,7 +138,19 @@ export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorP
         {/* Preview */}
         {showPreview && (
           <div className="min-h-[200px] p-4 rounded-md border bg-card overflow-auto prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown rehypePlugins={[rehypeSanitize]} remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown 
+              rehypePlugins={[[rehypeSanitize, customSchema]]} 
+              remarkPlugins={[remarkGfm, remarkBreaks]}
+              components={{
+                h1: ({node, ...props}) => <h1 {...props} className="text-3xl font-bold mt-6 mb-4" />,
+                h2: ({node, ...props}) => <h2 {...props} className="text-2xl font-bold mt-5 mb-3" />,
+                h3: ({node, ...props}) => <h3 {...props} className="text-xl font-bold mt-4 mb-2" />,
+                h4: ({node, ...props}) => <h4 {...props} className="text-lg font-bold mt-4 mb-2" />,
+                h5: ({node, ...props}) => <h5 {...props} className="text-base font-bold mt-4 mb-2" />,
+                h6: ({node, ...props}) => <h6 {...props} className="text-sm font-bold mt-4 mb-2" />,
+                br: () => <br className="my-2" />,
+              }}
+            >
               {value || '*No content to preview*'}
             </ReactMarkdown>
           </div>
@@ -172,7 +198,16 @@ export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorP
                       {item.description}
                     </div>
                     <div className="text-sm">
-                      <ReactMarkdown rehypePlugins={[rehypeSanitize]} remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown 
+                        rehypePlugins={[[rehypeSanitize, customSchema]]} 
+                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                        components={{
+                          h1: ({node, ...props}) => <h1 {...props} className="text-xl font-bold mt-3 mb-2" />,
+                          h2: ({node, ...props}) => <h2 {...props} className="text-lg font-bold mt-3 mb-2" />,
+                          h3: ({node, ...props}) => <h3 {...props} className="text-base font-bold mt-2 mb-1" />,
+                          br: () => <br className="my-1" />,
+                        }}
+                      >
                         {item.example}
                       </ReactMarkdown>
                     </div>

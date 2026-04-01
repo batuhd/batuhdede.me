@@ -153,6 +153,7 @@ const PROJECT_FIELDS = [
 const BLOG_FIELDS = [
   "title", "excerpt", "content", "date", "read_time", "image_url", "order_index",
   "linked_project_id", "linked_experience_id", "linked_education_id",
+  "linked_skill_category_ids", "linked_language_id", "linked_activity_id", "linked_certification_id",
   "title_tr", "excerpt_tr", "content_tr", "title_de", "excerpt_de", "content_de",
   "title_es", "excerpt_es", "content_es",
 ];

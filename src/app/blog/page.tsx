@@ -8,9 +8,19 @@ import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
 import ReactMarkdown from "react-markdown";
-import rehypeSanitize from "rehype-sanitize";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { sanitizeUrl } from "@/lib/utils";
+
+// Custom schema - className attribute izni ver (Tailwind için)
+const customSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    '*': [...(defaultSchema.attributes['*'] || []), 'className'],
+  },
+};
 
 interface BlogPost {
   id: string;
@@ -332,8 +342,8 @@ function BlogContent() {
                 </h1>
                 <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed">
                   <ReactMarkdown 
-                    rehypePlugins={[rehypeSanitize]} 
-                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[[rehypeSanitize, customSchema]]}
+                    remarkPlugins={[remarkGfm, remarkBreaks]}
                     components={{
                       a: ({node, ...props}) => {
                         const href = props.href || "";
@@ -345,6 +355,13 @@ function BlogContent() {
                         const safeSrc = sanitizeUrl(srcStr);
                         return safeSrc ? <img {...props} src={safeSrc} className="rounded-lg my-4 max-w-full" /> : null;
                       },
+                      h1: ({node, ...props}) => <h1 {...props} className="text-3xl font-bold mt-8 mb-4 text-foreground" />,
+                      h2: ({node, ...props}) => <h2 {...props} className="text-2xl font-bold mt-6 mb-3 text-foreground" />,
+                      h3: ({node, ...props}) => <h3 {...props} className="text-xl font-bold mt-5 mb-2 text-foreground" />,
+                      h4: ({node, ...props}) => <h4 {...props} className="text-lg font-bold mt-4 mb-2 text-foreground" />,
+                      h5: ({node, ...props}) => <h5 {...props} className="text-base font-bold mt-4 mb-2 text-foreground" />,
+                      h6: ({node, ...props}) => <h6 {...props} className="text-sm font-bold mt-4 mb-2 text-foreground" />,
+                      br: () => <br className="my-2" />,
                     }}
                   >
                     {getLocalized(selectedPost, "content") || ""}
