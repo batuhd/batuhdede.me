@@ -45,13 +45,15 @@ export function ImageInputWithRecent({ value, onChange, placeholder, className }
     setIsOpen(true);
     setLoading(true);
     if (!supabase) return;
-    
-    const [edu, exp, proj, cert, about] = await Promise.all([
+
+    const [edu, exp, proj, cert, about, projImages, blogs] = await Promise.all([
       supabase.from("educations").select("logo_url").not("logo_url", "is", null),
       supabase.from("experiences").select("logo_url").not("logo_url", "is", null),
       supabase.from("projects").select("image").not("image", "is", null),
       supabase.from("certifications").select("icon_url").not("icon_url", "is", null),
       supabase.from("about_me").select("profile_photo_url").not("profile_photo_url", "is", null),
+      supabase.from("project_images").select("image_url").not("image_url", "is", null),
+      supabase.from("blogs").select("image_url").not("image_url", "is", null),
     ]);
 
     const urls = new Set<string>();
@@ -60,7 +62,10 @@ export function ImageInputWithRecent({ value, onChange, placeholder, className }
     proj.data?.forEach((d: any) => { if (d.image?.trim()) urls.add(d.image) });
     cert.data?.forEach((d: any) => { if (d.icon_url?.trim()) urls.add(d.icon_url) });
     about.data?.forEach((d: any) => { if (d.profile_photo_url?.trim()) urls.add(d.profile_photo_url) });
-    
+    projImages.data?.forEach((d: any) => { if (d.image_url?.trim()) urls.add(d.image_url) });
+    blogs.data?.forEach((d: any) => { if (d.image_url?.trim()) urls.add(d.image_url) });
+
+    // Sort by most recent (assuming URLs contain timestamps or using Set order)
     setImages(Array.from(urls));
     setLoading(false);
   };
