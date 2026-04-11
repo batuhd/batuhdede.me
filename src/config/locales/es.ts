@@ -122,6 +122,8 @@ export const es: Record<string, string> = {
   "cert.skillsEvaluated": "Habilidades Evaluadas",
   "cert.relatedProjects": "Proyectos Relacionados",
   "cert.relatedArticles": "Artículos Relacionados",
+  "cert.viewAll": "Ver todo",
+  "cert.allCertifications": "Todas las Certificaciones",
 
   // Works page
   "works.relatedBlogs": "Publicaciones de Blog Relacionadas",

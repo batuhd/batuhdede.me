@@ -441,76 +441,73 @@ export function Certifications() {
   const { getLocalized, t } = useLanguage();
   const { certifications, certificationSkills, skillCategories, projects, blogs } = useSiteData();
   const [selectedCert, setSelectedCert] = useState<any | null>(null);
+  const [showAllCerts, setShowAllCerts] = useState(false);
 
   if (certifications.length === 0) return null;
 
+  // Split certifications into two rows for marquee effect - evenly distribute
+  const half = Math.floor(certifications.length / 2);
+  const firstRow = certifications.slice(0, half + (certifications.length % 2));
+  const secondRow = certifications.slice(half + (certifications.length % 2));
+
+  // Duplicate items 3x for seamless infinite loop (prevents visible jump)
+  const duplicatedFirstRow = [...firstRow, ...firstRow, ...firstRow];
+  const duplicatedSecondRow = [...secondRow, ...secondRow, ...secondRow];
+
+  const CertItem = ({ cert }: { cert: any }) => {
+    return (
+      <div 
+        onClick={() => setSelectedCert(cert)}
+        className="group flex items-center gap-3 px-5 py-2.5 rounded-xl border bg-card/80 transition-all hover:bg-accent/50 cursor-pointer flex-shrink-0 h-12"
+      >
+        {cert.icon_url && (
+          <img src={cert.icon_url} alt={cert.name} className="h-6 w-6 rounded object-cover flex-shrink-0" />
+        )}
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <span className="text-sm font-medium">{getLocalized(cert, "name")}</span>
+          <span className="text-xs text-muted-foreground">·</span>
+          <span className="text-xs text-muted-foreground">{cert.issuer}</span>
+        </div>
+        <ExternalLink className="h-3 w-3 text-muted-foreground opacity-70 flex-shrink-0" />
+      </div>
+    );
+  };
+
   return (
     <section className="space-y-6">
-      <h2 className="text-lg font-semibold tracking-tight">{t("home.certifications")}</h2>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {certifications.map((cert: any) => {
-          // Find skills for this cert
-          const relatedSkillIds = certificationSkills?.filter(cs => cs.certification_id === cert.id).map(cs => cs.skill_category_id) || [];
-          const relatedSkills = skillCategories?.filter(sc => relatedSkillIds.includes(sc.id)) || [];
-
-          return (
-            <div 
-              key={cert.id} 
-              onClick={() => setSelectedCert(cert)}
-              className="flex flex-col justify-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-accent/30 cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                {cert.icon_url && (
-                  <img src={cert.icon_url} alt={cert.name} className="h-8 w-8 rounded object-cover flex-shrink-0" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-medium min-w-0 break-words pr-2">{getLocalized(cert, "name")}</h3>
-                    {cert.link_url && (
-                      <a href={cert.link_url} onClick={(e) => e.stopPropagation()} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1">
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">{cert.issuer}{cert.issue_date ? ` · ${cert.issue_date}` : ""}</p>
-                </div>
-              </div>
-              
-              {relatedSkills.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1 pl-11">
-                  {relatedSkills.map(skill => (
-                    <span key={skill.id} className="inline-flex rounded-md bg-secondary/50 px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
-                      {getLocalized(skill, "title")}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {(() => {
-                const relatedProjects = projects.filter((p: any) => p.linked_certification_id === cert.id);
-                const relatedBlogs = blogs.filter((b: any) => b.linked_certification_id === cert.id);
-                if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
-                
-                return (
-                  <div className="mt-3 border-t border-border/50 pt-3 flex flex-wrap gap-2 pl-11">
-                    {relatedProjects.map((p: any) => (
-                      <Link key={p.id} href={`/works?project=${p.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 rounded-md bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border">
-                        <FolderKanban className="h-2.5 w-2.5 opacity-70" />
-                        <span>{getLocalized(p, "title")}</span>
-                      </Link>
-                    ))}
-                    {relatedBlogs.map((b: any) => (
-                      <Link key={b.id} href={`/blog?post=${b.id}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1.5 rounded-md bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border">
-                        <PenTool className="h-2.5 w-2.5 opacity-70" />
-                        <span>{getLocalized(b, "title")}</span>
-                      </Link>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          );
-        })}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold tracking-tight">{t("home.certifications")}</h2>
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {certifications.length}
+          </span>
+        </div>
+        <button
+          onClick={() => setShowAllCerts(true)}
+          className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+        >
+          {t("cert.viewAll")}
+        </button>
+      </div>
+      
+      <div className="space-y-3 overflow-hidden py-2 -my-2">
+        {/* First row - scrolls right to left */}
+        <div className="relative pb-2 h-12">
+          <div className="flex gap-3 animate-marquee-left">
+            {duplicatedFirstRow.map((cert, idx) => (
+              <CertItem key={`${cert.id}-row1-${idx}`} cert={cert} />
+            ))}
+          </div>
+        </div>
+        
+        {/* Second row - scrolls left to right */}
+        <div className="relative pb-2 h-12">
+          <div className="flex gap-3 animate-marquee-right">
+            {duplicatedSecondRow.map((cert, idx) => (
+              <CertItem key={`${cert.id}-row2-${idx}`} cert={cert} />
+            ))}
+          </div>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -612,6 +609,67 @@ export function Certifications() {
                     </div>
                   );
                 })()}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* All Certifications Modal */}
+      <AnimatePresence>
+        {showAllCerts && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 px-0 sm:px-6 backdrop-blur-sm"
+            onClick={() => setShowAllCerts(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-medium text-muted-foreground">{t("cert.allCertifications")}</h2>
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    {certifications.length}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowAllCerts(false)}
+                  className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto p-4 sm:p-6">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {certifications.map((cert: any) => (
+                    <div
+                      key={cert.id}
+                      onClick={() => {
+                        setShowAllCerts(false);
+                        setTimeout(() => setSelectedCert(cert), 300);
+                      }}
+                      className="group flex items-center gap-3 p-4 rounded-xl border bg-card/50 transition-all hover:bg-accent/50 cursor-pointer"
+                    >
+                      {cert.icon_url && (
+                        <img src={cert.icon_url} alt={cert.name} className="h-10 w-10 rounded-lg object-cover flex-shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-medium truncate">{getLocalized(cert, "name")}</h3>
+                        <p className="text-xs text-muted-foreground">{cert.issuer}{cert.issue_date && ` · ${cert.issue_date}`}</p>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground opacity-70 flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           </motion.div>

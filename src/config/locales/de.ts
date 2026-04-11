@@ -122,6 +122,8 @@ export const de: Record<string, string> = {
   "cert.skillsEvaluated": "Bewertete Fähigkeiten",
   "cert.relatedProjects": "Verwandte Projekte",
   "cert.relatedArticles": "Verwandte Artikel",
+  "cert.viewAll": "Alle anzeigen",
+  "cert.allCertifications": "Alle Zertifikate",
 
   // Works page
   "works.relatedBlogs": "Verwandte Blogbeiträge",

@@ -120,6 +120,8 @@ export const en: Record<string, string> = {
   "cert.skillsEvaluated": "Skills Evaluated",
   "cert.relatedProjects": "Related Projects",
   "cert.relatedArticles": "Related Articles",
+  "cert.viewAll": "View All",
+  "cert.allCertifications": "All Certifications",
 
   // Works page
   "works.relatedBlogs": "Related Blog Posts",

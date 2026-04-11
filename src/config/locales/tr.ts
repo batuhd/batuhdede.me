@@ -123,6 +123,8 @@ export const tr: Record<string, string> = {
   "cert.skillsEvaluated": "Değerlendirilen Yetenekler",
   "cert.relatedProjects": "İlgili Projeler",
   "cert.relatedArticles": "İlgili Yazılar",
+  "cert.viewAll": "Tümünü Gör",
+  "cert.allCertifications": "Tüm Sertifikalar",
 
   // Works page
   "works.relatedBlogs": "İlgili Blog Yazıları",
