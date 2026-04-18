@@ -137,6 +137,10 @@ export const en: Record<string, string> = {
   "blog.entityType.language": "Language",
   "blog.entityType.activity": "Activity",
   "blog.entityType.certification": "Certification",
+  "blog.share": "Share",
+  "blog.copyLink": "Copy link",
+  "blog.linkCopied": "Link copied!",
+  "blog.shareOn": "Share on:",
 
   // GitHub
   "github.contributionsOn": "{count} contributions on {date}",

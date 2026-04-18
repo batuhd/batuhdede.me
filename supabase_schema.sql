@@ -220,6 +220,7 @@ CREATE TABLE public.blogs (
     content text,
     date text,
     read_time text,
+    image_url text,
     title_tr text,
     excerpt_tr text,
     content_tr text,
@@ -232,6 +233,16 @@ CREATE TABLE public.blogs (
     linked_project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
     linked_experience_id uuid REFERENCES public.experiences(id) ON DELETE SET NULL,
     linked_education_id uuid REFERENCES public.educations(id) ON DELETE SET NULL,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Blog Images (multiple images per blog post)
+CREATE TABLE public.blog_images (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    blog_id uuid NOT NULL REFERENCES public.blogs(id) ON DELETE CASCADE,
+    image_url text NOT NULL,
+    caption text,
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -290,6 +301,8 @@ ALTER TABLE public.projects ADD CONSTRAINT check_project_link CHECK (link IS NUL
 ALTER TABLE public.projects ADD CONSTRAINT check_project_github CHECK (github IS NULL OR github ~ '^https?://|^/[^/]');
 ALTER TABLE public.projects ADD CONSTRAINT check_project_image CHECK (image IS NULL OR image ~ '^https?://|^/[^/]');
 ALTER TABLE public.project_images ADD CONSTRAINT check_project_images_url CHECK (image_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.blog_images ADD CONSTRAINT check_blog_images_url CHECK (image_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.blogs ADD CONSTRAINT check_blog_image_url CHECK (image_url IS NULL OR image_url ~ '^https?://|^/[^/]');
 ALTER TABLE public.social_links ADD CONSTRAINT check_social_url CHECK (url IS NULL OR url ~ '^https?://|^mailto:');
 
 -- Content Length Limits to prevent DoS (payload size)
@@ -332,6 +345,7 @@ ALTER TABLE public.certification_skills ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.project_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blog_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_emails ENABLE ROW LEVEL SECURITY;
 
@@ -348,6 +362,7 @@ CREATE POLICY "Public read" ON public.certification_skills FOR SELECT USING (tru
 CREATE POLICY "Public read" ON public.projects FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.project_images FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.blogs FOR SELECT USING (true);
+CREATE POLICY "Public read" ON public.blog_images FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.social_links FOR SELECT USING (true);
 CREATE POLICY "Public read" ON public.contact_emails FOR SELECT USING (true);
 
@@ -402,6 +417,10 @@ CREATE POLICY "Admin insert" ON public.blogs FOR INSERT WITH CHECK (auth.uid() =
 CREATE POLICY "Admin update" ON public.blogs FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
+CREATE POLICY "Admin insert" ON public.blog_images FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.blog_images FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.blog_images FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
 CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
@@ -420,7 +439,7 @@ CREATE OR REPLACE FUNCTION reorder_items(
 ) RETURNS void AS $$
 BEGIN
   -- Basic table name validation to prevent SQL injection in dynamic query
-  IF p_table NOT IN ('projects', 'blogs', 'experiences', 'educations', 'skill_categories', 'languages', 'activities', 'certifications', 'project_images') THEN
+  IF p_table NOT IN ('projects', 'blogs', 'experiences', 'educations', 'skill_categories', 'languages', 'activities', 'certifications', 'project_images', 'blog_images') THEN
     RAISE EXCEPTION 'Invalid table name for reordering';
   END IF;
 

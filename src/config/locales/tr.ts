@@ -140,6 +140,10 @@ export const tr: Record<string, string> = {
   "blog.entityType.language": "Dil",
   "blog.entityType.activity": "Etkinlik",
   "blog.entityType.certification": "Sertifika",
+  "blog.share": "Paylaş",
+  "blog.copyLink": "Link kopyala",
+  "blog.linkCopied": "Link kopyalandı!",
+  "blog.shareOn": "Şurada paylaş:",
 
   // GitHub
   "github.contributionsOn": "{date} tarihinde {count} katkı",
