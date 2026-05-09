@@ -22,7 +22,7 @@ export const revalidate = 60;
 
 // Metadata
 export const metadata = {
-  title: "Batuhan Akçan - Portfolio",
+  title: "Batuhan Dede - Portfolio",
   description: "Full Stack Developer & Software Engineer",
 };
 

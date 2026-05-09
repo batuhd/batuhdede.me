@@ -6,7 +6,7 @@ import { WorksContent } from "./works-content";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Works - Batuhan Akçan",
+  title: "Works - Batuhan Dede",
   description: "A showcase of my projects and work",
 };
 
