@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { supabase } from "@/lib/supabase";
 
 interface SiteData {
@@ -37,10 +43,25 @@ const defaultData: SiteData = {
 
 const SiteDataContext = createContext<SiteData>(defaultData);
 
-export function SiteDataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<SiteData>(defaultData);
+interface SiteDataProviderProps {
+  children: ReactNode;
+  initialData?: Partial<SiteData>;
+}
+
+export function SiteDataProvider({
+  children,
+  initialData,
+}: SiteDataProviderProps) {
+  const [data, setData] = useState<SiteData>(
+    initialData ? { ...defaultData, ...initialData } : defaultData,
+  );
 
   useEffect(() => {
+    // Eğer initialData varsa, client-side fetch yapma
+    if (initialData?.loaded) {
+      return;
+    }
+
     if (!supabase) {
       setData((d) => ({ ...d, loaded: true }));
       return;
@@ -48,18 +69,61 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
 
     const fetchAll = async () => {
       const sb = supabase!;
-      const [aboutRes, skillsRes, expRes, eduRes, langRes, actRes, certRes, certSkillsRes, sectionRes, projectsRes, blogsRes] = await Promise.all([
+      const [
+        aboutRes,
+        skillsRes,
+        expRes,
+        eduRes,
+        langRes,
+        actRes,
+        certRes,
+        certSkillsRes,
+        sectionRes,
+        projectsRes,
+        blogsRes,
+      ] = await Promise.all([
         sb.from("about_me").select("*").limit(1),
-        sb.from("skill_categories").select("*").order("order_index", { ascending: true }),
-        sb.from("experiences").select("*").order("order_index", { ascending: true }),
-        sb.from("educations").select("*").order("order_index", { ascending: true }),
-        sb.from("languages").select("*").order("order_index", { ascending: true }),
-        sb.from("activities").select("*").order("order_index", { ascending: true }),
-        sb.from("certifications").select("*").order("order_index", { ascending: true }),
+        sb
+          .from("skill_categories")
+          .select("*")
+          .order("order_index", { ascending: true }),
+        sb
+          .from("experiences")
+          .select("*")
+          .order("order_index", { ascending: true }),
+        sb
+          .from("educations")
+          .select("*")
+          .order("order_index", { ascending: true }),
+        sb
+          .from("languages")
+          .select("*")
+          .order("order_index", { ascending: true }),
+        sb
+          .from("activities")
+          .select("*")
+          .order("order_index", { ascending: true }),
+        sb
+          .from("certifications")
+          .select("*")
+          .order("order_index", { ascending: true }),
         sb.from("certification_skills").select("*"),
-        sb.from("section_order").select("*").order("order_index", { ascending: true }),
-        sb.from("projects").select("id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id").order("order_index", { ascending: true }),
-        sb.from("blogs").select("id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id").order("order_index", { ascending: true }),
+        sb
+          .from("section_order")
+          .select("*")
+          .order("order_index", { ascending: true }),
+        sb
+          .from("projects")
+          .select(
+            "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id",
+          )
+          .order("order_index", { ascending: true }),
+        sb
+          .from("blogs")
+          .select(
+            "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id",
+          )
+          .order("order_index", { ascending: true }),
       ]);
 
       setData({
@@ -75,17 +139,18 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         projects: projectsRes?.data || [],
         blogs: blogsRes?.data || [],
         loaded: true,
-        isMaintenance: sectionRes?.data?.some((s: any) => s.section_id === "maintenance_mode") || false,
+        isMaintenance:
+          sectionRes?.data?.some(
+            (s: any) => s.section_id === "maintenance_mode",
+          ) || false,
       });
     };
 
     fetchAll();
-  }, []);
+  }, [initialData]);
 
   return (
-    <SiteDataContext.Provider value={data}>
-      {children}
-    </SiteDataContext.Provider>
+    <SiteDataContext.Provider value={data}>{children}</SiteDataContext.Provider>
   );
 }
 
