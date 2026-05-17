@@ -212,6 +212,7 @@ export interface Blog {
   date: string;
   read_time: string | null;
   image_url: string | null;
+  is_published: boolean;
   order_index: number;
   title_tr?: string;
   excerpt_tr?: string;

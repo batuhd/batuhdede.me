@@ -38,7 +38,10 @@ interface BlogContentProps {
 }
 
 export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
-  const [posts] = useState<BlogWithImages[]>(initialBlogs);
+  // Sadece yayınlanmış blogları göster
+  const [posts] = useState<BlogWithImages[]>(
+    initialBlogs.filter((blog) => blog.is_published),
+  );
   const [loading] = useState(false);
   const [selectedPost, setSelectedPost] = useState<BlogWithImages | null>(null);
   const { t, getLocalized } = useLanguage();

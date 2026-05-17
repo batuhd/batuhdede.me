@@ -25,6 +25,8 @@ import {
   Award,
   Trophy,
   Mail,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -102,6 +104,7 @@ interface Blog {
   date?: string;
   read_time?: string;
   image_url?: string;
+  is_published?: boolean;
   title_tr?: string;
   excerpt_tr?: string;
   content_tr?: string;
@@ -205,6 +208,7 @@ const BLOG_FIELDS = [
   "date",
   "read_time",
   "image_url",
+  "is_published",
   "order_index",
   "linked_project_id",
   "linked_experience_id",
@@ -356,6 +360,7 @@ function AdminDashboardContent() {
     date: "",
     read_time: "",
     image_url: "",
+    is_published: false,
     additional_images: "",
     linked_project_id: "",
     linked_experience_id: "",
@@ -384,6 +389,7 @@ function AdminDashboardContent() {
     date: "",
     read_time: "",
     image_url: "",
+    is_published: false,
     additional_images: "",
     linked_project_id: "",
     linked_experience_id: "",
@@ -863,6 +869,7 @@ function AdminDashboardContent() {
       date: "",
       read_time: "",
       image_url: "",
+      is_published: false,
       additional_images: "",
       linked_project_id: "",
       linked_experience_id: "",
@@ -896,6 +903,7 @@ function AdminDashboardContent() {
       date: blog.date || "",
       read_time: blog.read_time || "",
       image_url: blog.image_url || "",
+      is_published: blog.is_published ?? false,
       additional_images: blog.additional_images || "",
       linked_project_id: blog.linked_project_id || "",
       linked_experience_id: blog.linked_experience_id || "",
@@ -1020,6 +1028,34 @@ function AdminDashboardContent() {
       ),
     );
     await refreshBlogs();
+  };
+
+  // Toggle blog publish status
+  const handleToggleBlogPublish = async (blog: Blog) => {
+    if (!supabase) return;
+
+    const newStatus = !blog.is_published;
+    const { error } = await supabase
+      .from("blogs")
+      .update({ is_published: newStatus })
+      .eq("id", blog.id);
+
+    if (error) {
+      console.error("Error toggling blog publish status:", error);
+      toast.error("Durum değiştirilirken hata oluştu");
+      return;
+    }
+
+    // Optimistic update
+    setBlogs(
+      blogs.map((b) =>
+        b.id === blog.id ? { ...b, is_published: newStatus } : b,
+      ),
+    );
+
+    toast.success(
+      newStatus ? "Blog yayınlandı" : "Blog taslak olarak kaydedildi",
+    );
   };
 
   if (loading) {
@@ -2249,6 +2285,35 @@ function AdminDashboardContent() {
                               placeholder="Short summary"
                             />
                           </div>
+
+                          {/* Publish Toggle */}
+                          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id="is_published_new"
+                                checked={blogForm.is_published}
+                                onChange={(e) =>
+                                  setBlogForm({
+                                    ...blogForm,
+                                    is_published: e.target.checked,
+                                  })
+                                }
+                                className="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
+                              />
+                              <label
+                                htmlFor="is_published_new"
+                                className="text-sm font-medium cursor-pointer"
+                              >
+                                Yayında
+                              </label>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {blogForm.is_published
+                                ? "🟢 Bu yazı herkes tarafından görülebilir"
+                                : "⚫ Bu yazı sadece admin tarafından görülebilir (Taslak)"}
+                            </span>
+                          </div>
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">
                               Content * (Markdown supported)
@@ -2651,6 +2716,36 @@ function AdminDashboardContent() {
                               className={inputClass}
                             />
                           </div>
+
+                          {/* Publish Toggle */}
+                          <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id="is_published_edit"
+                                checked={editBlogForm.is_published}
+                                onChange={(e) =>
+                                  setEditBlogForm({
+                                    ...editBlogForm,
+                                    is_published: e.target.checked,
+                                  })
+                                }
+                                className="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
+                              />
+                              <label
+                                htmlFor="is_published_edit"
+                                className="text-sm font-medium cursor-pointer"
+                              >
+                                Yayında
+                              </label>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {editBlogForm.is_published
+                                ? "🟢 Bu yazı herkes tarafından görülebilir"
+                                : "⚫ Bu yazı sadece admin tarafından görülebilir (Taslak)"}
+                            </span>
+                          </div>
+
                           <div className="space-y-1">
                             <label className="text-xs font-medium text-muted-foreground">
                               Content *
@@ -2775,6 +2870,7 @@ function AdminDashboardContent() {
                             editingBlogId === blog.id
                               ? "border-primary/50 bg-primary/5"
                               : "hover:bg-muted/30",
+                            !blog.is_published && "opacity-60 bg-muted/20",
                           )}
                         >
                           <div className="flex flex-col gap-0.5 flex-shrink-0">
@@ -2829,6 +2925,27 @@ function AdminDashboardContent() {
                             )}
                           </div>
                           <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                            {/* Publish Toggle */}
+                            <button
+                              onClick={() => handleToggleBlogPublish(blog)}
+                              className={cn(
+                                "rounded-md p-2 transition-colors",
+                                blog.is_published
+                                  ? "text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20"
+                                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                              )}
+                              title={
+                                blog.is_published
+                                  ? "Yayında - Gizle"
+                                  : "Taslak - Yayınla"
+                              }
+                            >
+                              {blog.is_published ? (
+                                <Eye className="h-4 w-4" />
+                              ) : (
+                                <EyeOff className="h-4 w-4" />
+                              )}
+                            </button>
                             <button
                               onClick={() => handleEditBlog(blog)}
                               className="rounded-md p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
