@@ -22,20 +22,8 @@ import { BlogImageGallery } from "@/components/blog/blog-image-gallery";
 import { ShareButtons } from "@/components/blog/share-buttons";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
-import ReactMarkdown from "react-markdown";
-import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
-import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
-import { sanitizeUrl } from "@/lib/utils";
+import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
 import type { BlogWithImages } from "@/lib/data";
-
-const customSchema = {
-  ...defaultSchema,
-  attributes: {
-    ...(defaultSchema.attributes || {}),
-    "*": [...(defaultSchema.attributes?.["*"] || []), "className"],
-  },
-};
 
 interface LinkedEntity {
   id: string;
@@ -334,40 +322,9 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
                   {getLocalized(selectedPost, "title", "Untitled")}
                 </h1>
                 <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed">
-                  <ReactMarkdown
-                    rehypePlugins={[[rehypeSanitize, customSchema]]}
-                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                    components={{
-                      a: ({ node, ...props }) => {
-                        const href = props.href || "";
-                        const safeHref = sanitizeUrl(href);
-                        return safeHref ? (
-                          <a
-                            {...props}
-                            href={safeHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          />
-                        ) : (
-                          <>{props.children}</>
-                        );
-                      },
-                      img: ({ node, src, ...props }) => {
-                        const srcStr = typeof src === "string" ? src : "";
-                        const safeSrc = sanitizeUrl(srcStr);
-                        return safeSrc ? (
-                          <img
-                            {...props}
-                            src={safeSrc}
-                            className="rounded-lg my-4 max-w-full"
-                          />
-                        ) : null;
-                      },
-                    }}
-                  >
-                    {getLocalized(selectedPost, "content") || ""}
-                  </ReactMarkdown>
+                  <MarkdownRenderer
+                    content={getLocalized(selectedPost, "content") || ""}
+                  />
                 </div>
 
                 {/* Related Entities */}

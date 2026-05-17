@@ -1,21 +1,34 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
-import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
-import { HelpCircle, X } from "lucide-react";
-
-// Custom schema - className attribute izni ver
-const customSchema = {
-  ...defaultSchema,
-  attributes: {
-    ...(defaultSchema.attributes || {}),
-    '*': [...(defaultSchema.attributes?.['*'] || []), 'className'],
-  },
-};
+import { SimpleMarkdownRenderer } from "@/components/markdown/markdown-renderer";
+import {
+  Bold,
+  Italic,
+  Heading1,
+  Heading2,
+  Heading3,
+  List,
+  ListOrdered,
+  Link,
+  Image,
+  Code,
+  Quote,
+  Table,
+  Minus,
+  Eye,
+  EyeOff,
+  HelpCircle,
+  X,
+  Maximize2,
+  Minimize2,
+  Smile,
+  Check,
+  Copy,
+  Columns,
+  AlignLeft,
+} from "lucide-react";
 
 const inputClass =
   "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
@@ -24,155 +37,492 @@ interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  minHeight?: string;
 }
 
+type ViewMode = "edit" | "preview" | "split";
+
+// Emoji map for shortcodes
+const emojiMap: Record<string, string> = {
+  ":smile:": "😄",
+  ":laugh:": "😂",
+  ":wink:": "😉",
+  ":heart:": "❤️",
+  ":thumbsup:": "👍",
+  ":thumbsdown:": "👎",
+  ":fire:": "🔥",
+  ":rocket:": "🚀",
+  ":star:": "⭐",
+  ":check:": "✅",
+  ":x:": "❌",
+  ":warning:": "⚠️",
+  ":bulb:": "💡",
+  ":book:": "📚",
+  ":computer:": "💻",
+  ":code:": "💻",
+  ":phone:": "📱",
+  ":email:": "📧",
+  ":link:": "🔗",
+  ":trophy:": "🏆",
+  ":medal:": "🥇",
+  ":calendar:": "📅",
+  ":clock:": "🕐",
+  ":idea:": "💡",
+};
+
 const markdownGuide = [
-  { syntax: "**metin**", description: "Kalın yazı", example: "**kalın**" },
-  { syntax: "*metin*", description: "İtalik yazı", example: "*italik*" },
-  { syntax: "# Başlık", description: "Büyük başlık (H1)", example: "# Ana Başlık" },
-  { syntax: "## Başlık", description: "Orta başlık (H2)", example: "## Alt Başlık" },
-  { syntax: "### Başlık", description: "Küçük başlık (H3)", example: "### Alt Başlık" },
-  { syntax: "- eleman", description: "Sırasız liste", example: "- Birinci\n- İkinci" },
-  { syntax: "1. eleman", description: "Sıralı liste", example: "1. Birinci\n2. İkinci" },
-  { syntax: "[yazı](url)", description: "Link ekleme", example: "[GitHub](https://github.com)" },
-  { syntax: "`kod`", description: "Satır içi kod", example: "`console.log()`" },
-  { syntax: "```\nkod\n```", description: "Kod bloğu", example: "```javascript\nconsole.log('Merhaba');\n```" },
-  { syntax: "| A | B |", description: "Tablo", example: "| Ad | Soyad |\n|----|----|\n| Ali | Veli |" },
-  { syntax: "---", description: "Yatay çizgi", example: "---" },
-  { syntax: "> alıntı", description: "Alıntı bloğu", example: "> Bu bir alıntıdır" },
-  { syntax: "![alt](url)", description: "Resim ekleme", example: "![Logo](https://ornek.com/logo.png)" },
-  { syntax: "<br>", description: "Yeni satır (boşluk)", example: "Satır 1<br>Satır 2" },
-  { syntax: "İki boşluk + Enter", description: "Alt satıra geç", example: "Satır 1\nSatır 2" },
+  {
+    category: "Metin Formatlama",
+    items: [
+      { syntax: "**kalın**", result: "**kalın**", desc: "Kalın yazı" },
+      { syntax: "*italik*", result: "*italik*", desc: "İtalik yazı" },
+      {
+        syntax: "~~üstü çizili~~",
+        result: "~~üstü çizili~~",
+        desc: "Üstü çizili",
+      },
+      { syntax: "`kod`", result: "`kod`", desc: "Satır içi kod" },
+    ],
+  },
+  {
+    category: "Başlıklar",
+    items: [
+      { syntax: "# H1", result: "# Başlık 1", desc: "Ana başlık" },
+      { syntax: "## H2", result: "## Başlık 2", desc: "Alt başlık" },
+      { syntax: "### H3", result: "### Başlık 3", desc: "Küçük başlık" },
+    ],
+  },
+  {
+    category: "Listeler",
+    items: [
+      {
+        syntax: "- item",
+        result: "- Madde 1\n- Madde 2",
+        desc: "Sırasız liste",
+      },
+      {
+        syntax: "1. item",
+        result: "1. Birinci\n2. İkinci",
+        desc: "Sıralı liste",
+      },
+      { syntax: "- [ ]", result: "- [ ] Görev", desc: "Checkbox" },
+    ],
+  },
+  {
+    category: "Diğer",
+    items: [
+      {
+        syntax: "[link](url)",
+        result: "[GitHub](https://github.com)",
+        desc: "Link",
+      },
+      { syntax: "![alt](url)", result: "![Resim](/image.png)", desc: "Resim" },
+      { syntax: "> quote", result: "> Alıntı", desc: "Alıntı" },
+      { syntax: "---", result: "---", desc: "Yatay çizgi" },
+      { syntax: "```code```", result: "```js\ncode\n```", desc: "Kod bloğu" },
+    ],
+  },
 ];
 
-export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorProps) {
-  const [showPreview, setShowPreview] = useState(false);
+export function MarkdownEditor({
+  value,
+  onChange,
+  placeholder,
+  minHeight = "300px",
+}: MarkdownEditorProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [showGuide, setShowGuide] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const insertMarkdown = (before: string, after: string = '') => {
+  // Handle escape key to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreen]);
+
+  // Prevent body scroll when fullscreen
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isFullscreen]);
+
+  const insertText = useCallback(
+    (before: string, after: string = "", placeholderText: string = "") => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = value;
+      const selectedText = text.substring(start, end);
+      const textToInsert = selectedText || placeholderText;
+
+      const newValue =
+        text.substring(0, start) +
+        before +
+        textToInsert +
+        after +
+        text.substring(end);
+
+      onChange(newValue);
+
+      // Restore focus and set cursor position
+      setTimeout(() => {
+        textarea.focus();
+        const newCursorPos = start + before.length + textToInsert.length;
+        if (selectedText) {
+          textarea.setSelectionRange(newCursorPos, newCursorPos);
+        } else {
+          // Select the placeholder text
+          textarea.setSelectionRange(
+            start + before.length,
+            start + before.length + textToInsert.length,
+          );
+        }
+      }, 0);
+    },
+    [value, onChange],
+  );
+
+  const toolbarItems: Array<
+    | { type: "divider" }
+    | { icon: React.ElementType; label: string; action: () => void }
+  > = [
+    {
+      icon: Bold,
+      label: "Kalın",
+      action: () => insertText("**", "**", "kalın metin"),
+    },
+    {
+      icon: Italic,
+      label: "İtalik",
+      action: () => insertText("*", "*", "italik metin"),
+    },
+    { type: "divider" },
+    {
+      icon: Heading1,
+      label: "Başlık 1",
+      action: () => insertText("# ", "", "Başlık"),
+    },
+    {
+      icon: Heading2,
+      label: "Başlık 2",
+      action: () => insertText("## ", "", "Başlık"),
+    },
+    {
+      icon: Heading3,
+      label: "Başlık 3",
+      action: () => insertText("### ", "", "Başlık"),
+    },
+    { type: "divider" },
+    { icon: List, label: "Liste", action: () => insertText("- ", "", "Madde") },
+    {
+      icon: ListOrdered,
+      label: "Numaralı Liste",
+      action: () => insertText("1. ", "", "Birinci"),
+    },
+    { type: "divider" },
+    {
+      icon: Link,
+      label: "Link",
+      action: () => insertText("[", "](https://)", "link"),
+    },
+    {
+      icon: Image,
+      label: "Resim",
+      action: () => insertText("![", "](/image.png)", "açıklama"),
+    },
+    { type: "divider" },
+    { icon: Code, label: "Kod", action: () => insertText("`", "`", "kod") },
+    {
+      icon: Quote,
+      label: "Alıntı",
+      action: () => insertText("> ", "", "Alıntı"),
+    },
+    {
+      icon: Table,
+      label: "Tablo",
+      action: () =>
+        insertText(
+          "| Başlık 1 | Başlık 2 |\n|----------|----------|\n| Hücre 1  | Hücre 2  |",
+          "",
+          "",
+        ),
+    },
+    {
+      icon: Minus,
+      label: "Çizgi",
+      action: () => insertText("\n---\n", "", ""),
+    },
+  ];
+
+  const insertEmoji = (emoji: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-    
+
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const text = value;
-    const beforeText = text.substring(0, start);
-    const selectedText = text.substring(start, end);
-    const afterText = text.substring(end);
-    
-    const newValue = beforeText + before + selectedText + after + afterText;
+
+    const newValue = text.substring(0, start) + emoji + text.substring(end);
     onChange(newValue);
-    
-    // Restore focus and selection
+
     setTimeout(() => {
       textarea.focus();
-      const newCursorPos = start + before.length + selectedText.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
+      textarea.setSelectionRange(start + emoji.length, start + emoji.length);
     }, 0);
+
+    setShowEmojiPicker(false);
   };
 
-  const toolbarButtons = [
-    { icon: 'B', title: 'Bold', action: () => insertMarkdown('**', '**') },
-    { icon: 'I', title: 'Italic', action: () => insertMarkdown('*', '*') },
-    { icon: 'H1', title: 'Heading 1', action: () => insertMarkdown('# ') },
-    { icon: 'H2', title: 'Heading 2', action: () => insertMarkdown('## ') },
-    { icon: '•', title: 'List', action: () => insertMarkdown('- ') },
-    { icon: '1.', title: 'Numbered List', action: () => insertMarkdown('1. ') },
-    { icon: '[ ]', title: 'Link', action: () => insertMarkdown('[', '](url)') },
-    { icon: '`', title: 'Code', action: () => insertMarkdown('`', '`') },
-    { icon: '```', title: 'Code Block', action: () => insertMarkdown('```\n', '\n```') },
-    { icon: '|', title: 'Table', action: () => insertMarkdown('| Header 1 | Header 2 |\n|----------|----------|\n| Cell 1 | Cell 2 |') },
-    { icon: '---', title: 'Horizontal Rule', action: () => insertMarkdown('\n---\n') },
-    { icon: '↵', title: 'New Line (BR)', action: () => insertMarkdown('<br>\n') },
-  ];
+  const copyMarkdown = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
-  return (
-    <div className="space-y-2">
+  const wordCount = value.trim() ? value.trim().split(/\s+/).length : 0;
+  const charCount = value.length;
+
+  const editorContent = (
+    <div
+      className={cn(
+        "markdown-editor-container",
+        isFullscreen && "fixed inset-0 z-50 bg-background p-4",
+      )}
+    >
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded-lg border">
-        {toolbarButtons.map((btn, idx) => (
+      <div className="markdown-toolbar">
+        {toolbarItems.map((item, idx) => {
+          if ("type" in item) {
+            return <div key={idx} className="markdown-toolbar-divider" />;
+          }
+          const Icon = item.icon;
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={item.action}
+              className="markdown-toolbar-button"
+              title={item.label}
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          );
+        })}
+
+        <div className="markdown-toolbar-divider" />
+
+        {/* Emoji Picker Toggle */}
+        <div className="relative">
           <button
-            key={idx}
             type="button"
-            onClick={btn.action}
-            title={btn.title}
-            className="px-2 py-1 text-xs font-medium rounded hover:bg-background hover:shadow-sm transition-all border border-transparent hover:border-border"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className={cn(
+              "markdown-toolbar-button",
+              showEmojiPicker && "active",
+            )}
+            title="Emoji Ekle"
           >
-            {btn.icon}
+            <Smile className="h-4 w-4" />
           </button>
-        ))}
-        <div className="w-px h-6 bg-border mx-1" />
+
+          {showEmojiPicker && (
+            <div className="absolute top-full left-0 mt-1 p-2 bg-card border rounded-lg shadow-lg z-50 grid grid-cols-5 gap-1 min-w-[200px]">
+              {Object.entries(emojiMap).map(([code, emoji]) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => insertEmoji(emoji)}
+                  className="p-2 hover:bg-muted rounded transition-colors text-lg"
+                  title={code}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1" />
+
+        {/* View Mode Toggles */}
+        <div className="flex items-center gap-1 bg-muted rounded-md p-0.5">
+          <button
+            type="button"
+            onClick={() => setViewMode("edit")}
+            className={cn(
+              "p-1.5 rounded text-xs font-medium transition-colors",
+              viewMode === "edit"
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            title="Sadece Edit"
+          >
+            <AlignLeft className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("split")}
+            className={cn(
+              "p-1.5 rounded text-xs font-medium transition-colors",
+              viewMode === "split"
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            title="Split View"
+          >
+            <Columns className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("preview")}
+            className={cn(
+              "p-1.5 rounded text-xs font-medium transition-colors",
+              viewMode === "preview"
+                ? "bg-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            title="Sadece Preview"
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        <div className="markdown-toolbar-divider" />
+
+        {/* Fullscreen Toggle */}
         <button
           type="button"
-          onClick={() => setShowPreview(!showPreview)}
-          className={cn(
-            "px-3 py-1 text-xs font-medium rounded transition-all",
-            showPreview ? "bg-primary text-primary-foreground" : "hover:bg-background hover:shadow-sm border border-transparent hover:border-border"
-          )}
+          onClick={() => setIsFullscreen(!isFullscreen)}
+          className="markdown-toolbar-button"
+          title={isFullscreen ? "Küçült" : "Tam Ekran"}
         >
-          {showPreview ? 'Hide Preview' : 'Show Preview'}
+          {isFullscreen ? (
+            <Minimize2 className="h-4 w-4" />
+          ) : (
+            <Maximize2 className="h-4 w-4" />
+          )}
         </button>
+
+        {/* Copy Markdown */}
+        <button
+          type="button"
+          onClick={copyMarkdown}
+          className="markdown-toolbar-button"
+          title="Markdown Kopyala"
+        >
+          {copied ? (
+            <Check className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* Help */}
         <button
           type="button"
           onClick={() => setShowGuide(true)}
-          className="flex items-center gap-1 px-3 py-1 text-xs font-medium rounded hover:bg-background hover:shadow-sm border border-transparent hover:border-border text-muted-foreground hover:text-foreground transition-all"
-          title="Markdown Kullanım Kılavuzu"
+          className="markdown-toolbar-button"
+          title="Yardım"
         >
-          <HelpCircle className="h-3.5 w-3.5" />
-          Yardım
+          <HelpCircle className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Editor */}
-      <div className={cn("grid gap-4", showPreview ? "grid-cols-2" : "grid-cols-1")}>
-        <textarea
-          ref={textareaRef}
-          required
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={cn(inputClass, "min-h-[200px] font-mono text-sm")}
-          placeholder={placeholder}
-        />
-        
+      {/* Editor Area */}
+      <div
+        className={cn(
+          "flex-1 min-h-0",
+          viewMode === "split" && "grid md:grid-cols-2 gap-4",
+        )}
+      >
+        {/* Editor */}
+        {(viewMode === "edit" || viewMode === "split") && (
+          <div className="flex flex-col h-full">
+            <textarea
+              ref={textareaRef}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={
+                placeholder ||
+                "Markdown yazmaya başlayın...\n\n# Başlık\n**kalın** *italik*\n- liste\n- öğesi"
+              }
+              className={cn(
+                "markdown-editor-textarea flex-1",
+                viewMode === "split" && "min-h-[400px]",
+              )}
+              style={{ minHeight }}
+              spellCheck={false}
+            />
+          </div>
+        )}
+
         {/* Preview */}
-        {showPreview && (
-          <div className="min-h-[200px] p-4 rounded-md border bg-card overflow-auto prose prose-sm max-w-none dark:prose-invert">
-            <ReactMarkdown 
-              rehypePlugins={[[rehypeSanitize, customSchema]]} 
-              remarkPlugins={[remarkGfm, remarkBreaks]}
-              components={{
-                h1: ({node, ...props}) => <h1 {...props} className="text-3xl font-bold mt-6 mb-4" />,
-                h2: ({node, ...props}) => <h2 {...props} className="text-2xl font-bold mt-5 mb-3" />,
-                h3: ({node, ...props}) => <h3 {...props} className="text-xl font-bold mt-4 mb-2" />,
-                h4: ({node, ...props}) => <h4 {...props} className="text-lg font-bold mt-4 mb-2" />,
-                h5: ({node, ...props}) => <h5 {...props} className="text-base font-bold mt-4 mb-2" />,
-                h6: ({node, ...props}) => <h6 {...props} className="text-sm font-bold mt-4 mb-2" />,
-                br: () => <br className="my-2" />,
-              }}
-            >
-              {value || '*No content to preview*'}
-            </ReactMarkdown>
+        {(viewMode === "preview" || viewMode === "split") && (
+          <div
+            className={cn(
+              "markdown-editor-preview",
+              viewMode === "preview" && "min-h-[400px]",
+            )}
+          >
+            {value ? (
+              <SimpleMarkdownRenderer content={value} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <EyeOff className="h-8 w-8 mb-2 opacity-50" />
+                <p className="text-sm">Önizleme için içerik yazın</p>
+              </div>
+            )}
           </div>
         )}
       </div>
-      
-      <p className="text-xs text-muted-foreground">
+
+      {/* Stats */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+        <span>
+          {wordCount} kelime | {charCount} karakter
+        </span>
         <button
           type="button"
           onClick={() => setShowGuide(true)}
-          className="text-primary hover:underline font-medium"
+          className="text-primary hover:underline"
         >
-          Markdown kullanım kılavuzunu gör →
+          Markdown Kılavuzu
         </button>
-      </p>
+      </div>
 
-      {/* Markdown Kullanım Kılavuzu Modal */}
+      {/* Guide Modal */}
       {showGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-card border rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setShowGuide(false)}
+        >
+          <div
+            className="bg-card border rounded-xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b px-6 py-4">
-              <h3 className="text-lg font-semibold">📚 Markdown Kullanım Kılavuzu</h3>
+              <h3 className="text-lg font-semibold">📚 Markdown Kılavuzu</h3>
               <button
                 type="button"
                 onClick={() => setShowGuide(false)}
@@ -181,51 +531,58 @@ export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorP
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="overflow-y-auto p-6">
-              <p className="text-sm text-muted-foreground mb-4">
-                Blog yazılarınızı formatlamak için aşağıdaki Markdown komutlarını kullanabilirsiniz. 
-                Toolbar'daki butonlara tıklayarak da bu komutları hızlıca ekleyebilirsiniz.
+              <p className="text-sm text-muted-foreground mb-6">
+                Markdown, metinleri kolayca formatlamanıza olanak tanıyan basit
+                bir işaretleme dilidir. Toolbar&apos;daki butonları kullanarak
+                veya aşağıdaki syntax&apos;ları yazarak kullanabilirsiniz.
               </p>
-              
-              <div className="grid gap-3">
-                {markdownGuide.map((item, idx) => (
-                  <div key={idx} className="grid grid-cols-3 gap-4 p-3 rounded-lg bg-muted/50 border items-center">
-                    <div className="font-mono text-sm bg-background px-2 py-1 rounded border">
-                      {item.syntax}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {item.description}
-                    </div>
-                    <div className="text-sm">
-                      <ReactMarkdown 
-                        rehypePlugins={[[rehypeSanitize, customSchema]]} 
-                        remarkPlugins={[remarkGfm, remarkBreaks]}
-                        components={{
-                          h1: ({node, ...props}) => <h1 {...props} className="text-xl font-bold mt-3 mb-2" />,
-                          h2: ({node, ...props}) => <h2 {...props} className="text-lg font-bold mt-3 mb-2" />,
-                          h3: ({node, ...props}) => <h3 {...props} className="text-base font-bold mt-2 mb-1" />,
-                          br: () => <br className="my-1" />,
-                        }}
-                      >
-                        {item.example}
-                      </ReactMarkdown>
+
+              <div className="grid gap-6">
+                {markdownGuide.map((section) => (
+                  <div key={section.category}>
+                    <h4 className="font-semibold text-sm mb-3 text-primary">
+                      {section.category}
+                    </h4>
+                    <div className="grid gap-2">
+                      {section.items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="grid grid-cols-3 gap-4 p-3 rounded-lg bg-muted/50 border items-center text-sm"
+                        >
+                          <code className="font-mono text-xs bg-background px-2 py-1 rounded border">
+                            {item.syntax}
+                          </code>
+                          <span className="text-muted-foreground">
+                            {item.desc}
+                          </span>
+                          <SimpleMarkdownRenderer content={item.result} />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
-              
+
               <div className="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
                 <h4 className="font-semibold text-sm mb-2">💡 İpuçları:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>Linkler otomatik olarak güvenli bir şekilde açılır (yeni sekmede)</li>
-                  <li>Resimler için URL doğrulaması yapılır, güvenli olmayan resimler gösterilmez</li>
-                  <li>HTML kullanımı güvenlik nedeniyle kısıtlanmıştır</li>
-                  <li>Kod blokları için syntax highlighting desteklenir</li>
+                <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+                  <li>Satır sonu için iki boşluk bırakıp Enter&apos;a basın</li>
+                  <li>Linkler otomatik olarak güvenli bir şekilde açılır</li>
+                  <li>
+                    Kod bloklarında dil belirtmek için (örn: ```javascript)
+                    kullanın
+                  </li>
+                  <li>
+                    Emoji eklemek için emoji butonunu kullanın veya :smile:
+                    yazın
+                  </li>
+                  <li>Tablolar otomatik olarak responsive olur</li>
                 </ul>
               </div>
             </div>
-            
+
             <div className="border-t px-6 py-4 flex justify-end">
               <button
                 type="button"
@@ -238,6 +595,32 @@ export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorP
           </div>
         </div>
       )}
+    </div>
+  );
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn("w-full", isFullscreen && "contents")}
+    >
+      {editorContent}
+    </div>
+  );
+}
+
+// Standalone preview component for read-only display
+export function MarkdownPreview({
+  content,
+  className,
+}: {
+  content: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn("prose prose-zinc dark:prose-invert max-w-none", className)}
+    >
+      <SimpleMarkdownRenderer content={content} />
     </div>
   );
 }
