@@ -92,13 +92,16 @@ body {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
 }
@@ -119,12 +122,14 @@ body {
   height: 0;
   display: none;
 }
+
 .github-graph-scroll {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
 @media (max-width: 640px) {
+
   input,
   textarea,
   select {
@@ -137,6 +142,7 @@ body {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-33.333%);
   }
@@ -146,17 +152,18 @@ body {
   0% {
     transform: translateX(-33.333%);
   }
+
   100% {
     transform: translateX(0);
   }
 }
 
 .animate-marquee-left {
-  animation: marquee-left 30s linear infinite;
+  animation: marquee-left 10s linear infinite;
 }
 
 .animate-marquee-right {
-  animation: marquee-right 30s linear infinite;
+  animation: marquee-right 10s linear infinite;
 }
 
 .animate-marquee-left:hover,

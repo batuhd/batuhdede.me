@@ -1,207 +1,145 @@
 "use client";
 
-import Image from "next/image";
 import { FadeIn } from "@/components/motion/fade-in";
 import {
-  Star,
   ExternalLink,
-  Code2,
-  Video,
-  Type,
-  Hammer,
-  Globe,
+  Github,
+  Layers,
+  Palette,
+  Film,
+  Languages,
 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
-
-const techStack = [
-  { labelKey: "credits.tech.frontend", value: "Next.js 16, React 19, Tailwind CSS v4" },
-  { labelKey: "credits.tech.database", value: "Supabase (PostgreSQL) + RLS" },
-  { labelKey: "credits.tech.auth", value: "Supabase Authentication" },
-  { labelKey: "credits.tech.security", value: "Cloudflare Turnstile, Rate Limiting, CSP" },
-  { labelKey: "credits.tech.hosting", value: "Vercel" },
-  { labelKey: "credits.tech.forms", value: "Formspree" },
-  { labelKey: "credits.tech.icons", value: "Lucide React" },
-];
-
-const typography = [
-  { labelKey: "credits.typo.sans", value: "Geist Sans — Vercel" },
-  { labelKey: "credits.typo.mono", value: "Geist Mono — Vercel" },
-];
 
 export default function CreditsPage() {
   const { t } = useLanguage();
 
   return (
-    <div className="space-y-8 sm:space-y-12 max-w-2xl mx-auto w-full">
+    <div className="max-w-md mx-auto w-full">
+      {/* Header */}
       <FadeIn>
-        <div className="space-y-2">
-          <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            <Star className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">
             {t("credits.title")}
           </h1>
-          <p className="text-base sm:text-lg text-muted-foreground">
-            {t("credits.subtitle")}
-          </p>
+          <p className="text-muted-foreground mt-1">{t("credits.subtitle")}</p>
         </div>
       </FadeIn>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="space-y-6">
         {/* Source Code */}
-        <FadeIn delay={0.1} className="sm:col-span-2">
-          <section className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-              <Code2 className="h-5 w-5 text-primary" />
-              <h2>{t("credits.sourceCode")}</h2>
+        <FadeIn delay={0.05}>
+          <a
+            href="https://github.com/batuhd/batuhd.github.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex items-center gap-4 p-4 rounded-2xl bg-card border hover:border-primary/50 transition-all"
+          >
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <Github className="h-6 w-6 text-primary" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              {t("credits.sourceCodeDesc")}
-            </p>
-            <a
-              href="https://github.com/batuhd/batuhd.github.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-            >
-              github.com/batuhd/batuhd.github.io
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </section>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium">{t("credits.sourceCode")}</p>
+              <p className="text-sm text-muted-foreground truncate">
+                github.com/batuhd/batuhd.github.io
+              </p>
+            </div>
+            <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          </a>
         </FadeIn>
 
         {/* Tech Stack */}
-        <FadeIn delay={0.2}>
-          <section className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6 shadow-sm h-full">
-            <div className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-              <Hammer className="h-5 w-5 text-primary" />
-              <h2>{t("credits.techStack")}</h2>
+        <FadeIn delay={0.1}>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <Layers className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {t("credits.techStack")}
+              </span>
             </div>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              {techStack.map((item, i) => (
-                <li
-                  key={item.labelKey}
-                  className={`flex flex-col sm:flex-row sm:justify-between gap-0.5 sm:gap-4 ${i < techStack.length - 1 ? "border-b border-border/50 pb-2" : "pb-2"}`}
-                >
-                  <span className="font-medium text-foreground">
-                    {t(item.labelKey)}
-                  </span>
-                  <span className="text-xs sm:text-sm">{item.value}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+            <div className="space-y-2">
+              <div className="p-3 rounded-xl bg-card border flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Framework</span>
+                <span className="text-sm font-medium">Next.js 16</span>
+              </div>
+              <div className="p-3 rounded-xl bg-card border flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">UI</span>
+                <span className="text-sm font-medium">React 19 + Tailwind</span>
+              </div>
+              <div className="p-3 rounded-xl bg-card border flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Database</span>
+                <span className="text-sm font-medium">Supabase</span>
+              </div>
+              <div className="p-3 rounded-xl bg-card border flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Hosting</span>
+                <span className="text-sm font-medium">Vercel</span>
+              </div>
+            </div>
+          </div>
         </FadeIn>
 
         {/* Typography */}
-        <FadeIn delay={0.3}>
-          <section className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6 shadow-sm h-full">
-            <div className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-              <Type className="h-5 w-5 text-primary" />
-              <h2>{t("credits.typography")}</h2>
+        <FadeIn delay={0.15}>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <Palette className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {t("credits.typography")}
+              </span>
             </div>
-            <ul className="space-y-4 text-sm text-muted-foreground">
-              {typography.map((item) => (
-                <li
-                  key={item.labelKey}
-                  className="flex flex-col sm:flex-row sm:justify-between gap-0.5 border-b border-border/50 pb-3"
-                >
-                  <span className="font-medium text-foreground">
-                    {t(item.labelKey)}
-                  </span>
-                  <span className="text-xs sm:text-sm">{item.value}</span>
-                </li>
-              ))}
-              <li className="flex flex-col gap-1 pb-1">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-0.5 mb-1">
-                  <span className="font-medium text-foreground">
-                    {t("credits.typo.logo")}
-                  </span>
-                  <span className="text-xs sm:text-sm">
-                    Epetri — A Typography
-                  </span>
-                </div>
-                <span className="text-xs">{t("credits.typo.logoNote")}</span>
-                <a
-                  href="https://atypography.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 hover:text-primary mt-1 text-xs sm:text-sm"
-                >
-                  atypography.com — Epetri
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </li>
-            </ul>
-          </section>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="p-3 rounded-xl bg-card border text-center">
+                <p className="font-medium text-sm">Geist Sans</p>
+                <p className="text-xs text-muted-foreground">Body</p>
+              </div>
+              <div className="p-3 rounded-xl bg-card border text-center">
+                <p className="font-medium text-sm">Geist Mono</p>
+                <p className="text-xs text-muted-foreground">Code</p>
+              </div>
+              <div className="p-3 rounded-xl bg-card border text-center">
+                <p className="font-medium text-sm">Epetri</p>
+                <p className="text-xs text-muted-foreground">Logo</p>
+              </div>
+            </div>
+          </div>
         </FadeIn>
 
-        {/* Media & Video */}
-        <FadeIn delay={0.4} className="sm:col-span-2">
-          <section className="space-y-6 rounded-2xl border bg-card p-5 sm:p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-              <Video className="h-5 w-5 text-primary" />
-              <h2>{t("credits.media")}</h2>
+        {/* Media */}
+        <FadeIn delay={0.2}>
+          <div className="p-4 rounded-2xl bg-card border">
+            <div className="flex items-center gap-2 mb-2">
+              <Film className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{t("credits.media")}</span>
             </div>
-            <div className="space-y-2">
-              <h3 className="font-medium text-foreground tracking-tight underline underline-offset-4 mb-2">
-                {t("credits.media.introTitle")}
-              </h3>
-              <p className="text-sm text-foreground">
-                {t("credits.media.introDesc")}
-              </p>
-              <p className="text-sm font-medium mb-4 text-primary">
-                {t("credits.media.introCredit")}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {t("credits.typo.logoNote")}
-              </p>
-              <a
-                href="https://atypography.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors mt-2"
-              >
-                atypography.com — Epetri
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          </section>
+            <p className="text-sm text-muted-foreground">
+              {t("credits.media.introDesc")}
+            </p>
+            <p className="text-xs text-primary mt-2">
+              {t("credits.media.introCredit")}
+            </p>
+          </div>
         </FadeIn>
 
         {/* Translation */}
-        <FadeIn delay={0.45} className="sm:col-span-2">
-          <section className="space-y-4 rounded-2xl border bg-card p-5 sm:p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-              <Globe className="h-5 w-5 text-primary" />
-              <h2>{t("credits.translationTitle")}</h2>
+        <FadeIn delay={0.25}>
+          <div className="p-4 rounded-2xl bg-card border">
+            <div className="flex items-center gap-2 mb-2">
+              <Languages className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {t("credits.translationTitle")}
+              </span>
             </div>
             <p className="text-sm text-muted-foreground">
               {t("credits.translationNote")}
             </p>
-          </section>
+          </div>
         </FadeIn>
 
         {/* Footer */}
-        <FadeIn delay={0.5} className="sm:col-span-2 text-center py-6 sm:py-8">
-          <div className="flex justify-center mb-6">
-            <Image
-              src="/media/yuvarlaklogo.png"
-              alt="Logo"
-              width={48}
-              height={48}
-              className="dark:hidden drop-shadow-sm opacity-80"
-            />
-            <Image
-              src="/media/yuvarlaklogobeyaz.png"
-              alt="Logo"
-              width={48}
-              height={48}
-              className="hidden dark:block drop-shadow-sm opacity-80"
-            />
-          </div>
-          <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed mb-4 px-4">
-            {t("credits.footer")}
+        <FadeIn delay={0.3}>
+          <p className="text-center text-sm text-muted-foreground pt-4">
+            {t("home.footer")}
           </p>
-          <p className="text-sm font-medium">{t("home.footer")}</p>
         </FadeIn>
       </div>
     </div>

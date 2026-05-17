@@ -42,8 +42,8 @@ export default async function Home() {
     certifications: data.certifications,
     certificationSkills: data.certificationSkills,
     sectionOrder: data.sectionOrder,
-    projects: [], // Ana sayfada kullanılmıyor
-    blogs: [], // Ana sayfada kullanılmıyor
+    projects: data.projects || [],
+    blogs: data.blogs || [],
     loaded: true, // Server'da yüklendi
     isMaintenance: data.sectionOrder.some(
       (s) => s.section_id === "maintenance_mode",
@@ -126,7 +126,7 @@ export default async function Home() {
 
           <FadeIn delay={0.7} direction="none">
             <footer className="border-t pt-6 sm:pt-8 pb-16 sm:pb-8 text-center text-sm text-muted-foreground">
-              <p>Designed & Built with passion</p>
+              <p>Sinop'ta ❤️ ile yapıldı</p>
               <p className="mt-1">&copy;batuhd</p>
             </footer>
           </FadeIn>

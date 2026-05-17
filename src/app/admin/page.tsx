@@ -3053,6 +3053,12 @@ function AdminDashboardContent() {
                       placeholder: "Present",
                     },
                     {
+                      key: "is_current",
+                      label: "Ongoing",
+                      type: "checkbox",
+                      placeholder: "Currently active",
+                    },
+                    {
                       key: "logo_url",
                       label: "Logo URL",
                       placeholder: "https://...",

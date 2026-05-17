@@ -1,6 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+
+// Fisher-Yates shuffle algorithm
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
 import { ExternalLink, FolderKanban, PenTool, X } from "lucide-react";
@@ -8,23 +18,64 @@ import { ExpandableText } from "@/components/ui/expandable-text";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { sanitizeUrl } from "@/lib/utils";
-import type { Project, Blog, Experience, Education, Activity, Certification } from "@/types";
+import type {
+  Project,
+  Blog,
+  Experience,
+  Education,
+  Activity,
+  Certification,
+} from "@/types";
 
 function parseDate(dateStr: string | null): Date | null {
-  if (!dateStr || dateStr.toLowerCase().includes("present") || dateStr.toLowerCase().includes("devam") || dateStr.toLowerCase().includes("heute") || dateStr.toLowerCase().includes("actual")) {
+  if (
+    !dateStr ||
+    dateStr.toLowerCase().includes("present") ||
+    dateStr.toLowerCase().includes("devam") ||
+    dateStr.toLowerCase().includes("heute") ||
+    dateStr.toLowerCase().includes("actual")
+  ) {
     return new Date();
   }
-  
+
   // Custom parsing for localized inputs to avoid Safari/Firefox Date.parse() bugs
-  const monthsTr: Record<string, number> = { "oca":0, "şub":1, "mar":2, "nis":3, "may":4, "haz":5, "tem":6, "ağu":7, "eyl":8, "eki":9, "kas":10, "ara":11 };
-  const monthsEn: Record<string, number> = { "jan":0, "feb":1, "mar":2, "apr":3, "may":4, "jun":5, "jul":6, "aug":7, "sep":8, "oct":9, "nov":10, "dec":11 };
-  
+  const monthsTr: Record<string, number> = {
+    oca: 0,
+    şub: 1,
+    mar: 2,
+    nis: 3,
+    may: 4,
+    haz: 5,
+    tem: 6,
+    ağu: 7,
+    eyl: 8,
+    eki: 9,
+    kas: 10,
+    ara: 11,
+  };
+  const monthsEn: Record<string, number> = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+
   const parts = dateStr.trim().split(" ");
   if (parts.length === 2) {
-    const m = parts[0].toLowerCase().substring(0,3);
+    const m = parts[0].toLowerCase().substring(0, 3);
     const yr = parseInt(parts[1]);
-    if (monthsTr[m] !== undefined && !isNaN(yr)) return new Date(yr, monthsTr[m], 1);
-    if (monthsEn[m] !== undefined && !isNaN(yr)) return new Date(yr, monthsEn[m], 1);
+    if (monthsTr[m] !== undefined && !isNaN(yr))
+      return new Date(yr, monthsTr[m], 1);
+    if (monthsEn[m] !== undefined && !isNaN(yr))
+      return new Date(yr, monthsEn[m], 1);
   }
 
   const yearMatch = dateStr.match(/^\d{4}$/);
@@ -38,8 +89,19 @@ function parseDate(dateStr: string | null): Date | null {
 
 function formatDate(dateStr: string | null, locale: string): string {
   if (!dateStr) return "";
-  if (dateStr.toLowerCase().includes("present") || dateStr.toLowerCase().includes("devam") || dateStr.toLowerCase().includes("heute") || dateStr.toLowerCase().includes("actual")) {
-    return locale === "tr" ? "Devam ediyor" : locale === "de" ? "Heute" : locale === "es" ? "Actual" : "Present";
+  if (
+    dateStr.toLowerCase().includes("present") ||
+    dateStr.toLowerCase().includes("devam") ||
+    dateStr.toLowerCase().includes("heute") ||
+    dateStr.toLowerCase().includes("actual")
+  ) {
+    return locale === "tr"
+      ? "Devam ediyor"
+      : locale === "de"
+        ? "Heute"
+        : locale === "es"
+          ? "Actual"
+          : "Present";
   }
   const d = parseDate(dateStr);
   if (!d) return dateStr;
@@ -48,7 +110,10 @@ function formatDate(dateStr: string | null, locale: string): string {
   if (parts.length === 1 && parts[0].length === 4) return parts[0]; // just year
 
   try {
-    const formatted = new Intl.DateTimeFormat(locale, { month: "short", year: "numeric" }).format(d);
+    const formatted = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      year: "numeric",
+    }).format(d);
     // Capitalize first letter
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   } catch (e) {
@@ -56,7 +121,12 @@ function formatDate(dateStr: string | null, locale: string): string {
   }
 }
 
-function calculateDuration(start: string | null, end: string | null, isCurrent: boolean, locale: string) {
+function calculateDuration(
+  start: string | null,
+  end: string | null,
+  isCurrent: boolean,
+  locale: string,
+) {
   if (!start) return null;
   const startDate = parseDate(start);
   const endDateStr = end || (isCurrent ? "Present" : "");
@@ -83,18 +153,26 @@ function calculateDuration(start: string | null, end: string | null, isCurrent: 
   if (locale === "de") {
     let s = "";
     if (years > 0) s += `${years} Jahr${years > 1 ? "e" : ""}`;
-    if (remainingMonths > 0) s += (s ? " " : "") + `${remainingMonths} Monat${remainingMonths > 1 ? "e" : ""}`;
+    if (remainingMonths > 0)
+      s +=
+        (s ? " " : "") +
+        `${remainingMonths} Monat${remainingMonths > 1 ? "e" : ""}`;
     return s || null;
   }
   if (locale === "es") {
     let s = "";
     if (years > 0) s += `${years} año${years > 1 ? "s" : ""}`;
-    if (remainingMonths > 0) s += (s ? " " : "") + `${remainingMonths} mes${remainingMonths > 1 ? "es" : ""}`;
+    if (remainingMonths > 0)
+      s +=
+        (s ? " " : "") +
+        `${remainingMonths} mes${remainingMonths > 1 ? "es" : ""}`;
     return s || null;
   }
   let s = "";
   if (years > 0) s += `${years} yr${years > 1 ? "s" : ""}`;
-  if (remainingMonths > 0) s += (s ? " " : "") + `${remainingMonths} mo${remainingMonths > 1 ? "s" : ""}`;
+  if (remainingMonths > 0)
+    s +=
+      (s ? " " : "") + `${remainingMonths} mo${remainingMonths > 1 ? "s" : ""}`;
   return s || null;
 }
 
@@ -107,7 +185,9 @@ export function Experience() {
     const map: Record<string, { projects: Project[]; blogs: Blog[] }> = {};
     experiences.forEach((exp: Experience) => {
       map[exp.id] = {
-        projects: projects.filter((p: Project) => p.linked_experience_id === exp.id),
+        projects: projects.filter(
+          (p: Project) => p.linked_experience_id === exp.id,
+        ),
         blogs: blogs.filter((b: Blog) => b.linked_experience_id === exp.id),
       };
     });
@@ -118,56 +198,94 @@ export function Experience() {
 
   return (
     <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.experience")}</h2>
+      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">
+        {t("home.experience")}
+      </h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
         {experiences.map((exp: Experience) => {
           const related = relatedItemsMap[exp.id];
-          const hasRelated = related.projects.length > 0 || related.blogs.length > 0;
-          
+          const hasRelated =
+            related.projects.length > 0 || related.blogs.length > 0;
+
           return (
             <div key={exp.id} className="relative pl-6 sm:pl-8 group">
               <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
               <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
                 <div className="flex gap-4">
                   {exp.logo_url ? (
-                    <img src={exp.logo_url} alt={exp.company} className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0" />
+                    <img
+                      src={exp.logo_url}
+                      alt={exp.company}
+                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0"
+                    />
                   ) : (
                     <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
-                      <span className="text-sm font-semibold text-muted-foreground">{exp.company?.[0]?.toUpperCase()}</span>
+                      <span className="text-sm font-semibold text-muted-foreground">
+                        {exp.company?.[0]?.toUpperCase()}
+                      </span>
                     </div>
                   )}
                   <div className="space-y-1 min-w-0 flex-1">
-                    <h3 className="font-semibold text-base">{getLocalized(exp, "title")}</h3>
+                    <h3 className="font-semibold text-base">
+                      {getLocalized(exp, "title")}
+                    </h3>
                     <p className="text-sm font-medium text-muted-foreground">
                       {exp.company}
                       {exp.location ? ` · ${exp.location}` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span>{formatDate(exp.start_date, locale)}{exp.end_date || exp.is_current ? ` - ${formatDate(exp.end_date || "Present", locale)}` : ""}</span>
-                      {calculateDuration(exp.start_date, exp.end_date, exp.is_current, locale) && (
+                      <span>
+                        {formatDate(exp.start_date, locale)}
+                        {exp.end_date || exp.is_current
+                          ? ` - ${formatDate(exp.end_date || "Present", locale)}`
+                          : ""}
+                      </span>
+                      {calculateDuration(
+                        exp.start_date,
+                        exp.end_date,
+                        exp.is_current,
+                        locale,
+                      ) && (
                         <>
                           <span>·</span>
-                          <span>{calculateDuration(exp.start_date, exp.end_date, exp.is_current, locale)}</span>
+                          <span>
+                            {calculateDuration(
+                              exp.start_date,
+                              exp.end_date,
+                              exp.is_current,
+                              locale,
+                            )}
+                          </span>
                         </>
                       )}
                     </p>
                     {exp.description && (
                       <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
-                        <ExpandableText text={getLocalized(exp, "description")} />
+                        <ExpandableText
+                          text={getLocalized(exp, "description")}
+                        />
                       </div>
                     )}
-                    
+
                     {hasRelated && (
                       <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
                         {related.projects.map((p: Project) => (
-                          <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                          <Link
+                            key={p.id}
+                            href={`/works?project=${p.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
+                          >
                             <FolderKanban className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(p, "title")}</span>
                             <ExternalLink className="h-2.5 w-2.5 opacity-50" />
                           </Link>
                         ))}
                         {related.blogs.map((b: Blog) => (
-                          <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                          <Link
+                            key={b.id}
+                            href={`/blog?post=${b.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
+                          >
                             <PenTool className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(b, "title")}</span>
                             <ExternalLink className="h-2.5 w-2.5 opacity-50" />
@@ -195,7 +313,9 @@ export function Education() {
     const map: Record<string, { projects: Project[]; blogs: Blog[] }> = {};
     educations.forEach((edu: Education) => {
       map[edu.id] = {
-        projects: projects.filter((p: Project) => p.linked_education_id === edu.id),
+        projects: projects.filter(
+          (p: Project) => p.linked_education_id === edu.id,
+        ),
         blogs: blogs.filter((b: Blog) => b.linked_education_id === edu.id),
       };
     });
@@ -206,11 +326,14 @@ export function Education() {
 
   return (
     <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.education")}</h2>
+      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">
+        {t("home.education")}
+      </h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
         {educations.map((edu: Education) => {
           const related = relatedItemsMap[edu.id];
-          const hasRelated = related.projects.length > 0 || related.blogs.length > 0;
+          const hasRelated =
+            related.projects.length > 0 || related.blogs.length > 0;
 
           return (
             <div key={edu.id} className="relative pl-6 sm:pl-8 group">
@@ -218,18 +341,31 @@ export function Education() {
               <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
                 <div className="flex gap-4">
                   {edu.logo_url ? (
-                    <img src={edu.logo_url} alt={edu.university} className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0" />
+                    <img
+                      src={edu.logo_url}
+                      alt={edu.university}
+                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0"
+                    />
                   ) : (
                     <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
-                      <span className="text-sm font-semibold text-muted-foreground">{edu.university?.[0]?.toUpperCase()}</span>
+                      <span className="text-sm font-semibold text-muted-foreground">
+                        {edu.university?.[0]?.toUpperCase()}
+                      </span>
                     </div>
                   )}
                   <div className="space-y-1 min-w-0 flex-1">
-                    <h3 className="font-semibold text-base">{getLocalized(edu, "university")}</h3>
+                    <h3 className="font-semibold text-base">
+                      {getLocalized(edu, "university")}
+                    </h3>
                     {(edu.degree || edu.major || edu.gpa) && (
                       <div className="flex flex-wrap items-center gap-2 mt-0.5">
                         <p className="text-sm font-medium text-muted-foreground">
-                          {getLocalized(edu, "degree")}{getLocalized(edu, "degree") && getLocalized(edu, "major") ? ` - ` : ""}{getLocalized(edu, "major")}
+                          {getLocalized(edu, "degree")}
+                          {getLocalized(edu, "degree") &&
+                          getLocalized(edu, "major")
+                            ? ` - `
+                            : ""}
+                          {getLocalized(edu, "major")}
                         </p>
                         {edu.gpa && (
                           <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-primary ring-1 ring-inset ring-primary/20 uppercase">
@@ -240,28 +376,53 @@ export function Education() {
                     )}
                     <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
                       <span>
-                        {formatDate(edu.start_date, locale)}{edu.end_date || edu.is_current ? ` - ${formatDate(edu.end_date || "Present", locale)}` : ""}
-                        {getLocalized(edu, "location") ? ` · ${getLocalized(edu, "location")}` : ""}
+                        {formatDate(edu.start_date, locale)}
+                        {edu.end_date || edu.is_current
+                          ? ` - ${formatDate(edu.end_date || "Present", locale)}`
+                          : ""}
+                        {getLocalized(edu, "location")
+                          ? ` · ${getLocalized(edu, "location")}`
+                          : ""}
                       </span>
-                      {calculateDuration(edu.start_date, edu.end_date, !!edu.is_current, locale) && (
+                      {calculateDuration(
+                        edu.start_date,
+                        edu.end_date,
+                        !!edu.is_current,
+                        locale,
+                      ) && (
                         <>
                           <span>·</span>
-                          <span>{calculateDuration(edu.start_date, edu.end_date, !!edu.is_current, locale)}</span>
+                          <span>
+                            {calculateDuration(
+                              edu.start_date,
+                              edu.end_date,
+                              !!edu.is_current,
+                              locale,
+                            )}
+                          </span>
                         </>
                       )}
                     </p>
-                    
+
                     {hasRelated && (
                       <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
                         {related.projects.map((p: Project) => (
-                          <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                          <Link
+                            key={p.id}
+                            href={`/works?project=${p.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
+                          >
                             <FolderKanban className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(p, "title")}</span>
                             <ExternalLink className="h-2.5 w-2.5 opacity-50" />
                           </Link>
                         ))}
                         {related.blogs.map((b: Blog) => (
-                          <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                          <Link
+                            key={b.id}
+                            href={`/blog?post=${b.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
+                          >
                             <PenTool className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(b, "title")}</span>
                             <ExternalLink className="h-2.5 w-2.5 opacity-50" />
@@ -289,24 +450,42 @@ export function Languages() {
   const getLanguageFlag = (name: string) => {
     const lower = name.toLowerCase();
     if (lower.includes("turkish") || lower.includes("türkçe")) return "🇹🇷";
-    if (lower.includes("english") || lower.includes("ingilizce") || lower.includes("i̇ngilizce")) return "🇬🇧";
+    if (
+      lower.includes("english") ||
+      lower.includes("ingilizce") ||
+      lower.includes("i̇ngilizce")
+    )
+      return "🇬🇧";
     if (lower.includes("german") || lower.includes("almanca")) return "🇩🇪";
-    if (lower.includes("spanish") || lower.includes("ispanyolca") || lower.includes("i̇spanyolca")) return "🇪🇸";
+    if (
+      lower.includes("spanish") ||
+      lower.includes("ispanyolca") ||
+      lower.includes("i̇spanyolca")
+    )
+      return "🇪🇸";
     if (lower.includes("french") || lower.includes("fransızca")) return "🇫🇷";
-    if (lower.includes("italian") || lower.includes("italyanca") || lower.includes("i̇talyanca")) return "🇮🇹";
+    if (
+      lower.includes("italian") ||
+      lower.includes("italyanca") ||
+      lower.includes("i̇talyanca")
+    )
+      return "🇮🇹";
     if (lower.includes("russian") || lower.includes("rusça")) return "🇷🇺";
     if (lower.includes("arabic") || lower.includes("arapça")) return "🇸🇦";
     if (lower.includes("japanese") || lower.includes("japonca")) return "🇯🇵";
     if (lower.includes("chinese") || lower.includes("çince")) return "🇨🇳";
     if (lower.includes("korean") || lower.includes("korece")) return "🇰🇷";
     if (lower.includes("dutch") || lower.includes("felemenkçe")) return "🇳🇱";
-    if (lower.includes("portuguese") || lower.includes("portekizce")) return "🇵🇹";
+    if (lower.includes("portuguese") || lower.includes("portekizce"))
+      return "🇵🇹";
     return null;
   };
 
   return (
     <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.languages")}</h2>
+      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">
+        {t("home.languages")}
+      </h2>
       <div className="flex flex-wrap gap-2 sm:gap-3 ml-3">
         {languages.map((lang: any) => {
           const flag = getLanguageFlag(lang.name);
@@ -315,32 +494,54 @@ export function Languages() {
               key={lang.id}
               className="group flex items-center gap-2 rounded-xl border bg-card/40 px-3 py-1.5 sm:px-4 sm:py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              {flag && <span className="text-base sm:text-lg leading-none">{flag}</span>}
-              <span className="text-xs sm:text-sm font-medium text-foreground group-hover:text-accent-foreground">{getLocalized(lang, "name")}</span>
+              {flag && (
+                <span className="text-base sm:text-lg leading-none">
+                  {flag}
+                </span>
+              )}
+              <span className="text-xs sm:text-sm font-medium text-foreground group-hover:text-accent-foreground">
+                {getLocalized(lang, "name")}
+              </span>
               {lang.level && (
                 <>
                   <span className="w-1 h-1 rounded-full bg-muted-foreground/30 mx-0.5" />
                   <span className="text-xs sm:text-sm group-hover:text-accent-foreground/80 transition-colors">
-                    {t(`level.${lang.level.toLowerCase()}`) !== `level.${lang.level.toLowerCase()}` ? t(`level.${lang.level.toLowerCase()}`) : lang.level}
+                    {t(`level.${lang.level.toLowerCase()}`) !==
+                    `level.${lang.level.toLowerCase()}`
+                      ? t(`level.${lang.level.toLowerCase()}`)
+                      : lang.level}
                   </span>
                 </>
               )}
               {(() => {
-                const relatedProjects = projects.filter((p: any) => p.linked_language_id === lang.id);
-                const relatedBlogs = blogs.filter((b: any) => b.linked_language_id === lang.id);
-                if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
-                
+                const relatedProjects = projects.filter(
+                  (p: any) => p.linked_language_id === lang.id,
+                );
+                const relatedBlogs = blogs.filter(
+                  (b: any) => b.linked_language_id === lang.id,
+                );
+                if (relatedProjects.length === 0 && relatedBlogs.length === 0)
+                  return null;
+
                 return (
                   <div className="w-full mt-2 pt-2 border-t border-border/50 flex flex-wrap gap-2">
                     {relatedProjects.map((p: any) => (
-                      <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border shadow-sm">
+                      <Link
+                        key={p.id}
+                        href={`/works?project=${p.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border shadow-sm"
+                      >
                         <FolderKanban className="h-3 w-3 opacity-70" />
                         <span>{getLocalized(p, "title")}</span>
                         <ExternalLink className="h-2 w-2 opacity-0 group-hover/link:opacity-50 -ml-0.5" />
                       </Link>
                     ))}
                     {relatedBlogs.map((b: any) => (
-                      <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border shadow-sm">
+                      <Link
+                        key={b.id}
+                        href={`/blog?post=${b.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border shadow-sm"
+                      >
                         <PenTool className="h-3 w-3 opacity-70" />
                         <span>{getLocalized(b, "title")}</span>
                         <ExternalLink className="h-2 w-2 opacity-0 group-hover/link:opacity-50 -ml-0.5" />
@@ -365,7 +566,9 @@ export function Activities() {
 
   return (
     <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">{t("home.activities")}</h2>
+      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">
+        {t("home.activities")}
+      </h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
         {activities.map((act: any) => (
           <div key={act.id} className="relative pl-6 sm:pl-8 group">
@@ -373,28 +576,60 @@ export function Activities() {
             <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
               <div className="flex gap-4">
                 {act.logo_url ? (
-                  <img src={act.logo_url} alt={act.organization} className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0" />
+                  <img
+                    src={act.logo_url}
+                    alt={act.organization}
+                    className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0"
+                  />
                 ) : (
                   <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
-                    <span className="text-sm font-semibold text-muted-foreground">{act.organization?.[0]?.toUpperCase()}</span>
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      {act.organization?.[0]?.toUpperCase()}
+                    </span>
                   </div>
                 )}
                 <div className="space-y-1 min-w-0 flex-1 break-words">
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-base min-w-0 break-words pr-2">{getLocalized(act, "organization")}</h3>
+                    <h3 className="font-semibold text-base min-w-0 break-words pr-2">
+                      {getLocalized(act, "organization")}
+                    </h3>
                     {act.link_url && (
-                      <a href={act.link_url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1">
+                      <a
+                        href={act.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1"
+                      >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     )}
                   </div>
-                  <p className="text-sm font-medium text-muted-foreground">{getLocalized(act, "role")}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {getLocalized(act, "role")}
+                  </p>
                   <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span>{formatDate(act.start_date, locale)}{act.end_date ? ` - ${formatDate(act.end_date, locale)}` : ""}</span>
-                    {calculateDuration(act.start_date, act.end_date, false, locale) && (
+                    <span>
+                      {formatDate(act.start_date, locale)}
+                      {act.end_date || act.is_current
+                        ? ` - ${formatDate(act.end_date || "Present", locale)}`
+                        : ""}
+                    </span>
+                    {calculateDuration(
+                      act.start_date,
+                      act.end_date,
+                      !!act.is_current,
+                      locale,
+                    ) && (
                       <>
                         <span>·</span>
-                        <span>{calculateDuration(act.start_date, act.end_date, false, locale)}</span>
+                        <span>
+                          {calculateDuration(
+                            act.start_date,
+                            act.end_date,
+                            !!act.is_current,
+                            locale,
+                          )}
+                        </span>
                       </>
                     )}
                   </p>
@@ -404,21 +639,37 @@ export function Activities() {
                     </div>
                   )}
                   {(() => {
-                    const relatedProjects = projects.filter((p: any) => p.linked_activity_id === act.id);
-                    const relatedBlogs = blogs.filter((b: any) => b.linked_activity_id === act.id);
-                    if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
-                    
+                    const relatedProjects = projects.filter(
+                      (p: any) => p.linked_activity_id === act.id,
+                    );
+                    const relatedBlogs = blogs.filter(
+                      (b: any) => b.linked_activity_id === act.id,
+                    );
+                    if (
+                      relatedProjects.length === 0 &&
+                      relatedBlogs.length === 0
+                    )
+                      return null;
+
                     return (
                       <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
                         {relatedProjects.map((p: any) => (
-                          <Link key={p.id} href={`/works?project=${p.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                          <Link
+                            key={p.id}
+                            href={`/works?project=${p.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
+                          >
                             <FolderKanban className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(p, "title")}</span>
                             <ExternalLink className="h-2.5 w-2.5 opacity-50" />
                           </Link>
                         ))}
                         {relatedBlogs.map((b: any) => (
-                          <Link key={b.id} href={`/blog?post=${b.id}`} className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors">
+                          <Link
+                            key={b.id}
+                            href={`/blog?post=${b.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
+                          >
                             <PenTool className="h-3 w-3 opacity-70" />
                             <span>{getLocalized(b, "title")}</span>
                             <ExternalLink className="h-2.5 w-2.5 opacity-50" />
@@ -439,16 +690,34 @@ export function Activities() {
 
 export function Certifications() {
   const { getLocalized, t } = useLanguage();
-  const { certifications, certificationSkills, skillCategories, projects, blogs } = useSiteData();
+  const {
+    certifications,
+    certificationSkills,
+    skillCategories,
+    projects,
+    blogs,
+  } = useSiteData();
   const [selectedCert, setSelectedCert] = useState<any | null>(null);
   const [showAllCerts, setShowAllCerts] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // Mark as client-side only after mount to avoid hydration mismatch
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   if (certifications.length === 0) return null;
 
-  // Split certifications into two rows for marquee effect - evenly distribute
-  const half = Math.floor(certifications.length / 2);
-  const firstRow = certifications.slice(0, half + (certifications.length % 2));
-  const secondRow = certifications.slice(half + (certifications.length % 2));
+  // Only shuffle on client side to prevent hydration mismatch
+  // Use memo to prevent reshuffling on every render
+  const displayCerts = useMemo(() => {
+    return isClient ? shuffleArray(certifications) : certifications;
+  }, [isClient, certifications]);
+
+  // Split certifications into two rows for marquee effect
+  const half = Math.floor(displayCerts.length / 2);
+  const firstRow = displayCerts.slice(0, half + (displayCerts.length % 2));
+  const secondRow = displayCerts.slice(half + (displayCerts.length % 2));
 
   // Duplicate items 3x for seamless infinite loop (prevents visible jump)
   const duplicatedFirstRow = [...firstRow, ...firstRow, ...firstRow];
@@ -456,19 +725,29 @@ export function Certifications() {
 
   const CertItem = ({ cert }: { cert: any }) => {
     return (
-      <div 
+      <div
         onClick={() => setSelectedCert(cert)}
-        className="group flex items-center gap-3 px-5 py-2.5 rounded-xl border bg-card/80 transition-all hover:bg-accent/50 cursor-pointer flex-shrink-0 h-12"
+        className="group flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl border bg-card/80 transition-all hover:bg-accent/50 cursor-pointer flex-shrink-0 h-12 min-w-0"
       >
         {cert.icon_url && (
-          <img src={cert.icon_url} alt={cert.name} className="h-6 w-6 rounded object-cover flex-shrink-0" />
+          <img
+            src={cert.icon_url}
+            alt={cert.name}
+            className="h-5 w-5 sm:h-6 sm:w-6 rounded object-cover flex-shrink-0"
+          />
         )}
-        <div className="flex items-center gap-2 whitespace-nowrap">
-          <span className="text-sm font-medium">{getLocalized(cert, "name")}</span>
-          <span className="text-xs text-muted-foreground">·</span>
-          <span className="text-xs text-muted-foreground">{cert.issuer}</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 overflow-hidden">
+          <span className="text-xs sm:text-sm font-medium truncate max-w-[100px] sm:max-w-[200px]">
+            {getLocalized(cert, "name")}
+          </span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
+            ·
+          </span>
+          <span className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-[60px] sm:max-w-[150px]">
+            {cert.issuer}
+          </span>
         </div>
-        <ExternalLink className="h-3 w-3 text-muted-foreground opacity-70 flex-shrink-0" />
+        <ExternalLink className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground opacity-70 flex-shrink-0" />
       </div>
     );
   };
@@ -477,7 +756,9 @@ export function Certifications() {
     <section className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">{t("home.certifications")}</h2>
+          <h2 className="text-lg font-semibold tracking-tight">
+            {t("home.certifications")}
+          </h2>
           <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
             {certifications.length}
           </span>
@@ -489,7 +770,7 @@ export function Certifications() {
           {t("cert.viewAll")}
         </button>
       </div>
-      
+
       <div className="space-y-3 overflow-hidden py-2 -my-2">
         {/* First row - scrolls right to left */}
         <div className="relative pb-2 h-12">
@@ -499,7 +780,7 @@ export function Certifications() {
             ))}
           </div>
         </div>
-        
+
         {/* Second row - scrolls left to right */}
         <div className="relative pb-2 h-12">
           <div className="flex gap-3 animate-marquee-right">
@@ -528,7 +809,9 @@ export function Certifications() {
               className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl"
             >
               <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
-                <h2 className="text-sm font-medium text-muted-foreground">{t("cert.details")}</h2>
+                <h2 className="text-sm font-medium text-muted-foreground">
+                  {t("cert.details")}
+                </h2>
                 <button
                   onClick={() => setSelectedCert(null)}
                   className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -538,31 +821,60 @@ export function Certifications() {
               </div>
 
               <div className="overflow-y-auto p-4 sm:p-8 space-y-6">
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   {selectedCert.icon_url && (
-                    <img src={selectedCert.icon_url} alt={selectedCert.name} className="h-16 w-16 rounded-xl object-cover bg-muted/50 p-2 border" />
+                    <img
+                      src={selectedCert.icon_url}
+                      alt={selectedCert.name}
+                      className="h-16 w-16 rounded-xl object-cover bg-muted/50 p-2 border flex-shrink-0"
+                    />
                   )}
-                  <div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{getLocalized(selectedCert, "name")}</h1>
-                    <p className="text-sm text-muted-foreground mt-1">{selectedCert.issuer} {selectedCert.issue_date && `· ${selectedCert.issue_date}`}</p>
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <h1 className="text-lg sm:text-2xl font-bold tracking-tight break-words">
+                      {getLocalized(selectedCert, "name")}
+                    </h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">
+                      {selectedCert.issuer}{" "}
+                      {selectedCert.issue_date &&
+                        `· ${selectedCert.issue_date}`}
+                    </p>
                     {selectedCert.link_url && (
-                      <a href={selectedCert.link_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2">
-                        {t("cert.viewCredential")} <ExternalLink className="h-3.5 w-3.5" />
+                      <a
+                        href={selectedCert.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
+                      >
+                        {t("cert.viewCredential")}{" "}
+                        <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     )}
                   </div>
                 </div>
 
                 {(() => {
-                  const relatedSkillIds = certificationSkills?.filter((cs: any) => cs.certification_id === selectedCert.id).map((cs: any) => cs.skill_category_id) || [];
-                  const relatedSkills = skillCategories?.filter((sc: any) => relatedSkillIds.includes(sc.id)) || [];
+                  const relatedSkillIds =
+                    certificationSkills
+                      ?.filter(
+                        (cs: any) => cs.certification_id === selectedCert.id,
+                      )
+                      .map((cs: any) => cs.skill_category_id) || [];
+                  const relatedSkills =
+                    skillCategories?.filter((sc: any) =>
+                      relatedSkillIds.includes(sc.id),
+                    ) || [];
                   if (relatedSkills.length > 0) {
                     return (
                       <div className="space-y-2">
-                        <h3 className="text-sm font-semibold text-muted-foreground">{t("cert.skillsEvaluated")}</h3>
+                        <h3 className="text-sm font-semibold text-muted-foreground">
+                          {t("cert.skillsEvaluated")}
+                        </h3>
                         <div className="flex flex-wrap gap-2">
                           {relatedSkills.map((skill: any) => (
-                            <span key={skill.id} className="inline-flex rounded-md bg-secondary/50 px-2.5 py-1 text-xs font-medium text-secondary-foreground shadow-sm">
+                            <span
+                              key={skill.id}
+                              className="inline-flex rounded-md bg-secondary/50 px-2.5 py-1 text-xs font-medium text-secondary-foreground shadow-sm"
+                            >
                               {getLocalized(skill, "title")}
                             </span>
                           ))}
@@ -574,19 +886,33 @@ export function Certifications() {
                 })()}
 
                 {(() => {
-                  const relatedProjects = projects.filter((p: any) => p.linked_certification_id === selectedCert.id);
-                  const relatedBlogs = blogs.filter((b: any) => b.linked_certification_id === selectedCert.id);
-                  if (relatedProjects.length === 0 && relatedBlogs.length === 0) return null;
-                  
+                  const relatedProjects = projects.filter(
+                    (p: any) => p.linked_certification_id === selectedCert.id,
+                  );
+                  const relatedBlogs = blogs.filter(
+                    (b: any) => b.linked_certification_id === selectedCert.id,
+                  );
+                  if (relatedProjects.length === 0 && relatedBlogs.length === 0)
+                    return null;
+
                   return (
                     <div className="pt-6 mt-6 border-t flex flex-col gap-4">
                       {relatedProjects.length > 0 && (
                         <div className="space-y-3">
-                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2"><FolderKanban className="h-4 w-4" /> {t("cert.relatedProjects")}</h3>
+                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                            <FolderKanban className="h-4 w-4" />{" "}
+                            {t("cert.relatedProjects")}
+                          </h3>
                           <div className="flex flex-col gap-2">
                             {relatedProjects.map((p: any) => (
-                              <Link key={p.id} href={`/works?project=${p.id}`} className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                                <span className="text-sm font-medium group-hover:text-primary transition-colors">{getLocalized(p, "title")}</span>
+                              <Link
+                                key={p.id}
+                                href={`/works?project=${p.id}`}
+                                className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                              >
+                                <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                                  {getLocalized(p, "title")}
+                                </span>
                                 <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                               </Link>
                             ))}
@@ -595,11 +921,20 @@ export function Certifications() {
                       )}
                       {relatedBlogs.length > 0 && (
                         <div className="space-y-3">
-                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2"><PenTool className="h-4 w-4" /> {t("cert.relatedArticles")}</h3>
+                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                            <PenTool className="h-4 w-4" />{" "}
+                            {t("cert.relatedArticles")}
+                          </h3>
                           <div className="flex flex-col gap-2">
                             {relatedBlogs.map((b: any) => (
-                              <Link key={b.id} href={`/blog?post=${b.id}`} className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                                <span className="text-sm font-medium group-hover:text-primary transition-colors">{getLocalized(b, "title")}</span>
+                              <Link
+                                key={b.id}
+                                href={`/blog?post=${b.id}`}
+                                className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                              >
+                                <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                                  {getLocalized(b, "title")}
+                                </span>
                                 <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                               </Link>
                             ))}
@@ -631,25 +966,27 @@ export function Certifications() {
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl"
+              className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-[calc(100vw-16px)] sm:max-w-2xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl mx-2 sm:mx-0"
             >
-              <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-medium text-muted-foreground">{t("cert.allCertifications")}</h2>
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+              <div className="flex items-center justify-between border-b px-3 sm:px-6 py-2.5 sm:py-4">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                  <h2 className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                    {t("cert.allCertifications")}
+                  </h2>
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium text-primary flex-shrink-0">
                     {certifications.length}
                   </span>
                 </div>
                 <button
                   onClick={() => setShowAllCerts(false)}
-                  className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  className="rounded-full p-1.5 sm:p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex-shrink-0"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
 
-              <div className="overflow-y-auto p-4 sm:p-6">
-                <div className="grid gap-3 sm:grid-cols-2">
+              <div className="overflow-y-auto p-3 sm:p-6 w-full">
+                <div className="grid grid-cols-1 gap-2 sm:gap-3 w-full">
                   {certifications.map((cert: any) => (
                     <div
                       key={cert.id}
@@ -657,16 +994,25 @@ export function Certifications() {
                         setShowAllCerts(false);
                         setTimeout(() => setSelectedCert(cert), 300);
                       }}
-                      className="group flex items-center gap-3 p-4 rounded-xl border bg-card/50 transition-all hover:bg-accent/50 cursor-pointer"
+                      className="group flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-xl border bg-card/50 transition-all hover:bg-accent/50 cursor-pointer min-w-0 w-full overflow-hidden"
                     >
                       {cert.icon_url && (
-                        <img src={cert.icon_url} alt={cert.name} className="h-10 w-10 rounded-lg object-cover flex-shrink-0" />
+                        <img
+                          src={cert.icon_url}
+                          alt={cert.name}
+                          className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                        />
                       )}
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-medium truncate">{getLocalized(cert, "name")}</h3>
-                        <p className="text-xs text-muted-foreground">{cert.issuer}{cert.issue_date && ` · ${cert.issue_date}`}</p>
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <h3 className="text-xs sm:text-sm font-medium truncate">
+                          {getLocalized(cert, "name")}
+                        </h3>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                          {cert.issuer}
+                          {cert.issue_date && ` · ${cert.issue_date}`}
+                        </p>
                       </div>
-                      <ExternalLink className="h-4 w-4 text-muted-foreground opacity-70 flex-shrink-0" />
+                      <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground opacity-70 flex-shrink-0 mt-1" />
                     </div>
                   ))}
                 </div>

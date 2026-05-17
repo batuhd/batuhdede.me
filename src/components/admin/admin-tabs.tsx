@@ -723,6 +723,9 @@ export function AdminSkillsTab() {
   const [form, setForm] = useState({
     title: "",
     skills: "",
+    skills_tr: "",
+    skills_de: "",
+    skills_es: "",
     title_tr: "",
     title_de: "",
     title_es: "",
@@ -753,9 +756,24 @@ export function AdminSkillsTab() {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+    const skills_tr = form.skills_tr
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const skills_de = form.skills_de
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const skills_es = form.skills_es
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const { error } = await supabase.from("skill_categories").insert({
       title: form.title,
       skills,
+      skills_tr: skills_tr.length > 0 ? skills_tr : null,
+      skills_de: skills_de.length > 0 ? skills_de : null,
+      skills_es: skills_es.length > 0 ? skills_es : null,
       title_tr: form.title_tr || null,
       title_de: form.title_de || null,
       title_es: form.title_es || null,
@@ -765,6 +783,9 @@ export function AdminSkillsTab() {
     setForm({
       title: "",
       skills: "",
+      skills_tr: "",
+      skills_de: "",
+      skills_es: "",
       title_tr: "",
       title_de: "",
       title_es: "",
@@ -780,6 +801,9 @@ export function AdminSkillsTab() {
     setForm({
       title: item.title || "",
       skills: Array.isArray(item.skills) ? item.skills.join(", ") : "",
+      skills_tr: Array.isArray(item.skills_tr) ? item.skills_tr.join(", ") : "",
+      skills_de: Array.isArray(item.skills_de) ? item.skills_de.join(", ") : "",
+      skills_es: Array.isArray(item.skills_es) ? item.skills_es.join(", ") : "",
       title_tr: item.title_tr || "",
       title_de: item.title_de || "",
       title_es: item.title_es || "",
@@ -795,11 +819,26 @@ export function AdminSkillsTab() {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+    const skills_tr = form.skills_tr
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const skills_de = form.skills_de
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const skills_es = form.skills_es
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     const { error, data } = await supabase
       .from("skill_categories")
       .update({
         title: form.title,
         skills,
+        skills_tr: skills_tr.length > 0 ? skills_tr : null,
+        skills_de: skills_de.length > 0 ? skills_de : null,
+        skills_es: skills_es.length > 0 ? skills_es : null,
         title_tr: form.title_tr || null,
         title_de: form.title_de || null,
         title_es: form.title_es || null,
@@ -939,6 +978,19 @@ export function AdminSkillsTab() {
               placeholder={form.title || "Translation..."}
             />
           </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">
+              Skills ({langTab.toUpperCase()}) — comma separated
+            </label>
+            <textarea
+              value={form[`skills_${langTab}` as keyof typeof form] || ""}
+              onChange={(e) =>
+                setForm({ ...form, [`skills_${langTab}`]: e.target.value })
+              }
+              className={`${inputClass} min-h-[80px]`}
+              placeholder={form.skills || "Translation..."}
+            />
+          </div>
         </div>
       )}
       <div className="flex justify-end gap-2">
@@ -984,6 +1036,9 @@ export function AdminSkillsTab() {
             setForm({
               title: "",
               skills: "",
+              skills_tr: "",
+              skills_de: "",
+              skills_es: "",
               title_tr: "",
               title_de: "",
               title_es: "",
@@ -1081,6 +1136,95 @@ const MONTHS = [
   "Nov",
   "Dec",
 ];
+
+// Turkish month abbreviations for parsing existing data
+const MONTHS_TR = [
+  "Oca",
+  "Şub",
+  "Mar",
+  "Nis",
+  "May",
+  "Haz",
+  "Tem",
+  "Ağu",
+  "Eyl",
+  "Eki",
+  "Kas",
+  "Ara",
+];
+
+// German month abbreviations for parsing existing data
+const MONTHS_DE = [
+  "Jan",
+  "Feb",
+  "Mär",
+  "Apr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Okt",
+  "Nov",
+  "Dez",
+];
+
+// Spanish month abbreviations for parsing existing data
+const MONTHS_ES = [
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
+];
+
+// All months combined for parsing
+const ALL_MONTHS = [...MONTHS, ...MONTHS_TR, ...MONTHS_DE, ...MONTHS_ES];
+
+// Map to convert any month abbreviation to English standard
+const MONTH_MAP: Record<string, string> = {
+  // English
+  Jan: "Jan",
+  Feb: "Feb",
+  Mar: "Mar",
+  Apr: "Apr",
+  May: "May",
+  Jun: "Jun",
+  Jul: "Jul",
+  Aug: "Aug",
+  Sep: "Sep",
+  Oct: "Oct",
+  Nov: "Nov",
+  Dec: "Dec",
+  // Turkish
+  Oca: "Jan",
+  Şub: "Feb",
+  Nis: "Apr",
+  Haz: "Jun",
+  Tem: "Jul",
+  Ağu: "Aug",
+  Eyl: "Sep",
+  Eki: "Oct",
+  Kas: "Nov",
+  Ara: "Dec",
+  // German
+  Mär: "Mar",
+  Mai: "May",
+  Okt: "Oct",
+  Dez: "Dec",
+  // Spanish
+  Ene: "Jan",
+  Abr: "Apr",
+  Ago: "Aug",
+  Dic: "Dec",
+};
 const YEARS = Array.from(
   { length: 50 },
   (_, i) => new Date().getFullYear() - i,
@@ -1099,23 +1243,32 @@ export function MonthYearInput({
 }) {
   let month = "";
   let year = "";
+
   if (
     value &&
     value.toLowerCase() !== "present" &&
-    value.toLowerCase() !== "devam"
+    value.toLowerCase() !== "devam" &&
+    value.toLowerCase() !== "actual" &&
+    value.toLowerCase() !== "heute"
   ) {
     const parts = value.split(" ");
     if (parts.length === 2) {
-      month = parts[0];
-      year = parts[1];
+      const parsedMonth = MONTH_MAP[parts[0]] || parts[0];
+      if (MONTHS.includes(parsedMonth)) {
+        month = parsedMonth;
+        year = parts[1];
+      }
     } else if (parts.length === 1 && parts[0].length === 4) {
       year = parts[0];
+    } else if (parts.length === 1 && ALL_MONTHS.includes(parts[0])) {
+      month = MONTH_MAP[parts[0]] || parts[0];
     }
   }
 
   const handleMonth = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const m = e.target.value;
     if (m && year) onChange(`${m} ${year}`);
+    else if (m && !year) onChange(m);
     else if (!m && year) onChange(year);
     else onChange("");
   };
@@ -1124,6 +1277,7 @@ export function MonthYearInput({
     const y = e.target.value;
     if (month && y) onChange(`${month} ${y}`);
     else if (!month && y) onChange(y);
+    else if (month && !y) onChange(month);
     else onChange("");
   };
 
@@ -1546,9 +1700,15 @@ export function AdminCrudTab({
                 <input
                   type="checkbox"
                   checked={!!form[field.key]}
-                  onChange={(e) =>
-                    setForm({ ...form, [field.key]: e.target.checked })
-                  }
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    const newForm = { ...form, [field.key]: isChecked };
+                    // If is_current is checked, set end_date to "present"
+                    if (field.key === "is_current" && isChecked) {
+                      newForm["end_date"] = "present";
+                    }
+                    setForm(newForm);
+                  }}
                   className="h-4 w-4 rounded border accent-primary"
                 />
                 <span className="text-sm text-muted-foreground">

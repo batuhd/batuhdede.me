@@ -65,6 +65,9 @@ export interface SkillCategory {
   id: string;
   title: string;
   skills: any[];
+  skills_tr?: any[];
+  skills_de?: any[];
+  skills_es?: any[];
   order_index: number;
   title_tr?: string;
   title_de?: string;
@@ -379,6 +382,8 @@ export const fetchHomeData = cache(async () => {
     sectionRes,
     socialLinksRes,
     contactEmailsRes,
+    projectsRes,
+    blogsRes,
   ] = await Promise.all([
     supabase.from("about_me").select("*").limit(1).single(),
     supabase
@@ -418,6 +423,18 @@ export const fetchHomeData = cache(async () => {
       .from("contact_emails")
       .select("*")
       .order("order_index", { ascending: true }),
+    supabase
+      .from("projects")
+      .select(
+        "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
+      )
+      .order("order_index", { ascending: true }),
+    supabase
+      .from("blogs")
+      .select(
+        "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
+      )
+      .order("order_index", { ascending: true }),
   ]);
 
   return {
@@ -432,6 +449,8 @@ export const fetchHomeData = cache(async () => {
     sectionOrder: sectionRes.data || [],
     socialLinks: socialLinksRes.data || [],
     contactEmails: contactEmailsRes.data || [],
+    projects: projectsRes.data || [],
+    blogs: blogsRes.data || [],
   };
 });
 
