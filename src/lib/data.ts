@@ -435,6 +435,7 @@ export const fetchHomeData = cache(async () => {
       .select(
         "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
       )
+      .eq("is_published", true)
       .order("order_index", { ascending: true }),
   ]);
 
