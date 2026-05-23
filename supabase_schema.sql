@@ -464,6 +464,12 @@ BEGIN
   IF TG_TABLE_NAME = 'blogs' AND (SELECT count(*) FROM blogs) >= 200 THEN
     RAISE EXCEPTION 'Maximum blogs limit reached (200)';
   END IF;
+  IF TG_TABLE_NAME = 'easter_eggs' AND (SELECT count(*) FROM easter_eggs) >= 50 THEN
+    RAISE EXCEPTION 'Maximum easter eggs limit reached (50)';
+  END IF;
+  IF TG_TABLE_NAME = 'easter_egg_config' AND (SELECT count(*) FROM easter_egg_config) >= 5 THEN
+    RAISE EXCEPTION 'Maximum easter egg config limit reached (5)';
+  END IF;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -475,3 +481,49 @@ CREATE TRIGGER check_projects_limit
 CREATE TRIGGER check_blogs_limit
   BEFORE INSERT ON blogs
   FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+CREATE TRIGGER check_easter_eggs_limit
+  BEFORE INSERT ON easter_eggs
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+CREATE TRIGGER check_easter_egg_config_limit
+  BEFORE INSERT ON easter_egg_config
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+
+-- =============================================
+-- Easter Eggs (secret Keyboard Surprise)
+-- =============================================
+CREATE TABLE public.easter_eggs (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    image_url text NOT NULL,
+    caption text,
+    is_active boolean DEFAULT true,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE POLICY "Public read" ON public.easter_eggs FOR SELECT USING (true);
+CREATE POLICY "Admin insert" ON public.easter_eggs FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.easter_eggs FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.easter_eggs FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
+
+
+-- =============================================
+-- Easter Egg Config (Dynamic Secret & Display)
+-- =============================================
+CREATE TABLE public.easter_egg_config (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    secret_code text NOT NULL DEFAULT 'secret',
+    display_title text NOT NULL DEFAULT 'secret',
+    display_subtitle text NOT NULL DEFAULT 'secret',
+    footer_text text DEFAULT 'secret.',
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.easter_egg_config ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read" ON public.easter_egg_config FOR SELECT USING (true);
+CREATE POLICY "Admin insert" ON public.easter_egg_config FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.easter_egg_config FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.easter_egg_config FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);

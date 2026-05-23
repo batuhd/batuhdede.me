@@ -27,6 +27,7 @@ import {
   Mail,
   Eye,
   EyeOff,
+  Heart,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -44,6 +45,7 @@ import {
   AdminLayoutTab,
   ImageInputWithRecent,
 } from "@/components/admin/admin-tabs";
+import { AdminEasterEggConfigTab } from "@/components/admin/easter-egg-config-tab";
 import { MarkdownEditor } from "@/components/admin/markdown-editor";
 import { Toaster, toast } from "sonner";
 
@@ -60,7 +62,8 @@ type Tab =
   | "social"
   | "contact_emails"
   | "settings"
-  | "section_layout";
+  | "section_layout"
+  | "easter_eggs";
 type LangTab = "default" | "tr" | "de" | "es";
 
 // Type definitions for better type safety
@@ -171,6 +174,7 @@ const SIDEBAR_CATEGORIES = [
     title: "Configuration",
     tabs: [
       { key: "section_layout", icon: LayoutDashboard, label: "Page Layout" },
+      { key: "easter_eggs", icon: Heart, label: "Easter Eggs" },
       { key: "settings", icon: Settings, label: "Settings" },
     ],
   },
@@ -3253,6 +3257,38 @@ function AdminDashboardContent() {
 
               {/* ───── CONTACT EMAILS TAB ───── */}
               {activeTab === "contact_emails" && <AdminContactEmailsTab />}
+
+              {/* Easter Eggs Tab */}
+              {activeTab === "easter_eggs" && (
+                <div className="space-y-8">
+                  <AdminCrudTab
+                    title="Easter Eggs"
+                    tableName="easter_eggs"
+                    displayField="caption"
+                    subtitleField="image_url"
+                    fields={[
+                      {
+                        key: "image_url",
+                        label: "Image URL",
+                        required: true,
+                        placeholder: "https://i.ibb.co/...",
+                      },
+                      {
+                        key: "caption",
+                        label: "Caption",
+                        placeholder: "Romantic caption for the photo...",
+                      },
+                      {
+                        key: "is_active",
+                        label: "Active",
+                        type: "checkbox",
+                        placeholder: "Show in gallery",
+                      },
+                    ]}
+                  />
+                  <AdminEasterEggConfigTab />
+                </div>
+              )}
 
               {/* ───── SETTINGS TAB ───── */}
               {activeTab === "settings" && (

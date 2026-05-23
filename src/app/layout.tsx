@@ -10,6 +10,7 @@ import { ReactQueryProvider } from "@/components/react-query-provider";
 import { MaintenanceGuard } from "@/components/maintenance-guard";
 import { Dock } from "@/components/navigation/dock";
 import { Intro } from "@/components/home/intro";
+import { EasterEgg } from "@/components/easter-egg";
 import { siteConfig } from "@/config/site";
 import Image from "next/image";
 import Link from "next/link";
@@ -108,6 +109,7 @@ export default function RootLayout({
                   <main className="relative mx-auto w-full px-4 sm:px-6 py-12 sm:py-16 pb-28 sm:pb-32">
                     {children}
                   </main>
+                  <EasterEgg />
                   <Dock />
                 </MaintenanceGuard>
               </SiteDataProvider>

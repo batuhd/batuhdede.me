@@ -21,6 +21,7 @@ interface SiteData {
   sectionOrder: any[];
   projects: any[];
   blogs: any[];
+  easterEggs: any[];
   loaded: boolean;
   isMaintenance: boolean;
 }
@@ -37,6 +38,7 @@ const defaultData: SiteData = {
   sectionOrder: [],
   projects: [],
   blogs: [],
+  easterEggs: [],
   loaded: false,
   isMaintenance: false,
 };
@@ -81,6 +83,7 @@ export function SiteDataProvider({
         sectionRes,
         projectsRes,
         blogsRes,
+        easterEggsRes,
       ] = await Promise.all([
         sb.from("about_me").select("*").limit(1),
         sb
@@ -124,6 +127,10 @@ export function SiteDataProvider({
             "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id",
           )
           .order("order_index", { ascending: true }),
+        sb
+          .from("easter_eggs")
+          .select("*")
+          .order("order_index", { ascending: true }),
       ]);
 
       setData({
@@ -138,6 +145,7 @@ export function SiteDataProvider({
         sectionOrder: sectionRes?.data || [],
         projects: projectsRes?.data || [],
         blogs: blogsRes?.data || [],
+        easterEggs: easterEggsRes?.data || [],
         loaded: true,
         isMaintenance:
           sectionRes?.data?.some(

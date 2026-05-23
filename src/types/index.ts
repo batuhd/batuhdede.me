@@ -338,3 +338,17 @@ export interface WorkFormData {
   title_es: string;
   description_es: string;
 }
+
+
+// ============================================
+// Easter Eggs
+// ============================================
+
+export interface EasterEgg {
+  id: string;
+  image_url: string;
+  caption?: string;
+  is_active: boolean;
+  order_index: number;
+  created_at: string;
+}

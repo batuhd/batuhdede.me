@@ -244,18 +244,56 @@ export interface SocialLink {
   id: string;
   platform: string;
   url: string;
-  icon: string | null;
+  icon?: string;
   order_index: number;
 }
 
 export interface ContactEmail {
   id: string;
   label: string;
-  email: string;
-  order_index: number;
   label_tr?: string;
   label_de?: string;
   label_es?: string;
+  email: string;
+  order_index: number;
+}
+
+export interface SocialLink {
+  id: string;
+  platform: string;
+  url: string;
+  icon?: string;
+  order_index: number;
+}
+
+export interface SectionOrder {
+  section_id: string;
+  order_index: number;
+}
+
+export interface EasterEgg {
+  id: string;
+  image_url: string;
+  caption: string | null;
+  is_active: boolean;
+  order_index: number;
+}
+
+export interface SiteData {
+  aboutMe: AboutMe | null;
+  skillCategories: SkillCategory[];
+  experiences: Experience[];
+  educations: Education[];
+  languages: Language[];
+  activities: Activity[];
+  certifications: Certification[];
+  certificationSkills: CertificationSkill[];
+  sectionOrder: SectionOrder[];
+  projects: Project[];
+  blogs: Blog[];
+  socialLinks: SocialLink[];
+  contactEmails: ContactEmail[];
+  easterEggs: EasterEgg[];
 }
 
 export interface SiteData {
@@ -301,6 +339,7 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
     blogsRes,
     socialLinksRes,
     contactEmailsRes,
+    easterEggsRes,
   ] = await Promise.all([
     supabase.from("about_me").select("*").limit(1).single(),
     supabase
@@ -348,6 +387,10 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
       .from("contact_emails")
       .select("*")
       .order("order_index", { ascending: true }),
+    supabase
+      .from("easter_eggs")
+      .select("*")
+      .order("order_index", { ascending: true }),
   ]);
 
   return {
@@ -364,6 +407,7 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
     blogs: blogsRes.data || [],
     socialLinks: socialLinksRes.data || [],
     contactEmails: contactEmailsRes.data || [],
+    easterEggs: (easterEggsRes.data || []) as EasterEgg[],
   };
 });
 
