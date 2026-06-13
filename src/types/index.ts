@@ -133,6 +133,21 @@ export interface Blog {
 // Resume Data
 // ============================================
 
+export interface RoleEntry {
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  description: string | null;
+  // Translations
+  title_tr?: string;
+  title_de?: string;
+  title_es?: string;
+  description_tr?: string;
+  description_de?: string;
+  description_es?: string;
+}
+
 export interface Experience {
   id: string;
   title: string;
@@ -143,6 +158,7 @@ export interface Experience {
   is_current: boolean;
   logo_url: string;
   description: string;
+  roles: RoleEntry[];
   order_index: number;
   // Translations
   title_tr?: string;
@@ -203,6 +219,7 @@ export interface Activity {
   logo_url: string;
   description: string;
   link_url: string;
+  roles: RoleEntry[];
   order_index: number;
   // Translations
   organization_tr?: string;

@@ -3034,6 +3034,12 @@ function AdminDashboardContent() {
                       placeholder: "What you did...",
                       translatable: true,
                     },
+                    {
+                      key: "roles",
+                      label: "Positions",
+                      type: "role_list",
+                      placeholder: "Add positions within this company",
+                    },
                   ]}
                 />
               )}
@@ -3195,6 +3201,12 @@ function AdminDashboardContent() {
                       type: "textarea",
                       placeholder: "What you did...",
                       translatable: true,
+                    },
+                    {
+                      key: "roles",
+                      label: "Positions",
+                      type: "role_list",
+                      placeholder: "Add positions within this organization",
                     },
                   ]}
                 />

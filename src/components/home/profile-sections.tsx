@@ -25,6 +25,7 @@ import type {
   Education,
   Activity,
   Certification,
+  RoleEntry,
 } from "@/types";
 
 function parseDate(dateStr: string | null): Date | null {
@@ -176,6 +177,45 @@ function calculateDuration(
   return s || null;
 }
 
+function sortRolesByDate(roles: RoleEntry[]): RoleEntry[] {
+  return [...roles].sort((a, b) => {
+    const da = parseDate(a.start_date);
+    const db = parseDate(b.start_date);
+    if (!da || !db) return 0;
+    return db.getTime() - da.getTime();
+  });
+}
+
+function getRolesDateRange(roles: RoleEntry[]) {
+  if (!roles || roles.length === 0) return null;
+  const sortedStart = [...roles].sort((a, b) => {
+    const da = parseDate(a.start_date);
+    const db = parseDate(b.start_date);
+    if (!da || !db) return 0;
+    return da.getTime() - db.getTime();
+  });
+  const sortedEnd = [...roles].sort((a, b) => {
+    const da = parseDate(a.is_current ? "Present" : a.end_date);
+    const db = parseDate(b.is_current ? "Present" : b.end_date);
+    if (!da || !db) return 0;
+    return db.getTime() - da.getTime();
+  });
+  return {
+    start: sortedStart[0]?.start_date,
+    end: sortedEnd[0]?.is_current ? "Present" : sortedEnd[0]?.end_date,
+    is_current: sortedEnd[0]?.is_current ?? false,
+  };
+}
+
+function calculateRolesDuration(
+  roles: RoleEntry[],
+  locale: string,
+): string | null {
+  const range = getRolesDateRange(roles);
+  if (!range) return null;
+  return calculateDuration(range.start, range.end, range.is_current, locale);
+}
+
 export function Experience() {
   const { locale, getLocalized, t } = useLanguage();
   const { experiences, projects, blogs } = useSiteData();
@@ -206,6 +246,26 @@ export function Experience() {
           const related = relatedItemsMap[exp.id];
           const hasRelated =
             related.projects.length > 0 || related.blogs.length > 0;
+          const roles = sortRolesByDate(exp.roles || []);
+          const hasRoles = roles.length > 0;
+          const allRoles = hasRoles
+            ? sortRolesByDate([
+                {
+                  title: exp.title,
+                  start_date: exp.start_date,
+                  end_date: exp.end_date,
+                  is_current: exp.is_current,
+                  description: exp.description,
+                  title_tr: exp.title_tr,
+                  title_de: exp.title_de,
+                  title_es: exp.title_es,
+                  description_tr: exp.description_tr,
+                  description_de: exp.description_de,
+                  description_es: exp.description_es,
+                },
+                ...roles,
+              ])
+            : [];
 
           return (
             <div key={exp.id} className="relative pl-6 sm:pl-8 group">
@@ -226,44 +286,106 @@ export function Experience() {
                     </div>
                   )}
                   <div className="space-y-1 min-w-0 flex-1">
-                    <h3 className="font-semibold text-base">
-                      {getLocalized(exp, "title")}
-                    </h3>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {exp.company}
-                      {exp.location ? ` · ${exp.location}` : ""}
-                    </p>
-                    <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span>
-                        {formatDate(exp.start_date, locale)}
-                        {exp.end_date || exp.is_current
-                          ? ` - ${formatDate(exp.end_date || "Present", locale)}`
-                          : ""}
-                      </span>
-                      {calculateDuration(
-                        exp.start_date,
-                        exp.end_date,
-                        exp.is_current,
-                        locale,
-                      ) && (
-                        <>
-                          <span>·</span>
-                          <span>
-                            {calculateDuration(
-                              exp.start_date,
-                              exp.end_date,
-                              exp.is_current,
+                    {hasRoles ? (
+                      <div className="space-y-1">
+                        <h3 className="font-semibold text-base">
+                          {exp.company}
+                        </h3>
+                        {exp.location && (
+                          <p className="text-sm font-medium text-muted-foreground">
+                            {exp.location}
+                          </p>
+                        )}
+                        {calculateRolesDuration(roles, locale) && (
+                          <p className="text-xs text-muted-foreground/80">
+                            {calculateRolesDuration(roles, locale)}
+                          </p>
+                        )}
+                        <div className="relative mt-3 border-l border-primary/20 pl-4 space-y-5">
+                          {allRoles.map((role, idx) => {
+                            const roleEnd = role.is_current
+                              ? "Present"
+                              : role.end_date;
+                            const roleDuration = calculateDuration(
+                              role.start_date,
+                              role.end_date,
+                              role.is_current,
                               locale,
-                            )}
+                            );
+                            return (
+                              <div key={idx} className="relative">
+                                <span className="absolute -left-[21.5px] top-[5px] h-2 w-2 rounded-full bg-primary/60 ring-4 ring-card/40" />
+                                <h4 className="font-medium text-sm">
+                                  {getLocalized(role, "title")}
+                                </h4>
+                                <p className="text-xs text-muted-foreground/80 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                  <span>
+                                    {formatDate(role.start_date, locale)}
+                                    {roleEnd
+                                      ? ` - ${formatDate(roleEnd, locale)}`
+                                      : ""}
+                                  </span>
+                                  {roleDuration && (
+                                    <>
+                                      <span>·</span>
+                                      <span>{roleDuration}</span>
+                                    </>
+                                  )}
+                                </p>
+                                {role.description && (
+                                  <div className="pt-2 text-sm text-muted-foreground leading-relaxed">
+                                    <ExpandableText
+                                      text={getLocalized(role, "description")}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <h3 className="font-semibold text-base">
+                          {getLocalized(exp, "title")}
+                        </h3>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {exp.company}
+                          {exp.location ? ` · ${exp.location}` : ""}
+                        </p>
+                        <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span>
+                            {formatDate(exp.start_date, locale)}
+                            {exp.end_date || exp.is_current
+                              ? ` - ${formatDate(exp.end_date || "Present", locale)}`
+                              : ""}
                           </span>
-                        </>
-                      )}
-                    </p>
-                    {exp.description && (
-                      <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
-                        <ExpandableText
-                          text={getLocalized(exp, "description")}
-                        />
+                          {calculateDuration(
+                            exp.start_date,
+                            exp.end_date,
+                            exp.is_current,
+                            locale,
+                          ) && (
+                            <>
+                              <span>·</span>
+                              <span>
+                                {calculateDuration(
+                                  exp.start_date,
+                                  exp.end_date,
+                                  exp.is_current,
+                                  locale,
+                                )}
+                              </span>
+                            </>
+                          )}
+                        </p>
+                        {exp.description && (
+                          <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
+                            <ExpandableText
+                              text={getLocalized(exp, "description")}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -570,7 +692,29 @@ export function Activities() {
         {t("home.activities")}
       </h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
-        {activities.map((act: any) => (
+        {activities.map((act: any) => {
+          const roles = sortRolesByDate(act.roles || []);
+          const hasRoles = roles.length > 0;
+          const allRoles = hasRoles
+            ? sortRolesByDate([
+                {
+                  title: act.role,
+                  start_date: act.start_date,
+                  end_date: act.end_date,
+                  is_current: act.is_current,
+                  description: act.description,
+                  title_tr: act.role_tr,
+                  title_de: act.role_de,
+                  title_es: act.role_es,
+                  description_tr: act.description_tr,
+                  description_de: act.description_de,
+                  description_es: act.description_es,
+                },
+                ...roles,
+              ])
+            : [];
+
+          return (
           <div key={act.id} className="relative pl-6 sm:pl-8 group">
             <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
             <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
@@ -589,53 +733,122 @@ export function Activities() {
                   </div>
                 )}
                 <div className="space-y-1 min-w-0 flex-1 break-words">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-base min-w-0 break-words pr-2">
-                      {getLocalized(act, "organization")}
-                    </h3>
-                    {act.link_url && (
-                      <a
-                        href={act.link_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    )}
-                  </div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {getLocalized(act, "role")}
-                  </p>
-                  <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                    <span>
-                      {formatDate(act.start_date, locale)}
-                      {act.end_date || act.is_current
-                        ? ` - ${formatDate(act.end_date || "Present", locale)}`
-                        : ""}
-                    </span>
-                    {calculateDuration(
-                      act.start_date,
-                      act.end_date,
-                      !!act.is_current,
-                      locale,
-                    ) && (
-                      <>
-                        <span>·</span>
-                        <span>
-                          {calculateDuration(
-                            act.start_date,
-                            act.end_date,
-                            !!act.is_current,
+                  {hasRoles ? (
+                    <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-base min-w-0 break-words pr-2">
+                          {getLocalized(act, "organization")}
+                        </h3>
+                        {act.link_url && (
+                          <a
+                            href={act.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                      {calculateRolesDuration(roles, locale) && (
+                        <p className="text-xs text-muted-foreground/80">
+                          {calculateRolesDuration(roles, locale)}
+                        </p>
+                      )}
+                      <div className="relative mt-3 border-l border-primary/20 pl-4 space-y-5">
+                        {allRoles.map((role, idx) => {
+                          const roleEnd = role.is_current
+                            ? "Present"
+                            : role.end_date;
+                          const roleDuration = calculateDuration(
+                            role.start_date,
+                            role.end_date,
+                            role.is_current,
                             locale,
-                          )}
+                          );
+                          return (
+                            <div key={idx} className="relative">
+                              <span className="absolute -left-[21.5px] top-[5px] h-2 w-2 rounded-full bg-primary/60 ring-4 ring-card/40" />
+                              <h4 className="font-medium text-sm">
+                                {getLocalized(role, "title")}
+                              </h4>
+                              <p className="text-xs text-muted-foreground/80 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <span>
+                                  {formatDate(role.start_date, locale)}
+                                  {roleEnd
+                                    ? ` - ${formatDate(roleEnd, locale)}`
+                                    : ""}
+                                </span>
+                                {roleDuration && (
+                                  <>
+                                    <span>·</span>
+                                    <span>{roleDuration}</span>
+                                  </>
+                                )}
+                              </p>
+                              {role.description && (
+                                <div className="pt-2 text-sm text-muted-foreground leading-relaxed">
+                                  <ExpandableText
+                                    text={getLocalized(role, "description")}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-base min-w-0 break-words pr-2">
+                          {getLocalized(act, "organization")}
+                        </h3>
+                        {act.link_url && (
+                          <a
+                            href={act.link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {getLocalized(act, "role")}
+                      </p>
+                      <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span>
+                          {formatDate(act.start_date, locale)}
+                          {act.end_date || act.is_current
+                            ? ` - ${formatDate(act.end_date || "Present", locale)}`
+                            : ""}
                         </span>
-                      </>
-                    )}
-                  </p>
-                  {act.description && (
-                    <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
-                      <ExpandableText text={getLocalized(act, "description")} />
+                        {calculateDuration(
+                          act.start_date,
+                          act.end_date,
+                          !!act.is_current,
+                          locale,
+                        ) && (
+                          <>
+                            <span>·</span>
+                            <span>
+                              {calculateDuration(
+                                act.start_date,
+                                act.end_date,
+                                !!act.is_current,
+                                locale,
+                              )}
+                            </span>
+                          </>
+                        )}
+                      </p>
+                      {act.description && (
+                        <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
+                          <ExpandableText text={getLocalized(act, "description")} />
+                        </div>
+                      )}
                     </div>
                   )}
                   {(() => {
@@ -682,7 +895,8 @@ export function Activities() {
               </div>
             </div>
           </div>
-        ))}
+        );
+      })}
       </div>
     </section>
   );

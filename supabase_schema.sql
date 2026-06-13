@@ -87,6 +87,7 @@ CREATE TABLE public.experiences (
     is_current boolean DEFAULT false,
     logo_url text,
     description text,
+    roles jsonb DEFAULT '[]'::jsonb,
     -- Translations
     title_tr text,
     title_de text,
@@ -150,6 +151,7 @@ CREATE TABLE public.activities (
     logo_url text,
     description text,
     link_url text,
+    roles jsonb DEFAULT '[]'::jsonb,
     -- Translations
     organization_tr text,
     organization_de text,
@@ -332,6 +334,23 @@ ALTER TABLE public.projects ADD CONSTRAINT check_project_desc_es_length CHECK (d
 
 ALTER TABLE public.blogs ADD CONSTRAINT check_blog_excerpt_length CHECK (char_length(excerpt) <= 2000);
 ALTER TABLE public.blogs ADD CONSTRAINT check_blog_content_length CHECK (char_length(content) <= 100000);
+
+-- =============================================
+-- MIGRATIONS: Add roles column to existing tables
+-- =============================================
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'experiences') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'experiences' AND column_name = 'roles') THEN
+            ALTER TABLE public.experiences ADD COLUMN roles jsonb DEFAULT '[]'::jsonb;
+        END IF;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'activities') THEN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'activities' AND column_name = 'roles') THEN
+            ALTER TABLE public.activities ADD COLUMN roles jsonb DEFAULT '[]'::jsonb;
+        END IF;
+    END IF;
+END $$;
 
 -- =============================================
 -- ROW LEVEL SECURITY (RLS)

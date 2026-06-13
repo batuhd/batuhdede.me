@@ -1313,6 +1313,215 @@ export function MonthYearInput({
   );
 }
 
+interface RoleEntry {
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  description: string | null;
+}
+
+function RoleListInput({
+  value,
+  onChange,
+  langTab = "default",
+}: {
+  value: RoleEntry[];
+  onChange: (val: RoleEntry[]) => void;
+  langTab?: LangTab;
+}) {
+  const roles = Array.isArray(value) ? value : [];
+  const isTranslation = langTab !== "default";
+
+  const updateRole = (index: number, updates: Partial<RoleEntry>) => {
+    const next = roles.map((role, i) =>
+      i === index ? { ...role, ...updates } : role,
+    );
+    onChange(next);
+  };
+
+  const addRole = () => {
+    onChange([
+      ...roles,
+      {
+        title: "",
+        start_date: "",
+        end_date: null,
+        is_current: false,
+        description: null,
+      },
+    ]);
+  };
+
+  const removeRole = (index: number) => {
+    onChange(roles.filter((_, i) => i !== index));
+  };
+
+  const moveRole = (index: number, direction: "up" | "down") => {
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= roles.length) return;
+    const next = [...roles];
+    const temp = next[index];
+    next[index] = next[swapIndex];
+    next[swapIndex] = temp;
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      {roles.map((role, index) => (
+        <div
+          key={index}
+          className="rounded-lg border bg-card/50 p-3 space-y-3"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-semibold text-muted-foreground">
+              Position {index + 1}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => moveRole(index, "up")}
+                disabled={index === 0}
+                className="rounded p-1 text-muted-foreground hover:bg-muted disabled:opacity-30"
+              >
+                <ChevronUp className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => moveRole(index, "down")}
+                disabled={index === roles.length - 1}
+                className="rounded p-1 text-muted-foreground hover:bg-muted disabled:opacity-30"
+              >
+                <ChevronDown className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => removeRole(index)}
+                className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                {isTranslation ? `Title (${langTab.toUpperCase()})` : "Title"}
+              </label>
+              <input
+                type="text"
+                value={
+                  (isTranslation
+                    ? (role[`title_${langTab}` as keyof RoleEntry] as string)
+                    : role.title) || ""
+                }
+                onChange={(e) =>
+                  updateRole(index, {
+                    [isTranslation ? `title_${langTab}` : "title"]:
+                      e.target.value,
+                  } as Partial<RoleEntry>)
+                }
+                className={inputClass}
+                placeholder={
+                  isTranslation
+                    ? role.title || "Translation..."
+                    : "Board Member"
+                }
+              />
+            </div>
+            {!isTranslation && (
+              <>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    Start Date
+                  </label>
+                  <MonthYearInput
+                    value={role.start_date || ""}
+                    onChange={(val) => updateRole(index, { start_date: val })}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    End Date
+                  </label>
+                  <MonthYearInput
+                    value={role.end_date || ""}
+                    onChange={(val) =>
+                      updateRole(index, {
+                        end_date: val || null,
+                      })
+                    }
+                    disabled={role.is_current}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!role.is_current}
+                      onChange={(e) =>
+                        updateRole(index, {
+                          is_current: e.target.checked,
+                          end_date: e.target.checked
+                            ? null
+                            : role.end_date,
+                        })
+                      }
+                      className="h-4 w-4 rounded border accent-primary"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Currently in this role
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+            <div className="space-y-1 sm:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                {isTranslation
+                  ? `Description (${langTab.toUpperCase()})`
+                  : "Description"}
+              </label>
+              <textarea
+                value={
+                  (isTranslation
+                    ? (role[`description_${langTab}` as keyof RoleEntry] as string)
+                    : role.description) || ""
+                }
+                onChange={(e) =>
+                  updateRole(index, {
+                    [isTranslation
+                      ? `description_${langTab}`
+                      : "description"]: e.target.value || null,
+                  } as Partial<RoleEntry>)
+                }
+                className={`${inputClass} min-h-[60px]`}
+                placeholder={
+                  isTranslation
+                    ? role.description || "Translation..."
+                    : "Optional description..."
+                }
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+      {!isTranslation && (
+        <button
+          type="button"
+          onClick={addRole}
+          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed py-2 text-xs font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+        >
+          <Plus className="h-3.5 w-3.5" /> Add Position
+        </button>
+      )}
+    </div>
+  );
+}
+
 interface FieldConfig {
   key: string;
   label: string;
@@ -1323,7 +1532,8 @@ interface FieldConfig {
     | "checkbox"
     | "month_year"
     | "select"
-    | "multi_select";
+    | "multi_select"
+    | "role_list";
   options?: { label: string; value: string }[];
   placeholder?: string;
   required?: boolean;
@@ -1359,14 +1569,20 @@ export function AdminCrudTab({
   const [form, setForm] = useState<Record<string, any>>({});
   const [langTab, setLangTab] = useState<LangTab>("default");
 
-  const translatableFields = fields.filter((f) => f.translatable);
-  const hasTranslatable = translatableFields.length > 0;
+  const translatableFields = fields.filter(
+    (f) => f.translatable && f.type !== "role_list",
+  );
+  const roleListFields = fields.filter((f) => f.type === "role_list");
+  const hasTranslatable =
+    translatableFields.length > 0 || roleListFields.length > 0;
+  const hasRoleList = roleListFields.length > 0;
 
   const emptyForm = () => {
     const f: Record<string, any> = {};
     fields.forEach((field) => {
       if (field.type === "checkbox") f[field.key] = false;
-      else if (field.type === "multi_select") f[field.key] = [];
+      else if (field.type === "multi_select" || field.type === "role_list")
+        f[field.key] = [];
       else f[field.key] = "";
     });
     if (hasTranslatable)
@@ -1426,6 +1642,10 @@ export function AdminCrudTab({
       if (field.type === "multi_select") return; // Handled separately
 
       const val = form[field.key];
+      if (field.type === "role_list") {
+        payload[field.key] = Array.isArray(val) ? val : [];
+        return;
+      }
       if (field.type === "number" && val !== "")
         payload[field.key] = parseInt(val);
       else if (field.type === "checkbox") payload[field.key] = !!val;
@@ -1494,7 +1714,8 @@ export function AdminCrudTab({
     setEditingId(item.id);
     const f: Record<string, any> = {};
     fields.forEach((field) => {
-      if (field.type === "multi_select") f[field.key] = item[field.key] || [];
+      if (field.type === "multi_select" || field.type === "role_list")
+        f[field.key] = item[field.key] || [];
       else
         f[field.key] =
           item[field.key] ?? (field.type === "checkbox" ? false : "");
@@ -1662,6 +1883,18 @@ export function AdminCrudTab({
               )}
             </div>
           ))}
+          {roleListFields.map((field) => (
+            <div key={field.key} className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                {field.label} ({langTab.toUpperCase()})
+              </label>
+              <RoleListInput
+                value={form[field.key] || []}
+                onChange={(val) => setForm({ ...form, [field.key]: val })}
+                langTab={langTab}
+              />
+            </div>
+          ))}
         </div>
       );
     }
@@ -1672,7 +1905,8 @@ export function AdminCrudTab({
             key={field.key}
             className={cn(
               "space-y-1",
-              field.type === "textarea" && "sm:col-span-2",
+              (field.type === "textarea" || field.type === "role_list") &&
+                "sm:col-span-2",
             )}
           >
             <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">
@@ -1775,6 +2009,12 @@ export function AdminCrudTab({
                   );
                 })}
               </div>
+            ) : field.type === "role_list" ? (
+              <RoleListInput
+                value={form[field.key] || []}
+                onChange={(val) => setForm({ ...form, [field.key]: val })}
+                langTab={langTab}
+              />
             ) : field.key.includes("logo") ||
               field.key.includes("icon") ||
               field.key.includes("image") ? (
@@ -1826,7 +2066,9 @@ export function AdminCrudTab({
           </button>
         </div>
       )}
-      {hasTranslatable && <LangTabBar active={langTab} onChange={setLangTab} />}
+      {(hasTranslatable || hasRoleList) && (
+        <LangTabBar active={langTab} onChange={setLangTab} />
+      )}
       {renderFormFields()}
       <div className="flex justify-end gap-2">
         {isEdit && (

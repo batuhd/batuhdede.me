@@ -74,6 +74,20 @@ export interface SkillCategory {
   title_es?: string;
 }
 
+export interface RoleEntry {
+  title: string;
+  start_date: string;
+  end_date: string | null;
+  is_current: boolean;
+  description: string | null;
+  title_tr?: string;
+  title_de?: string;
+  title_es?: string;
+  description_tr?: string;
+  description_de?: string;
+  description_es?: string;
+}
+
 export interface Experience {
   id: string;
   title: string;
@@ -84,6 +98,7 @@ export interface Experience {
   is_current: boolean;
   logo_url: string | null;
   description: string | null;
+  roles: RoleEntry[];
   order_index: number;
   title_tr?: string;
   title_de?: string;
@@ -138,6 +153,7 @@ export interface Activity {
   logo_url: string | null;
   description: string | null;
   link_url: string | null;
+  roles: RoleEntry[];
   order_index: number;
   organization_tr?: string;
   organization_de?: string;
