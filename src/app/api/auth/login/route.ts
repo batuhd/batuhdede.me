@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       const remainingSeconds = Math.ceil((record.lockedUntil - now) / 1000);
       return NextResponse.json(
         {
-          error: `Too many failed attempts. Try again in ${remainingSeconds} seconds.`,
+          error: "Too many failed attempts. Try again later.",
           locked: true,
           remainingSeconds,
         },
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const result = loginSchema.safeParse(body);
-    
+
     if (!result.success) {
       const errors = result.error.errors.map(e => e.message).join(", ");
       return NextResponse.json(
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
+
     validatedData = result.data;
   } catch {
     return NextResponse.json(
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     if (process.env.NODE_ENV === "development") {
       console.error("Supabase Auth Error:", authError.message);
     }
-    
+
     // Record failed attempt
     const existing = attempts.get(ip);
     const now = Date.now();
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: `${authError.message}. ${remaining} attempt(s) remaining.`,
+        error: "Invalid credentials.",
         attemptsLeft: remaining,
       },
       { status: 401 }
@@ -166,22 +166,11 @@ export async function POST(request: Request) {
   // Success — clear attempts for this IP
   attempts.delete(ip);
 
-  const response = NextResponse.json({
+  return NextResponse.json({
     session: {
       access_token: data.session?.access_token,
       refresh_token: data.session?.refresh_token,
       expires_at: data.session?.expires_at,
     },
   });
-
-  // Set HTTP-only cookie for middleware auth check
-  response.cookies.set("admin_session", "authenticated", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60, // 1 hour (matches Supabase JWT expiry)
-  });
-
-  return response;
 }

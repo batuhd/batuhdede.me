@@ -30,7 +30,7 @@ import {
   Heart,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
+import { cn, sanitizeUrl } from "@/lib/utils";
 import {
   AdminErrorProvider,
   useAdminError,
@@ -232,6 +232,8 @@ const BLOG_FIELDS = [
   "content_es",
 ];
 
+const URL_FIELDS = ["link", "github", "image", "image_url"];
+
 function cleanObj(obj: Record<string, unknown>, allowedFields?: string[]) {
   const cleaned: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(obj)) {
@@ -240,13 +242,14 @@ function cleanObj(obj: Record<string, unknown>, allowedFields?: string[]) {
     if (typeof v === "string" && v.trim() === "") {
       if (
         k.startsWith("linked_") ||
-        k === "link" ||
-        k === "github" ||
-        k === "image" ||
-        k === "image_url"
+        URL_FIELDS.includes(k)
       ) {
         cleaned[k] = null;
       }
+      continue;
+    }
+    if (typeof v === "string" && URL_FIELDS.includes(k)) {
+      cleaned[k] = sanitizeUrl(v.trim());
       continue;
     }
     cleaned[k] = v;
@@ -595,11 +598,13 @@ function AdminDashboardContent() {
   };
 
   const handleSignOut = async () => {
-    if (supabase) {
-      await supabase.auth.signOut();
+    try {
       await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/admin/login");
+      await supabase?.auth.signOut();
+    } catch {
+      // Ignore errors and redirect to login regardless
     }
+    router.push("/admin/login");
   };
 
   // ── Works CRUD ──

@@ -17,7 +17,7 @@ import {
   EyeOff,
   Wrench,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, sanitizeUrl } from "@/lib/utils";
 import { useAdminError } from "@/context/admin-error-context";
 import { toast } from "sonner";
 
@@ -1636,6 +1636,16 @@ export function AdminCrudTab({
     fetchItems();
   }, []);
 
+  const URL_FIELDS = [
+    "logo_url",
+    "icon_url",
+    "image_url",
+    "link_url",
+    "image",
+    "link",
+    "github",
+  ];
+
   const buildPayload = () => {
     const payload: Record<string, any> = {};
     fields.forEach((field) => {
@@ -1649,15 +1659,18 @@ export function AdminCrudTab({
       if (field.type === "number" && val !== "")
         payload[field.key] = parseInt(val);
       else if (field.type === "checkbox") payload[field.key] = !!val;
-      else if (typeof val === "string" && val.trim()) payload[field.key] = val;
-      else payload[field.key] = null;
+      else if (typeof val === "string" && val.trim()) {
+        payload[field.key] = URL_FIELDS.includes(field.key)
+          ? sanitizeUrl(val.trim())
+          : val.trim();
+      } else payload[field.key] = null;
     });
     if (hasTranslatable)
       translatableFields.forEach((field) => {
         ["tr", "de", "es"].forEach((lang) => {
           const k = `${field.key}_${lang}`;
           const val = form[k];
-          payload[k] = typeof val === "string" && val.trim() ? val : null;
+          payload[k] = typeof val === "string" && val.trim() ? val.trim() : null;
         });
       });
     return payload;

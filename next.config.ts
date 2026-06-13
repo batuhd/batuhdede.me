@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+const supabaseProjectUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://*.supabase.co";
+
 const nextConfig: NextConfig = {
   // ISR optimization
   experimental: {
@@ -39,7 +42,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://api.github.com https://formspree.io https://va.vercel-scripts.com",
+              `connect-src 'self' ${supabaseProjectUrl} https://api.github.com https://formspree.io https://va.vercel-scripts.com`,
               "frame-src 'self' https://challenges.cloudflare.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
