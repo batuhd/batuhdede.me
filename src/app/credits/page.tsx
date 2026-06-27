@@ -11,6 +11,15 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 
+function TechStackRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="p-3 rounded-xl bg-card border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium">{value}</span>
+    </div>
+  );
+}
+
 export default function CreditsPage() {
   const { t } = useLanguage();
 
@@ -57,23 +66,15 @@ export default function CreditsPage() {
                 {t("credits.techStack")}
               </span>
             </div>
-            <div className="space-y-2">
-              <div className="p-3 rounded-xl bg-card border flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Framework</span>
-                <span className="text-sm font-medium">Next.js 16</span>
-              </div>
-              <div className="p-3 rounded-xl bg-card border flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">UI</span>
-                <span className="text-sm font-medium">React 19 + Tailwind</span>
-              </div>
-              <div className="p-3 rounded-xl bg-card border flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Database</span>
-                <span className="text-sm font-medium">Supabase</span>
-              </div>
-              <div className="p-3 rounded-xl bg-card border flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Hosting</span>
-                <span className="text-sm font-medium">Vercel</span>
-              </div>
+            <div className="grid gap-2">
+              <TechStackRow label={t("credits.tech.frontend")} value="Next.js 16 · React 19 · TypeScript 5" />
+              <TechStackRow label={t("credits.tech.styling")} value="Tailwind CSS 4 · Motion 12" />
+              <TechStackRow label={t("credits.tech.database")} value="Supabase PostgreSQL + Auth + RLS" />
+              <TechStackRow label={t("credits.tech.auth")} value="Supabase Auth · Cloudflare Turnstile" />
+              <TechStackRow label={t("credits.tech.forms")} value="Zod · Sonner" />
+              <TechStackRow label={t("credits.tech.icons")} value="Lucide React" />
+              <TechStackRow label={t("credits.tech.security")} value="Next.js Middleware · CSP Headers" />
+              <TechStackRow label={t("credits.tech.hosting")} value="Vercel" />
             </div>
           </div>
         </FadeIn>

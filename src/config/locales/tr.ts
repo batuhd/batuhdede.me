@@ -87,6 +87,7 @@ export const tr: Record<string, string> = {
     "Bu web sitesinin kaynak kodu açık kaynaklıdır ve GitHub'da mevcuttur.",
   "credits.techStack": "Teknoloji Yığını",
   "credits.tech.frontend": "Frontend",
+  "credits.tech.styling": "Stil",
   "credits.tech.database": "Veritabanı",
   "credits.tech.auth": "Kimlik Doğrulama",
   "credits.tech.hosting": "Barındırma",

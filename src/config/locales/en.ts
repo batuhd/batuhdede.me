@@ -85,6 +85,7 @@ export const en: Record<string, string> = {
     "The source code of this website is open-source and available on GitHub.",
   "credits.techStack": "Tech Stack",
   "credits.tech.frontend": "Frontend",
+  "credits.tech.styling": "Styling",
   "credits.tech.database": "Database",
   "credits.tech.auth": "Auth",
   "credits.tech.hosting": "Hosting",

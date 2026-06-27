@@ -87,6 +87,7 @@ export const es: Record<string, string> = {
     "El código fuente de este sitio web es de código abierto y está disponible en GitHub.",
   "credits.techStack": "Stack tecnológico",
   "credits.tech.frontend": "Frontend",
+  "credits.tech.styling": "Estilos",
   "credits.tech.database": "Base de datos",
   "credits.tech.auth": "Autenticación",
   "credits.tech.hosting": "Alojamiento",

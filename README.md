@@ -189,16 +189,18 @@ Additional security measures beyond the enterprise-grade foundation:
 
 | Layer               | Technology                                                           | Version |
 | ------------------- | -------------------------------------------------------------------- | ------- |
-| **Framework**       | [Next.js](https://nextjs.org/) (App Router)                          | 16      |
-| **UI Library**      | [React](https://react.dev/)                                          | 19      |
-| **Language**        | [TypeScript](https://www.typescriptlang.org/)                        | 5       |
-| **Styling**         | [Tailwind CSS](https://tailwindcss.com/) + `tailwind-merge` + `clsx` | 4       |
-| **Animations**      | [Framer Motion](https://www.framer.com/motion/)                      | 12      |
-| **Database & Auth** | [Supabase](https://supabase.com/) (PostgreSQL + Auth + RLS)          | Latest  |
+| **Framework**       | [Next.js](https://nextjs.org/) (App Router)                          | 16.2.9  |
+| **UI Library**      | [React](https://react.dev/)                                          | 19.2.7  |
+| **Language**        | [TypeScript](https://www.typescriptlang.org/)                        | 5.9.3   |
+| **Styling**         | [Tailwind CSS](https://tailwindcss.com/) + `tailwind-merge` + `clsx` | 4.3.1 / 3.6.0 / 2.1.1 |
+| **Animations**      | [Motion](https://motion.dev/) (formerly Framer Motion)               | 12.42.0 |
+| **Database & Auth** | [Supabase](https://supabase.com/) (`supabase-js` + `@supabase/ssr`)  | 2.108.2 / 0.12.0 |
 | **Security**        | Cloudflare Turnstile, Next.js Middleware, CSP                        | Latest  |
-| **Validation**      | [Zod](https://zod.dev/)                                              | 3.23+   |
-| **Notifications**   | [Sonner](https://sonner.emilkowal.ski/)                              | Latest  |
-| **Markdown**        | [react-markdown](https://github.com/remarkjs/react-markdown) + [rehype-sanitize](https://github.com/rehypejs/rehype-sanitize) | Latest |
+| **Validation**      | [Zod](https://zod.dev/)                                              | 3.25.76 |
+| **Notifications**   | [Sonner](https://sonner.emilkowal.ski/)                              | 2.0.7   |
+| **Icons**           | [Lucide React](https://lucide.dev/)                                  | 0.575.0 |
+| **Markdown**        | [react-markdown](https://github.com/remarkjs/react-markdown) + [rehype-sanitize](https://github.com/rehypejs/rehype-sanitize) | 10.1.0 / 6.0.0 |
+| **Analytics**       | [Vercel Analytics](https://vercel.com/analytics) & Speed Insights    | 2.0.1 / 2.0.0 |
 | **Hosting**         | [Vercel](https://vercel.com/)                                        | -       |
 
 ---
