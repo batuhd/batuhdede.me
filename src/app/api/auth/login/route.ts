@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { headers } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 
 // Input validation schema
@@ -94,7 +94,6 @@ export async function POST(request: Request) {
 
   const { email, password, captchaToken } = validatedData;
 
-  // Create a server-side Supabase client
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -105,30 +104,33 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // Prepare response so the SSR client can attach session cookies.
+  const response = NextResponse.json({ success: true });
+  const cookieStore = await cookies();
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
 
   // Attempt login
-  const { data, error: authError } =
-    await supabase.auth.signInWithPassword({
-      email,
-      password,
-      options: {
-        captchaToken,
-      },
-    });
+  const { error: authError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+    options: {
+      captchaToken,
+    },
+  });
 
   if (authError) {
-    // Temporary production debug logging to diagnose Vercel 401s.
-    // TODO: Remove or gate behind a debug flag once the issue is resolved.
-    console.error("[login debug]", {
-      message: authError.message,
-      status: authError.status,
-      name: authError.name,
-      code: (authError as any).code,
-      hasCaptchaToken: !!captchaToken,
-      captchaTokenLength: captchaToken?.length,
-    });
-
     // Record failed attempt
     const existing = attempts.get(ip);
     const now = Date.now();
@@ -172,11 +174,5 @@ export async function POST(request: Request) {
   // Success — clear attempts for this IP
   attempts.delete(ip);
 
-  return NextResponse.json({
-    session: {
-      access_token: data.session?.access_token,
-      refresh_token: data.session?.refresh_token,
-      expires_at: data.session?.expires_at,
-    },
-  });
+  return response;
 }

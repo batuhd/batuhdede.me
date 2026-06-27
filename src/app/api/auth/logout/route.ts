@@ -1,8 +1,30 @@
 import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-export async function POST(request: Request) {
+export async function POST() {
   const response = NextResponse.json({ success: true });
-  const cookieHeader = request.headers.get("cookie") || "";
+  const cookieStore = await cookies();
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    });
+
+    await supabase.auth.signOut();
+  }
 
   // Clear legacy admin_session cookie (backward compatibility)
   response.cookies.set("admin_session", "", {
@@ -12,20 +34,6 @@ export async function POST(request: Request) {
     path: "/",
     maxAge: 0,
   });
-
-  // Clear all Supabase auth cookies (e.g. sb-<project-ref>-auth-token)
-  const cookies = cookieHeader.split(";").map((c) => c.trim().split("=")[0]);
-  for (const name of cookies) {
-    if (name.startsWith("sb-")) {
-      response.cookies.set(name, "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 0,
-      });
-    }
-  }
 
   return response;
 }

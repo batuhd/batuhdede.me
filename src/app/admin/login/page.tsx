@@ -134,13 +134,8 @@ export default function AdminLoginPage() {
         setPassword("");
         resetTurnstile();
       } else {
-        // Set the session from server response
-        if (data.session?.access_token && data.session?.refresh_token) {
-          await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-          });
-        }
+        // Session cookies are set by the API; just navigate to the dashboard.
+        removeTurnstile();
         setIsLoggedIn(true);
         router.push("/admin");
       }
