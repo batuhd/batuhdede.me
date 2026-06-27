@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { FadeIn } from "@/components/motion/fade-in";
 import { LogIn, Loader2, ShieldCheck, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -17,32 +17,71 @@ export default function AdminLoginPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
   const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
 
-  const renderTurnstile = () => {
-    if ((window as any).turnstile && turnstileRef.current && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+  const removeTurnstile = useCallback(() => {
+    const turnstile = (window as any).turnstile;
+    if (widgetIdRef.current && turnstile) {
       try {
-        // Clear previous content safely (XSS prevention)
-        while (turnstileRef.current.firstChild) {
-          turnstileRef.current.removeChild(turnstileRef.current.firstChild);
-        }
-        (window as any).turnstile.render(turnstileRef.current, {
-          sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
-          callback: (token: string) => setCaptchaToken(token),
-          theme: "light",
-        });
-      } catch (e) {
-        // Silent fail for production, log only in development
-        if (process.env.NODE_ENV === "development") {
-          console.error("Turnstile render error", e);
-        }
+        turnstile.remove(widgetIdRef.current);
+      } catch {
+        // ignore cleanup errors
+      }
+      widgetIdRef.current = null;
+    }
+  }, []);
+
+  const resetTurnstile = useCallback(() => {
+    const turnstile = (window as any).turnstile;
+    if (widgetIdRef.current && turnstile) {
+      try {
+        turnstile.reset(widgetIdRef.current);
+      } catch {
+        // ignore reset errors
       }
     }
-  };
+    setCaptchaToken("");
+  }, []);
+
+  const renderTurnstile = useCallback(() => {
+    const turnstile = (window as any).turnstile;
+    const container = turnstileRef.current;
+    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    if (!turnstile || !container || !siteKey) return;
+
+    // Remove any previously rendered widget before re-rendering
+    removeTurnstile();
+
+    // Clear previous content safely (XSS prevention)
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+
+    try {
+      widgetIdRef.current = turnstile.render(container, {
+        sitekey: siteKey,
+        callback: (token: string) => setCaptchaToken(token),
+        "expired-callback": () => setCaptchaToken(""),
+        "error-callback": () => setCaptchaToken(""),
+        theme: "light",
+      });
+    } catch (e) {
+      // Silent fail for production, log only in development
+      if (process.env.NODE_ENV === "development") {
+        console.error("Turnstile render error", e);
+      }
+    }
+  }, [removeTurnstile]);
 
   useEffect(() => {
     // Attempt render in case the script is already loaded
     renderTurnstile();
-  }, []);
+
+    // Cleanup widget on unmount to prevent "Cannot find Widget" warnings
+    return () => {
+      removeTurnstile();
+    };
+  }, [renderTurnstile, removeTurnstile]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -93,6 +132,7 @@ export default function AdminLoginPage() {
 
         setError(data.error || "Invalid credentials.");
         setPassword("");
+        resetTurnstile();
       } else {
         // Set the session from server response
         if (data.session?.access_token && data.session?.refresh_token) {

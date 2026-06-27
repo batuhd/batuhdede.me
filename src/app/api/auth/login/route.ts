@@ -118,10 +118,16 @@ export async function POST(request: Request) {
     });
 
   if (authError) {
-    // Log only in development, never in production
-    if (process.env.NODE_ENV === "development") {
-      console.error("Supabase Auth Error:", authError.message);
-    }
+    // Temporary production debug logging to diagnose Vercel 401s.
+    // TODO: Remove or gate behind a debug flag once the issue is resolved.
+    console.error("[login debug]", {
+      message: authError.message,
+      status: authError.status,
+      name: authError.name,
+      code: (authError as any).code,
+      hasCaptchaToken: !!captchaToken,
+      captchaTokenLength: captchaToken?.length,
+    });
 
     // Record failed attempt
     const existing = attempts.get(ip);

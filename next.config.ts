@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              `connect-src 'self' ${supabaseProjectUrl} https://api.github.com https://formspree.io https://va.vercel-scripts.com`,
+              `connect-src 'self' ${supabaseProjectUrl} https://api.github.com https://formspree.io https://va.vercel-scripts.com https://challenges.cloudflare.com`,
               "frame-src 'self' https://challenges.cloudflare.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
