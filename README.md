@@ -79,6 +79,15 @@ Blog posts support optional **featured images** (cover photos):
 - Images render as aspect-ratio cover photos on both the blog card grid and the expanded blog modal
 - Fully responsive with smooth hover-scale animations
 
+### 🥚 Secret Easter Eggs
+
+A hidden keyboard-surprise feature for visitors who discover the secret code:
+
+- Configure the secret code, title, subtitle, and footer text in `easter_egg_config`
+- Upload multiple surprise images to `easter_eggs`
+- Toggle individual images on/off via `is_active`
+- Fully managed through the database — no code changes needed
+
 ### 🌍 Multilingual System (i18n)
 
 - Real-time language switching without page reloads
@@ -250,13 +259,13 @@ Additional security measures beyond the enterprise-grade foundation:
 
 ## 🗄️ Database Schema
 
-The Supabase database consists of **14 tables**, all with Row Level Security enabled:
+The Supabase database consists of **16 tables**, all with Row Level Security enabled:
 
 | Table                  | Purpose                         | Key Fields                                                            |
 | ---------------------- | ------------------------------- | --------------------------------------------------------------------- |
 | `about_me`             | Profile information             | name, role, bio, photo, stats, quote + translations                   |
-| `skill_categories`     | Grouped skills                  | title, skills (JSON array) + translations                             |
-| `experiences`          | Work history                    | title, company, dates, description + translations                     |
+| `skill_categories`     | Grouped skills                  | title, subtitle, skills (JSON array) + translations                   |
+| `experiences`          | Work history                    | title, company, location, dates, description + translations           |
 | `educations`           | Academic history                | university, degree, major, dates                                      |
 | `languages`            | Language proficiencies          | name, level (dropdown)                                                |
 | `activities`           | Leadership & extracurriculars   | organization, role, description + translations                        |
@@ -264,10 +273,12 @@ The Supabase database consists of **14 tables**, all with Row Level Security ena
 | `certification_skills` | Junction: certs ↔ skills        | certification_id, skill_category_id                                   |
 | `projects`             | Portfolio works                 | title, description, links, tags, image, linked\_\* IDs + translations |
 | `project_images`       | Multi-image gallery per project | project_id, image_url, order_index                                    |
-| `blogs`                | Blog posts (Markdown)           | title, excerpt, content, content_tr/de/es, date, image_url, linked\_\* IDs |
-| `social_links`         | Dock navigation links           | platform, URL                                                         |
-| `contact_emails`       | Contact email addresses         | label, email, label_tr/de/es, order_index                            |
+| `blogs`                | Blog posts (Markdown)           | title, excerpt, content, date, image_url, is_published, linked\_\* IDs |
+| `social_links`         | Dock navigation links           | platform, URL, icon, account_type                                     |
+| `contact_emails`       | Contact email addresses         | label, email, label_tr/de/es, order_index                             |
 | `section_order`        | Homepage section ordering       | section_id, order_index                                               |
+| `easter_eggs`          | Secret keyboard surprise images | image_url, caption, is_active, order_index                            |
+| `easter_egg_config`    | Easter egg secret & display     | secret_code, display_title, display_subtitle, footer_text             |
 
 ### Entity-Relationship Diagram
 
@@ -305,6 +316,8 @@ erDiagram
     about_me { uuid id PK }
     social_links { uuid id PK }
     section_order { text section_id PK }
+    easter_eggs { uuid id PK }
+    easter_egg_config { uuid id PK }
 ```
 
 ### Content Linking Columns
@@ -315,11 +328,13 @@ Both `projects` and `blogs` tables support relational linking:
 | --------------------------- | -------- | ----------------------------- |
 | `linked_experience_id`      | `uuid`   | `experiences`                 |
 | `linked_education_id`       | `uuid`   | `educations`                  |
-| `linked_skill_category_ids` | `uuid[]` | `skill_categories` (multiple) |
+| `linked_skill_category_ids` | `jsonb`  | `skill_categories` (multiple) |
 | `linked_language_id`        | `uuid`   | `languages`                   |
 | `linked_activity_id`        | `uuid`   | `activities`                  |
 | `linked_certification_id`   | `uuid`   | `certifications`              |
 | `linked_project_id`         | `uuid`   | `projects` (blogs only)       |
+
+`blogs` also includes an `is_published` boolean (default: `true`) so draft posts can be hidden from the public site and RSS feed.
 
 Every content table supports **4-language translations** (EN, TR, DE, ES) with dedicated columns per language.
 
@@ -468,15 +483,41 @@ with the UUID you copied. For example:
 
 Copy the **entire** contents of your modified `supabase_schema.sql` and paste it into **Supabase SQL Editor → New Query**. Click **Run**. This creates all tables, enables RLS, and sets up your security policies.
 
-#### 3.5 - Lock down sign-ups
+> **✅ Idempotent:** The schema file uses `IF NOT EXISTS` / `DROP IF EXISTS` everywhere, so you can safely re-run it later to add missing columns or restore policies without errors.
+
+#### 3.5 - Import your data (optional)
+
+If you have existing CSV backups, import them in this order to satisfy foreign-key constraints:
+
+1. `experiences`
+2. `educations`
+3. `languages`
+4. `activities`
+5. `certifications`
+6. `skill_categories`
+7. `projects`
+8. `blogs`
+9. `project_images`
+10. `blog_images`
+11. `certification_skills`
+12. `social_links`
+13. `contact_emails`
+14. `section_order`
+15. `about_me`
+16. `easter_egg_config`
+17. `easter_eggs`
+
+#### 3.6 - Lock down sign-ups
 
 Go to **Authentication → Settings → Auth Providers → Email** and toggle off **"Allow new users to sign up"**.
 
-#### 3.6 - Enable Cloudflare Turnstile inside Supabase
+#### 3.7 - Enable Cloudflare Turnstile inside Supabase
 
 Go to **Authentication → Settings → Auth Providers → Email** and enable **"Cloudflare Turnstile"**. Paste your Secret Key there.
 
-> **⚠️ Critical:** Do NOT skip steps 3.3 and 3.5. Without them, anyone who discovers your Supabase URL could potentially create an account and modify your portfolio data.
+> **⚠️ Critical:** Do NOT skip steps 3.3 and 3.6. Without them, anyone who discovers your Supabase URL could potentially create an account and modify your portfolio data.
+>
+> **🌐 CSP Note:** The `Content-Security-Policy` in `next.config.ts` automatically reads `NEXT_PUBLIC_SUPABASE_URL` from your environment variables. If you change Supabase projects, just update `.env.local` and restart the dev server — no manual CSP editing required.
 
 ### 4. Launch
 

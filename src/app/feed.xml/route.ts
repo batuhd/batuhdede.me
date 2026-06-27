@@ -39,6 +39,7 @@ export async function GET() {
       const { data, error } = await supabase
         .from("blogs")
         .select("*")
+        .eq("is_published", true)
         .order("created_at", { ascending: false });
 
       if (!error && data && data.length > 0) {

@@ -64,6 +64,7 @@ export interface AboutMe {
 export interface SkillCategory {
   id: string;
   title: string;
+  subtitle?: string;
   skills: any[];
   skills_tr?: any[];
   skills_de?: any[];
@@ -72,6 +73,9 @@ export interface SkillCategory {
   title_tr?: string;
   title_de?: string;
   title_es?: string;
+  subtitle_tr?: string;
+  subtitle_de?: string;
+  subtitle_es?: string;
 }
 
 export interface RoleEntry {
@@ -106,6 +110,12 @@ export interface Experience {
   description_tr?: string;
   description_de?: string;
   description_es?: string;
+  company_tr?: string;
+  company_de?: string;
+  company_es?: string;
+  location_tr?: string;
+  location_de?: string;
+  location_es?: string;
 }
 
 export interface Education {
@@ -177,6 +187,9 @@ export interface Certification {
   name_tr?: string;
   name_de?: string;
   name_es?: string;
+  issuer_tr?: string;
+  issuer_de?: string;
+  issuer_es?: string;
 }
 
 export interface CertificationSkill {
@@ -261,6 +274,7 @@ export interface SocialLink {
   platform: string;
   url: string;
   icon?: string;
+  account_type?: string;
   order_index: number;
 }
 
@@ -271,14 +285,6 @@ export interface ContactEmail {
   label_de?: string;
   label_es?: string;
   email: string;
-  order_index: number;
-}
-
-export interface SocialLink {
-  id: string;
-  platform: string;
-  url: string;
-  icon?: string;
   order_index: number;
 }
 
@@ -310,22 +316,6 @@ export interface SiteData {
   socialLinks: SocialLink[];
   contactEmails: ContactEmail[];
   easterEggs: EasterEgg[];
-}
-
-export interface SiteData {
-  aboutMe: AboutMe | null;
-  skillCategories: SkillCategory[];
-  experiences: Experience[];
-  educations: Education[];
-  languages: Language[];
-  activities: Activity[];
-  certifications: Certification[];
-  certificationSkills: CertificationSkill[];
-  sectionOrder: SectionOrder[];
-  projects: Project[];
-  blogs: Blog[];
-  socialLinks: SocialLink[];
-  contactEmails: ContactEmail[];
 }
 
 export interface BlogWithImages extends Blog {

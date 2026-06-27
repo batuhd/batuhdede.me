@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const supabaseProjectUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://*.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || "https://*.supabase.co";
 
 const nextConfig: NextConfig = {
   // ISR optimization

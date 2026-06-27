@@ -21,6 +21,8 @@ interface SiteData {
   sectionOrder: any[];
   projects: any[];
   blogs: any[];
+  socialLinks: any[];
+  contactEmails: any[];
   easterEggs: any[];
   loaded: boolean;
   isMaintenance: boolean;
@@ -38,6 +40,8 @@ const defaultData: SiteData = {
   sectionOrder: [],
   projects: [],
   blogs: [],
+  socialLinks: [],
+  contactEmails: [],
   easterEggs: [],
   loaded: false,
   isMaintenance: false,
@@ -145,6 +149,8 @@ export function SiteDataProvider({
         sectionOrder: sectionRes?.data || [],
         projects: projectsRes?.data || [],
         blogs: blogsRes?.data || [],
+        socialLinks: [],
+        contactEmails: [],
         easterEggs: easterEggsRes?.data || [],
         loaded: true,
         isMaintenance:
