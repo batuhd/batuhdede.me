@@ -51,7 +51,7 @@ A complete CMS dashboard with categorized sidebar navigation for managing every 
 | **Content Linking**    | Relationally link any work or blog to skills, experiences, education, certs, and more |
 | **Configuration**      | Social links, section reordering, visibility toggles, maintenance mode                |
 
-Every field supports **4 languages** (EN, TR, DE, ES) with an intuitive language tab switcher. Sections can be individually hidden/shown and reordered with drag-style up/down controls.
+Every field supports **4 languages** (EN, TR, DE, ES). Works and blog posts use a clean **stepper form** (Basic Info → Media → Links → Translations) for a better editing experience, while other sections keep their language tab switcher. The dashboard is **fully responsive** and includes a collapsible desktop sidebar, mobile drawer, sticky form actions, and reusable UI components.
 
 ### 🔗 Deep Content Linking System
 
@@ -224,8 +224,13 @@ Additional security measures beyond the enterprise-grade foundation:
     │
     ├── components/
     │   ├── admin/
-    │   │   ├── admin-tabs.tsx   # CMS forms: About, Skills, CRUD, Social, Layout, Contact Emails
-    │   │   └── markdown-editor.tsx  # 🆕 Rich markdown editor with toolbar & preview
+    │   │   ├── admin-layout.tsx     # Reusable admin shell (sidebar, header, mobile drawer)
+    │   │   ├── admin-dashboard.tsx  # Overview with stats, quick links, and recent content
+    │   │   ├── admin-tabs.tsx       # CMS forms: About, Skills, CRUD, Social, Layout, Contact Emails
+    │   │   ├── work-form.tsx        # Stepper form for adding/editing works
+    │   │   ├── blog-form.tsx        # Stepper form for adding/editing blog posts
+    │   │   ├── markdown-editor.tsx  # Rich markdown editor with toolbar & preview
+    │   │   └── ui/                  # Reusable admin UI primitives (cards, inputs, lists, dialogs, stepper)
     │   ├── home/
     │   │   ├── info.tsx         # Hero section (name, photo, tagline)
     │   │   ├── about.tsx        # Bio + custom stats
@@ -555,7 +560,8 @@ npm run dev
 | **Profile photo**    | Admin → About Me             | Toggle visibility on/off with checkbox    |
 | **Favorite quote**   | Admin → About Me             | Toggle visibility on/off with checkbox    |
 | **Maintenance mode** | Admin → Page Layout          | Toggle to temporarily block public access (displays dynamic random images) |
-| **Link content**     | Admin → Works/Blogs edit     | Use "Link Related Items" accordion        |
+| **Link content**     | Admin → Works/Blogs edit     | Use "Link Related Items" in the Links step  |
+| **Admin UI theme**   | `src/components/admin/ui/`   | Reusable Tailwind primitives - no external UI lib |
 
 ---
 

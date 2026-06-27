@@ -20,6 +20,13 @@ import {
 import { cn, sanitizeUrl } from "@/lib/utils";
 import { useAdminError } from "@/context/admin-error-context";
 import { toast } from "sonner";
+import {
+  AdminListView,
+  AdminListContainer,
+  AdminListItem,
+  type AdminListItemBadge,
+} from "./ui";
+import { AboutMeForm } from "./about-me-form";
 
 const inputClass =
   "w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary";
@@ -220,493 +227,15 @@ export function ImageInputWithRecent({
 // ──────── About Me Tab (name, role, tagline, bio, stats, quote) ────────
 
 export function AdminAboutTab() {
-  const { handleOperationError } = useAdminError();
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [langTab, setLangTab] = useState<LangTab>("default");
-  const [form, setForm] = useState<Record<string, any>>({
-    name: "",
-    role: "",
-    hero_tagline: "",
-    bio: "",
-    profile_photo_url: "",
-    started_coding_year: "",
-    projects_count: "",
-    years_experience: "",
-    stat_1_value: "",
-    stat_1_label: "",
-    stat_2_value: "",
-    stat_2_label: "",
-    stat_3_value: "",
-    stat_3_label: "",
-    quote_text: "",
-    quote_author: "",
-    hero_tagline_tr: "",
-    hero_tagline_de: "",
-    hero_tagline_es: "",
-    bio_tr: "",
-    bio_de: "",
-    bio_es: "",
-    role_tr: "",
-    role_de: "",
-    role_es: "",
-    quote_text_tr: "",
-    quote_text_de: "",
-    quote_text_es: "",
-    stat_1_label_tr: "",
-    stat_1_label_de: "",
-    stat_1_label_es: "",
-    stat_2_label_tr: "",
-    stat_2_label_de: "",
-    stat_2_label_es: "",
-    stat_3_label_tr: "",
-    stat_3_label_de: "",
-    stat_3_label_es: "",
-    show_quote: true,
-    show_stats: true,
-    show_profile_photo: true,
-  });
-
-  const fetchData = async () => {
-    if (!supabase) return;
-    const { data: rows } = await supabase.from("about_me").select("*").limit(1);
-    if (rows && rows.length > 0) {
-      const row = rows[0];
-      setData(row);
-      const f: Record<string, any> = {};
-      Object.keys(form).forEach((k) => {
-        if (
-          k === "show_quote" ||
-          k === "show_stats" ||
-          k === "show_profile_photo"
-        )
-          f[k] = row[k] !== false;
-        else f[k] = row[k]?.toString() || "";
-      });
-      setForm(f);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabase) return;
-    const payload: Record<string, any> = {};
-    const numFields = [
-      "started_coding_year",
-      "projects_count",
-      "years_experience",
-    ];
-    Object.keys(form).forEach((k) => {
-      if (
-        k === "show_quote" ||
-        k === "show_stats" ||
-        k === "show_profile_photo"
-      )
-        payload[k] = !!form[k];
-      else if (numFields.includes(k))
-        payload[k] = form[k] ? parseInt(form[k]) : null;
-      else payload[k] = form[k] || null;
-    });
-    if (data) {
-      const { error, data: updateData } = await supabase
-        .from("about_me")
-        .update(payload)
-        .eq("id", data.id)
-        .select();
-      if (
-        handleOperationError(
-          error ||
-            (!updateData || updateData.length === 0
-              ? { code: "42501", message: "Yetkisiz işlem" }
-              : null),
-          "Profil Güncelleme",
-        )
-      )
-        return;
-    } else {
-      const { error } = await supabase.from("about_me").insert(payload);
-      if (handleOperationError(error, "Profil Ekleme")) return;
-    }
-    await fetchData();
-    toast.success("Profil bilgileri başarıyla kaydedildi");
-  };
-
-  if (loading)
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
-
   return (
     <div className="space-y-6">
-      <h2 className="text-lg sm:text-xl font-semibold border-b pb-4">
-        About Me & Profile
-      </h2>
-      <form onSubmit={handleSave} className="space-y-5 max-w-xl">
-        <LangTabBar active={langTab} onChange={setLangTab} />
-
-        {langTab === "default" ? (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Full Name
-                </label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className={inputClass}
-                  placeholder="Batuhan Dede"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Role / Title
-                </label>
-                <input
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  className={inputClass}
-                  placeholder="Frontend Developer"
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Hero Tagline
-              </label>
-              <input
-                value={form.hero_tagline}
-                onChange={(e) =>
-                  setForm({ ...form, hero_tagline: e.target.value })
-                }
-                className={inputClass}
-                placeholder="Focusing on the intersection of code..."
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Bio
-              </label>
-              <textarea
-                value={form.bio}
-                onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                className={`${inputClass} min-h-[100px]`}
-                placeholder="Your bio text..."
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-muted-foreground flex items-baseline gap-1">
-                  Profile Photo URL{" "}
-                  <span className="text-[10px] text-muted-foreground/60 font-normal">
-                    (Use imgbb.com for free)
-                  </span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={form.show_profile_photo !== false}
-                    onChange={(e) =>
-                      setForm({ ...form, show_profile_photo: e.target.checked })
-                    }
-                    className="h-4 w-4 rounded border accent-primary"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    Show Photo
-                  </span>
-                </div>
-              </div>
-              <ImageInputWithRecent
-                value={form.profile_photo_url || ""}
-                onChange={(val) => setForm({ ...form, profile_photo_url: val })}
-                className={inputClass}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="border-t pt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Customizable Stats
-                </h3>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={form.show_stats !== false}
-                    onChange={(e) =>
-                      setForm({ ...form, show_stats: e.target.checked })
-                    }
-                    className="h-4 w-4 rounded border accent-primary"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    Show Section
-                  </span>
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 bg-muted/20 p-3 rounded-lg border">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Stat 1 Value (e.g. 2018)
-                  </label>
-                  <input
-                    value={form.stat_1_value}
-                    onChange={(e) =>
-                      setForm({ ...form, stat_1_value: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="2018"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Stat 1 Label
-                  </label>
-                  <input
-                    value={form.stat_1_label}
-                    onChange={(e) =>
-                      setForm({ ...form, stat_1_label: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="STARTED CODING"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 bg-muted/20 p-3 rounded-lg border">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Stat 2 Value (e.g. 3+)
-                  </label>
-                  <input
-                    value={form.stat_2_value}
-                    onChange={(e) =>
-                      setForm({ ...form, stat_2_value: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="3+"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Stat 2 Label
-                  </label>
-                  <input
-                    value={form.stat_2_label}
-                    onChange={(e) =>
-                      setForm({ ...form, stat_2_label: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="PROJECTS"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 bg-muted/20 p-3 rounded-lg border">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Stat 3 Value (e.g. 2+)
-                  </label>
-                  <input
-                    value={form.stat_3_value}
-                    onChange={(e) =>
-                      setForm({ ...form, stat_3_value: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="2+"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Stat 3 Label
-                  </label>
-                  <input
-                    value={form.stat_3_label}
-                    onChange={(e) =>
-                      setForm({ ...form, stat_3_label: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="YEARS EXPERIENCE"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="border-t pt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Favorite Quote
-                </h3>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={form.show_quote !== false}
-                    onChange={(e) =>
-                      setForm({ ...form, show_quote: e.target.checked })
-                    }
-                    className="h-4 w-4 rounded border accent-primary"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    Show Section
-                  </span>
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Quote Text
-                  </label>
-                  <input
-                    value={form.quote_text}
-                    onChange={(e) =>
-                      setForm({ ...form, quote_text: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="Those who hate themselves..."
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    Quote Author
-                  </label>
-                  <input
-                    value={form.quote_author}
-                    onChange={(e) =>
-                      setForm({ ...form, quote_author: e.target.value })
-                    }
-                    className={inputClass}
-                    placeholder="Hideaki Anno"
-                  />
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-xs text-muted-foreground">
-              Optional — leave empty to use default (EN).
-            </p>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Role ({langTab.toUpperCase()})
-              </label>
-              <input
-                value={form[`role_${langTab}`] || ""}
-                onChange={(e) =>
-                  setForm({ ...form, [`role_${langTab}`]: e.target.value })
-                }
-                className={inputClass}
-                placeholder={form.role || "Translation..."}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Tagline ({langTab.toUpperCase()})
-              </label>
-              <input
-                value={form[`hero_tagline_${langTab}`] || ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    [`hero_tagline_${langTab}`]: e.target.value,
-                  })
-                }
-                className={inputClass}
-                placeholder={form.hero_tagline || "Translation..."}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Bio ({langTab.toUpperCase()})
-              </label>
-              <textarea
-                value={form[`bio_${langTab}`] || ""}
-                onChange={(e) =>
-                  setForm({ ...form, [`bio_${langTab}`]: e.target.value })
-                }
-                className={`${inputClass} min-h-[100px]`}
-                placeholder={form.bio || "Translation..."}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Quote Text ({langTab.toUpperCase()})
-              </label>
-              <input
-                value={form[`quote_text_${langTab}`] || ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    [`quote_text_${langTab}`]: e.target.value,
-                  })
-                }
-                className={inputClass}
-                placeholder={form.quote_text || "Translation..."}
-              />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3 pt-2">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Stat 1 ({langTab.toUpperCase()})
-                </label>
-                <input
-                  value={form[`stat_1_label_${langTab}`] || ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      [`stat_1_label_${langTab}`]: e.target.value,
-                    })
-                  }
-                  className={inputClass}
-                  placeholder={form.stat_1_label || "Label..."}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Stat 2 ({langTab.toUpperCase()})
-                </label>
-                <input
-                  value={form[`stat_2_label_${langTab}`] || ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      [`stat_2_label_${langTab}`]: e.target.value,
-                    })
-                  }
-                  className={inputClass}
-                  placeholder={form.stat_2_label || "Label..."}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Stat 3 ({langTab.toUpperCase()})
-                </label>
-                <input
-                  value={form[`stat_3_label_${langTab}`] || ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      [`stat_3_label_${langTab}`]: e.target.value,
-                    })
-                  }
-                  className={inputClass}
-                  placeholder={form.stat_3_label || "Label..."}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:bg-foreground/90"
-          >
-            {data ? "Update" : "Save"}
-          </button>
-        </div>
-      </form>
+      <div className="border-b pb-4">
+        <h2 className="text-lg font-semibold sm:text-xl">About Me & Profile</h2>
+        <p className="text-sm text-muted-foreground">
+          Manage your profile information, stats, quote and translations.
+        </p>
+      </div>
+      <AboutMeForm />
     </div>
   );
 }
@@ -1568,6 +1097,7 @@ export function AdminCrudTab({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, any>>({});
   const [langTab, setLangTab] = useState<LangTab>("default");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const translatableFields = fields.filter(
     (f) => f.translatable && f.type !== "role_list",
@@ -2117,107 +1647,59 @@ export function AdminCrudTab({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b pb-4">
-        <h2 className="text-lg sm:text-xl font-semibold">{title}</h2>
-        <button
-          onClick={() => {
-            setIsAdding(!isAdding);
-            setEditingId(null);
-            setForm(emptyForm());
-            setLangTab("default");
-          }}
-          className="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
-        >
-          <Plus
-            className={`h-4 w-4 transition-transform ${isAdding ? "rotate-45" : ""}`}
-          />
-          <span className="hidden sm:inline">
-            {isAdding ? "Cancel" : "Add"}
-          </span>
-        </button>
-      </div>
       {isAdding && renderForm(handleAdd, "Save")}
       {editingId && renderForm(handleSaveEdit, "Update", true)}
-      <div className="space-y-2">
-        {items.length === 0 && !isAdding ? (
-          <div className="flex h-32 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-muted-foreground">
-            <p className="text-sm">No items yet.</p>
-          </div>
-        ) : (
-          items.map((item, idx) => (
-            <div
-              key={item.id}
-              className={cn(
-                "flex items-center gap-2 sm:gap-3 rounded-lg border p-3 sm:p-4 transition-colors",
-                editingId === item.id
-                  ? "border-primary/50 bg-primary/5"
-                  : "hover:bg-muted/30",
-              )}
-            >
-              <div className="flex flex-col gap-0.5 flex-shrink-0">
-                <button
-                  type="button"
-                  disabled={idx === 0}
-                  onClick={() => handleMove(item.id, "up")}
-                  className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
-                >
-                  <ChevronUp className="h-3.5 w-3.5" />
-                </button>
-                <GripVertical className="h-3.5 w-3.5 text-muted-foreground/30 mx-auto" />
-                <button
-                  type="button"
-                  disabled={idx === items.length - 1}
-                  onClick={() => handleMove(item.id, "down")}
-                  className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20 disabled:pointer-events-none transition-colors"
-                >
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div className="space-y-0.5 min-w-0 flex-1">
-                <h3 className="font-medium truncate">
-                  {item[displayField] || "—"}
-                </h3>
-                {subtitleField && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {item[subtitleField] || ""}
-                  </p>
-                )}
-                {hasTranslatable && (
-                  <div className="flex gap-1 mt-1">
-                    {["tr", "de", "es"].map((lang) => {
-                      const has = translatableFields.some(
-                        (f) => item[`${f.key}_${lang}`],
-                      );
-                      return has ? (
-                        <span
-                          key={lang}
-                          className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-medium"
-                        >
-                          {lang.toUpperCase()}
-                        </span>
-                      ) : null;
-                    })}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                <button
-                  onClick={() => handleEdit(item)}
-                  className="rounded-md p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+      <AdminListView
+        title={title}
+        addButtonLabel="Add"
+        isAdding={isAdding}
+        onAddToggle={() => {
+          setIsAdding(!isAdding);
+          setEditingId(null);
+          setForm(emptyForm());
+          setLangTab("default");
+        }}
+        searchPlaceholder={`Search ${title.toLowerCase()}...`}
+        filterFn={setSearchQuery}
+      >
+        <AdminListContainer
+          items={items}
+          filterKey={displayField}
+          searchQuery={searchQuery}
+          emptyState={{
+            title: "No items yet",
+            description: "Add your first item to get started.",
+          }}
+          renderItem={(item: any, idx: number) => {
+            const badges: AdminListItemBadge[] = [];
+            if (hasTranslatable) {
+              ["tr", "de", "es"].forEach((lang) => {
+                const has = translatableFields.some(
+                  (f) => item[`${f.key}_${lang}`],
+                );
+                if (has) badges.push({ label: lang.toUpperCase() });
+              });
+            }
+
+            return (
+              <AdminListItem
+                key={item.id}
+                index={idx}
+                title={item[displayField] || "—"}
+                subtitle={subtitleField ? item[subtitleField] || "" : undefined}
+                isFirst={idx === 0}
+                isLast={idx === items.length - 1}
+                isEditing={editingId === item.id}
+                onMoveUp={() => handleMove(item.id, "up")}
+                onMoveDown={() => handleMove(item.id, "down")}
+                onEdit={() => handleEdit(item)}
+                onDelete={() => handleDelete(item.id)}
+                badges={badges.length > 0 ? badges : undefined}
+              />
+            );
+          }}
+        />
+      </AdminListView>
     </div>
   );
 }

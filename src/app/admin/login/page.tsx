@@ -2,7 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FadeIn } from "@/components/motion/fade-in";
-import { LogIn, Loader2, ShieldCheck, LogOut } from "lucide-react";
+import {
+  LogIn,
+  Loader2,
+  ShieldCheck,
+  LogOut,
+  ArrowLeft,
+  Lock,
+  Mail,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
@@ -147,9 +155,12 @@ export default function AdminLoginPage() {
     }
   };
 
+  const inputClass =
+    "w-full rounded-lg border bg-background px-3 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary";
+
   if (isLoggedIn) {
     return (
-      <div className="relative flex min-h-[60vh] flex-col items-center justify-center space-y-4">
+      <div className="relative flex min-h-screen flex-col items-center justify-center space-y-4 bg-muted/30 px-4">
         <button
           onClick={async () => {
             if (supabase) {
@@ -159,7 +170,7 @@ export default function AdminLoginPage() {
             setIsLoggedIn(false);
             router.push("/admin/login");
           }}
-          className="absolute top-4 right-4 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground"
+          className="absolute top-4 right-4 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground"
         >
           <LogOut className="h-4 w-4" /> Log Out
         </button>
@@ -172,89 +183,126 @@ export default function AdminLoginPage() {
   return (
     <>
       {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
-        <Script 
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" 
-          async 
-          defer 
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          async
+          defer
           onLoad={renderTurnstile}
         />
       )}
-      <div className="flex min-h-[60vh] py-12 flex-col items-center justify-center space-y-8">
-        <FadeIn>
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <ShieldCheck className="h-8 w-8 text-primary" />
-          </div>
-        </FadeIn>
-
-        <FadeIn delay={0.1} className="w-full max-w-sm px-4 sm:px-0">
-          <div className="space-y-6 rounded-2xl border bg-card p-6 shadow-xl">
-            <div className="space-y-2 text-center">
-              <h1 className="text-2xl font-bold tracking-tight">Admin Portal</h1>
-              <p className="text-sm text-muted-foreground">
-                Secure area for content management.
-              </p>
+      <div className="flex min-h-screen flex-col bg-muted/30 md:flex-row">
+        {/* Brand panel */}
+        <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background p-8 md:p-12">
+          <FadeIn className="max-w-sm text-center md:max-w-md md:text-left">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg md:mx-0">
+              <ShieldCheck className="h-8 w-8" />
             </div>
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-foreground">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
-                  placeholder="admin@example.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
-                <div 
-                  ref={turnstileRef}
-                  className="w-full flex justify-center py-2" 
-                />
-              )}
-
-              {error && (
-                <p className="text-sm rounded hover:bg-destructive/20 transition-colors bg-destructive/10 text-destructive font-medium p-2 text-center border border-destructive/20">{error}</p>
-              )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-3 text-sm font-medium text-background transition-all hover:opacity-90 disabled:opacity-50"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <LogIn className="h-4 w-4" />
-                  Authenticate
-                </>
-              )}
-            </button>
-          </form>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+              Admin Portal
+            </h1>
+            <p className="mt-4 text-base text-muted-foreground sm:text-lg">
+              Secure access to your portfolio content management system.
+              Manage projects, blog posts, and site settings from one place.
+            </p>
+          </FadeIn>
         </div>
-      </FadeIn>
-    </div>
+
+        {/* Form panel */}
+        <div className="flex flex-1 items-center justify-center p-4 sm:p-8">
+          <FadeIn delay={0.1} className="w-full max-w-sm">
+            <div className="space-y-6 rounded-2xl border bg-card p-6 shadow-xl sm:p-8">
+              <div className="space-y-2 text-center md:text-left">
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Welcome back
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Enter your credentials to continue.
+                </p>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="email"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className={`${inputClass} pl-10`}
+                      placeholder="admin@example.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className={`${inputClass} pl-10`}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                </div>
+
+                {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                  <div
+                    ref={turnstileRef}
+                    className="flex w-full justify-center py-2"
+                  />
+                )}
+
+                {error && (
+                  <p className="rounded border border-destructive/20 bg-destructive/10 p-2.5 text-center text-sm font-medium text-destructive transition-colors">
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mt-2 flex h-11 w-full min-h-[44px] items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-3 text-sm font-medium text-background transition-all hover:opacity-90 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4" />
+                      Authenticate
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <a
+                href="/"
+                className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to website
+              </a>
+            </div>
+          </FadeIn>
+        </div>
+      </div>
     </>
   );
 }
