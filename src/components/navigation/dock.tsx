@@ -344,17 +344,6 @@ export function Dock() {
                   transition={{ duration: 0.15 }}
                   className="absolute -top-[140px] right-0 w-48 rounded-xl border border-border/50 bg-background/95 p-2 shadow-xl backdrop-blur-xl"
                 >
-                  <button
-                    onClick={() => {
-                      setContactModalOpen(true);
-                      setMoreMenuOpen(false);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  >
-                    <Mail className="h-4 w-4" />
-                    {t("nav.contact")}
-                  </button>
-                  <div className="my-1 h-px bg-border" />
                   <Link
                     href="/credits"
                     onClick={() => setMoreMenuOpen(false)}

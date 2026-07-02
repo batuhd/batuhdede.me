@@ -28,7 +28,7 @@ import type {
   RoleEntry,
 } from "@/types";
 
-function parseDate(dateStr: string | null): Date | null {
+function parseDate(dateStr: string | null, today?: Date | null): Date | null {
   if (
     !dateStr ||
     dateStr.toLowerCase().includes("present") ||
@@ -36,7 +36,7 @@ function parseDate(dateStr: string | null): Date | null {
     dateStr.toLowerCase().includes("heute") ||
     dateStr.toLowerCase().includes("actual")
   ) {
-    return new Date();
+    return today ?? new Date();
   }
 
   // Custom parsing for localized inputs to avoid Safari/Firefox Date.parse() bugs
@@ -127,11 +127,12 @@ function calculateDuration(
   end: string | null,
   isCurrent: boolean,
   locale: string,
+  today?: Date | null,
 ) {
   if (!start) return null;
   const startDate = parseDate(start);
   const endDateStr = end || (isCurrent ? "Present" : "");
-  const endDate = endDateStr ? parseDate(endDateStr) : null;
+  const endDate = endDateStr ? parseDate(endDateStr, today) : null;
 
   if (!startDate || !endDate) return null;
 
@@ -177,26 +178,26 @@ function calculateDuration(
   return s || null;
 }
 
-function sortRolesByDate(roles: RoleEntry[]): RoleEntry[] {
+function sortRolesByDate(roles: RoleEntry[], today?: Date | null): RoleEntry[] {
   return [...roles].sort((a, b) => {
-    const da = parseDate(a.start_date);
-    const db = parseDate(b.start_date);
+    const da = parseDate(a.start_date, today);
+    const db = parseDate(b.start_date, today);
     if (!da || !db) return 0;
     return db.getTime() - da.getTime();
   });
 }
 
-function getRolesDateRange(roles: RoleEntry[]) {
+function getRolesDateRange(roles: RoleEntry[], today?: Date | null) {
   if (!roles || roles.length === 0) return null;
   const sortedStart = [...roles].sort((a, b) => {
-    const da = parseDate(a.start_date);
-    const db = parseDate(b.start_date);
+    const da = parseDate(a.start_date, today);
+    const db = parseDate(b.start_date, today);
     if (!da || !db) return 0;
     return da.getTime() - db.getTime();
   });
   const sortedEnd = [...roles].sort((a, b) => {
-    const da = parseDate(a.is_current ? "Present" : a.end_date);
-    const db = parseDate(b.is_current ? "Present" : b.end_date);
+    const da = parseDate(a.is_current ? "Present" : a.end_date, today);
+    const db = parseDate(b.is_current ? "Present" : b.end_date, today);
     if (!da || !db) return 0;
     return db.getTime() - da.getTime();
   });
@@ -210,15 +211,21 @@ function getRolesDateRange(roles: RoleEntry[]) {
 function calculateRolesDuration(
   roles: RoleEntry[],
   locale: string,
+  today?: Date | null,
 ): string | null {
-  const range = getRolesDateRange(roles);
+  const range = getRolesDateRange(roles, today);
   if (!range) return null;
-  return calculateDuration(range.start, range.end, range.is_current, locale);
+  return calculateDuration(range.start, range.end, range.is_current, locale, today);
 }
 
 export function Experience() {
   const { locale, getLocalized, t } = useLanguage();
   const { experiences, projects, blogs } = useSiteData();
+  const [today, setToday] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setToday(new Date());
+  }, []);
 
   // Optimize: Pre-calculate related items to avoid IIFE in render
   const relatedItemsMap = useMemo(() => {
@@ -246,7 +253,7 @@ export function Experience() {
           const related = relatedItemsMap[exp.id];
           const hasRelated =
             related.projects.length > 0 || related.blogs.length > 0;
-          const roles = sortRolesByDate(exp.roles || []);
+          const roles = sortRolesByDate(exp.roles || [], today);
           const hasRoles = roles.length > 0;
           const allRoles = hasRoles
             ? sortRolesByDate([
@@ -296,9 +303,9 @@ export function Experience() {
                             {exp.location}
                           </p>
                         )}
-                        {calculateRolesDuration(roles, locale) && (
+                        {calculateRolesDuration(allRoles, locale, today) && (
                           <p className="text-xs text-muted-foreground/80">
-                            {calculateRolesDuration(roles, locale)}
+                            {calculateRolesDuration(allRoles, locale, today)}
                           </p>
                         )}
                         <div className="relative mt-3 border-l border-primary/20 pl-4 space-y-5">
@@ -311,6 +318,7 @@ export function Experience() {
                               role.end_date,
                               role.is_current,
                               locale,
+                              today,
                             );
                             return (
                               <div key={idx} className="relative">
@@ -365,6 +373,7 @@ export function Experience() {
                             exp.end_date,
                             exp.is_current,
                             locale,
+                            today,
                           ) && (
                             <>
                               <span>·</span>
@@ -374,6 +383,7 @@ export function Experience() {
                                   exp.end_date,
                                   exp.is_current,
                                   locale,
+                                  today,
                                 )}
                               </span>
                             </>
@@ -429,6 +439,11 @@ export function Experience() {
 export function Education() {
   const { locale, getLocalized, t } = useLanguage();
   const { educations, projects, blogs } = useSiteData();
+  const [today, setToday] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setToday(new Date());
+  }, []);
 
   // Optimize: Pre-calculate related items to avoid IIFE in render
   const relatedItemsMap = useMemo(() => {
@@ -511,6 +526,7 @@ export function Education() {
                         edu.end_date,
                         !!edu.is_current,
                         locale,
+                        today,
                       ) && (
                         <>
                           <span>·</span>
@@ -520,6 +536,7 @@ export function Education() {
                               edu.end_date,
                               !!edu.is_current,
                               locale,
+                              today,
                             )}
                           </span>
                         </>
@@ -683,6 +700,11 @@ export function Languages() {
 export function Activities() {
   const { locale, getLocalized, t } = useLanguage();
   const { activities, projects, blogs } = useSiteData();
+  const [today, setToday] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setToday(new Date());
+  }, []);
 
   if (activities.length === 0) return null;
 
@@ -693,7 +715,7 @@ export function Activities() {
       </h2>
       <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
         {activities.map((act: any) => {
-          const roles = sortRolesByDate(act.roles || []);
+          const roles = sortRolesByDate(act.roles || [], today);
           const hasRoles = roles.length > 0;
           const allRoles = hasRoles
             ? sortRolesByDate([
@@ -750,9 +772,9 @@ export function Activities() {
                           </a>
                         )}
                       </div>
-                      {calculateRolesDuration(roles, locale) && (
+                      {calculateRolesDuration(allRoles, locale, today) && (
                         <p className="text-xs text-muted-foreground/80">
-                          {calculateRolesDuration(roles, locale)}
+                          {calculateRolesDuration(allRoles, locale, today)}
                         </p>
                       )}
                       <div className="relative mt-3 border-l border-primary/20 pl-4 space-y-5">
@@ -765,6 +787,7 @@ export function Activities() {
                             role.end_date,
                             role.is_current,
                             locale,
+                            today,
                           );
                           return (
                             <div key={idx} className="relative">
@@ -830,6 +853,7 @@ export function Activities() {
                           act.end_date,
                           !!act.is_current,
                           locale,
+                          today,
                         ) && (
                           <>
                             <span>·</span>
@@ -839,6 +863,7 @@ export function Activities() {
                                 act.end_date,
                                 !!act.is_current,
                                 locale,
+                                today,
                               )}
                             </span>
                           </>
