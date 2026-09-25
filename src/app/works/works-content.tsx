@@ -4,25 +4,25 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { FadeIn } from "@/components/motion/fade-in";
 import {
-  FolderKanban,
   ExternalLink,
   Github,
   Loader2,
   X,
   PenTool,
-  Calendar,
   Briefcase,
   GraduationCap,
   MessageSquare,
   Trophy,
   Award,
   Code,
+  FolderKanban,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
 import Link from "next/link";
-import { BlogImageGallery } from "@/components/blog/blog-image-gallery";
 import Image from "next/image";
+import { BlogImageGallery } from "@/components/blog/blog-image-gallery";
+import { cn } from "@/lib/utils";
 import type { ProjectWithImages } from "@/lib/data";
 import type { LinkedEntity } from "@/types";
 
@@ -39,6 +39,24 @@ interface WorksContentProps {
   initialProjects: ProjectWithImages[];
   entityMap: Record<string, LinkedEntity>;
   relatedBlogs: RelatedBlog[];
+}
+
+const GRADIENTS = [
+  "from-pink-400 via-rose-400 to-orange-300",
+  "from-sky-400 via-blue-400 to-indigo-300",
+  "from-lime-300 via-green-400 to-emerald-300",
+  "from-fuchsia-400 via-purple-400 to-violet-300",
+  "from-amber-300 via-yellow-300 to-lime-300",
+  "from-cyan-300 via-teal-400 to-emerald-300",
+];
+
+function hostname(url: string | null): string {
+  if (!url) return "";
+  try {
+    return new URL(url).hostname.replace("www.", "");
+  } catch {
+    return url;
+  }
 }
 
 export function WorksContent({
@@ -118,106 +136,91 @@ export function WorksContent({
 
   return (
     <>
-      <div className="space-y-8 sm:space-y-12 max-w-2xl mx-auto w-full">
-        <FadeIn>
-          <div className="space-y-2">
-            <h1 className="flex items-center gap-3 text-2xl sm:text-4xl font-bold tracking-tight">
-              <FolderKanban className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
-              {t("works.title")}
-            </h1>
-            <p className="text-base sm:text-lg text-muted-foreground">
-              {t("works.subtitle")}
-            </p>
-          </div>
-        </FadeIn>
+      <div className="mx-auto w-full max-w-7xl px-4 pt-12 sm:px-6 sm:pt-16">
+        <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-5xl">
+          {t("works.title")}
+        </h1>
+        <p className="mt-3 max-w-2xl text-base text-muted-foreground">
+          {t("works.subtitle")}
+        </p>
 
         {loading ? (
-          <FadeIn delay={0.1}>
-            <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-card/50 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                {t("works.loading")}
-              </p>
-            </div>
-          </FadeIn>
+          <div className="flex h-64 flex-col items-center justify-center gap-4 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">{t("works.loading")}</p>
+          </div>
         ) : projects.length === 0 ? (
-          <FadeIn delay={0.1}>
-            <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-card/50 text-center px-4">
-              <FolderKanban className="h-10 w-10 text-muted-foreground/50" />
-              <div className="space-y-1">
-                <p className="font-medium text-foreground">
-                  {t("works.empty")}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {t("works.emptyDesc")}
-                </p>
-              </div>
+          <div className="flex h-64 flex-col items-center justify-center gap-4 px-4 text-center">
+            <FolderKanban className="h-10 w-10 text-muted-foreground" />
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">{t("works.empty")}</p>
+              <p className="text-sm text-muted-foreground">{t("works.emptyDesc")}</p>
             </div>
-          </FadeIn>
+          </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2">
-            {projects.map((project, index) => (
-              <FadeIn key={project.id} delay={0.1 + index * 0.05}>
-                <div
-                  onClick={() => openProject(project)}
-                  className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border bg-card p-5 sm:p-6 shadow-sm transition-all hover:shadow-md cursor-pointer hover:border-primary/50 active:scale-[0.99]"
-                >
-                  <div className="space-y-4">
-                    {project.image && typeof project.image === "string" && (
-                      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2">
+            {projects.map((project, index) => {
+              const title = getLocalized(project, "title", "Untitled Project");
+              const description = getLocalized(project, "description");
+              const label =
+                String(project.category || "") ||
+                (Array.isArray(project.tags) && project.tags[0]
+                  ? String(project.tags[0])
+                  : "");
+              const image =
+                project.image &&
+                (project.image.startsWith("http") || project.image.startsWith("/"))
+                  ? project.image
+                  : project.image
+                    ? `/${project.image}`
+                    : null;
+              const gradient = GRADIENTS[index % GRADIENTS.length];
+
+              return (
+                <FadeIn key={project.id} delay={0.05 + index * 0.03}>
+                  <article
+                    onClick={() => openProject(project)}
+                    className="group cursor-pointer"
+                  >
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-border bg-card">
+                      {image ? (
                         <Image
-                          src={
-                            project.image.startsWith("http") ||
-                            project.image.startsWith("/")
-                              ? project.image
-                              : `/${project.image}`
-                          }
-                          alt={String(project.title || "")}
+                          src={image}
+                          alt={title}
                           fill
                           sizes="(max-width: 768px) 100vw, 50vw"
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
+                      ) : (
+                        <div className={cn("absolute inset-0 bg-gradient-to-br", gradient)} />
+                      )}
+                      <div className="absolute inset-0 flex flex-col justify-between p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          {label && (
+                            <span className="rounded-md bg-black/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                              {label}
+                            </span>
+                          )}
+                          {project.link && (
+                            <span className="text-xs text-white/80">
+                              {hostname(project.link)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="rounded-xl bg-black/30 p-3 backdrop-blur-md">
+                          <h3 className="text-lg font-bold text-white sm:text-xl">{title}</h3>
+                          {description && (
+                            <p className="mt-1 line-clamp-2 text-xs text-neutral-200">
+                              {description}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    <div className="space-y-2">
-                      <h3 className="text-lg sm:text-xl font-semibold tracking-tight">
-                        {getLocalized(project, "title", "Untitled Project")}
-                      </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                        {getLocalized(project, "description")}
-                      </p>
                     </div>
-                    {Array.isArray(project.tags) && project.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {project.tags.map((tag: string) => (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-6 flex items-center gap-4">
-                    {project.link && (
-                      <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">
-                        <ExternalLink className="h-4 w-4" />
-                        {t("works.liveDemo")}
-                      </span>
-                    )}
-                    {project.github && (
-                      <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors">
-                        <Github className="h-4 w-4" />
-                        {t("works.source")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </FadeIn>
-            ))}
+                  </article>
+                </FadeIn>
+              );
+            })}
           </div>
         )}
       </div>
@@ -229,7 +232,7 @@ export function WorksContent({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 px-0 sm:px-6 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 px-0 backdrop-blur-sm sm:items-center sm:px-6"
             onClick={() => closeProject()}
           >
             <motion.div
@@ -238,22 +241,21 @@ export function WorksContent({
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl"
+              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-border bg-card shadow-2xl sm:max-h-[85vh] sm:rounded-2xl"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
-                <h2 className="text-sm font-medium text-muted-foreground truncate pr-4">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
+                <h2 className="truncate pr-4 text-sm font-medium text-muted-foreground">
                   {getLocalized(selectedProject, "title", "Project")}
                 </h2>
                 <button
                   onClick={() => closeProject()}
-                  className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex-shrink-0"
+                  className="shrink-0 rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label="Close"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Content */}
               <div className="overflow-y-auto p-4 sm:p-8">
                 {(selectedProject.image ||
                   selectedProject.images?.length > 0) && (
@@ -273,21 +275,21 @@ export function WorksContent({
                   </div>
                 )}
 
-                <h1 className="mb-4 text-xl sm:text-3xl font-bold tracking-tight">
+                <h1 className="mb-4 text-xl font-bold tracking-tight text-foreground sm:text-3xl">
                   {getLocalized(selectedProject, "title", "Untitled Project")}
                 </h1>
 
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-wrap mb-6">
+                <p className="mb-6 text-sm whitespace-pre-wrap leading-relaxed text-muted-foreground sm:text-base">
                   {getLocalized(selectedProject, "description")}
                 </p>
 
                 {Array.isArray(selectedProject.tags) &&
                   selectedProject.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-6">
+                    <div className="mb-6 flex flex-wrap gap-1.5">
                       {selectedProject.tags.map((tag) => (
                         <span
                           key={String(tag)}
-                          className="inline-flex items-center rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20"
+                          className="inline-flex items-center rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-white/10"
                         >
                           {String(tag)}
                         </span>
@@ -295,7 +297,6 @@ export function WorksContent({
                     </div>
                   )}
 
-                {/* Linked Entity Badges */}
                 {(() => {
                   const hasEntities =
                     selectedProject.linked_experience_id ||
@@ -308,7 +309,7 @@ export function WorksContent({
                   if (!hasEntities) return null;
 
                   return (
-                    <div className="flex flex-wrap gap-2 mb-6">
+                    <div className="mb-6 flex flex-wrap gap-2">
                       {[
                         {
                           id: selectedProject.linked_experience_id,
@@ -356,13 +357,13 @@ export function WorksContent({
                                 : section
                             }
                             onClick={() => setSelectedProject(null)}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-3 py-1.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
+                            className="inline-flex items-center gap-1.5 rounded-md bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
                           >
                             <Icon className="h-3.5 w-3.5 opacity-70" />
-                            <span className="truncate max-w-[200px]">
+                            <span className="max-w-[200px] truncate">
                               {getEntityTitle(entity)}
                             </span>
-                            <ExternalLink className="h-3 w-3 opacity-50 ml-0.5" />
+                            <ExternalLink className="ml-0.5 h-3 w-3 opacity-50" />
                           </Link>
                         );
                       })}
@@ -370,13 +371,13 @@ export function WorksContent({
                   );
                 })()}
 
-                <div className="flex flex-wrap items-center gap-4 pt-4 border-t">
+                <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4">
                   {selectedProject.link && (
                     <a
                       href={selectedProject.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]"
+                      className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-black transition-all hover:opacity-90 active:scale-[0.98]"
                     >
                       <ExternalLink className="h-4 w-4" />
                       {t("works.liveDemo")}
@@ -387,7 +388,7 @@ export function WorksContent({
                       href={selectedProject.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
+                      className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"
                     >
                       <Github className="h-4 w-4" />
                       {t("works.source")}
@@ -395,15 +396,14 @@ export function WorksContent({
                   )}
                 </div>
 
-                {/* Related Blog Posts */}
                 {(() => {
                   const projectBlogs = relatedBlogs.filter(
                     (b) => b.linked_project_id === selectedProject.id,
                   );
                   if (projectBlogs.length === 0) return null;
                   return (
-                    <div className="mt-6 pt-6 border-t">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3">
+                    <div className="mt-6 border-t border-border pt-6">
+                      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                         <PenTool className="h-4 w-4" />
                         {t("works.relatedBlogs")}
                       </h3>
@@ -413,34 +413,17 @@ export function WorksContent({
                             key={blog.id}
                             href={`/blog?post=${blog.id}`}
                             onClick={() => setSelectedProject(null)}
-                            className="flex items-start gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50 hover:border-primary/30 group"
+                            className="group flex items-start gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted"
                           >
                             <div className="min-w-0 flex-1">
-                              <h4 className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-1">
+                              <h4 className="line-clamp-1 text-sm font-medium text-foreground transition-colors group-hover:text-brand">
                                 {blog.title}
                               </h4>
-                              <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                                 {blog.excerpt}
                               </p>
-                              <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground/70">
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {blog.date}
-                                </span>
-                                {blog.read_time && (
-                                  <>
-                                    <span>&middot;</span>
-                                    <span>
-                                      {String(blog.read_time).replace(
-                                        "min read",
-                                        t("common.minRead"),
-                                      )}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
                             </div>
-                            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors flex-shrink-0 mt-0.5" />
+                            <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-brand" />
                           </Link>
                         ))}
                       </div>

@@ -65,6 +65,7 @@ export interface Project {
   github: string;
   image: string;
   tags: string[];
+  category?: string;
   order_index: number;
   // Translations
   title_tr?: string;
@@ -366,6 +367,7 @@ export interface WorkFormData {
   github: string;
   image: string;
   tags: string;
+  category: string;
   additional_images: string;
   linked_experience_id: string;
   linked_education_id: string;
@@ -393,6 +395,62 @@ export interface EasterEgg {
   is_active: boolean;
   order_index: number;
   created_at: string;
+}
+
+// ============================================
+// Prototypes (Prototypes page)
+// ============================================
+
+export interface Prototype {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  video_url: string | null;
+  is_published: boolean;
+  order_index: number;
+  // Translations
+  title_tr?: string;
+  title_de?: string;
+  title_es?: string;
+  description_tr?: string;
+  description_de?: string;
+  description_es?: string;
+  created_at?: string;
+}
+
+// ============================================
+// Uses Categories (Uses page)
+// ============================================
+
+export interface UsesCategory {
+  id: string;
+  title: string;
+  items: string[];
+  items_tr?: string[];
+  items_de?: string[];
+  items_es?: string[];
+  title_tr?: string;
+  title_de?: string;
+  title_es?: string;
+  order_index: number;
+  created_at?: string;
+}
+
+// ============================================
+// Gallery Items (Home polaroid gallery)
+// ============================================
+
+export interface GalleryItem {
+  id: string;
+  image_url: string;
+  caption?: string;
+  caption_tr?: string;
+  caption_de?: string;
+  caption_es?: string;
+  is_published: boolean;
+  order_index: number;
+  created_at?: string;
 }
 
 declare global {

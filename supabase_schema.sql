@@ -279,6 +279,53 @@ CREATE TABLE IF NOT EXISTS public.blog_images (
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Prototypes (Prototypes page rows)
+CREATE TABLE IF NOT EXISTS public.prototypes (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    title text NOT NULL,
+    description text,
+    image_url text,
+    video_url text,
+    -- Translations
+    title_tr text,
+    title_de text,
+    title_es text,
+    description_tr text,
+    description_de text,
+    description_es text,
+    is_published boolean DEFAULT true,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Uses Categories (Uses page — category + items list, mirrors skill_categories)
+CREATE TABLE IF NOT EXISTS public.uses_categories (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    title text NOT NULL,
+    items jsonb DEFAULT '[]'::jsonb,
+    items_tr jsonb DEFAULT '[]'::jsonb,
+    items_de jsonb DEFAULT '[]'::jsonb,
+    items_es jsonb DEFAULT '[]'::jsonb,
+    title_tr text,
+    title_de text,
+    title_es text,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Gallery Items (Home polaroid gallery)
+CREATE TABLE IF NOT EXISTS public.gallery_items (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    image_url text NOT NULL,
+    caption text,
+    caption_tr text,
+    caption_de text,
+    caption_es text,
+    is_published boolean DEFAULT true,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Social Links (for dock navigation)
 CREATE TABLE IF NOT EXISTS public.social_links (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -341,8 +388,16 @@ ALTER TABLE public.projects DROP CONSTRAINT IF EXISTS check_project_link;
 ALTER TABLE public.projects ADD CONSTRAINT check_project_link CHECK (link IS NULL OR link ~ '^https?://|^/[^/]');
 ALTER TABLE public.projects DROP CONSTRAINT IF EXISTS check_project_github;
 ALTER TABLE public.projects ADD CONSTRAINT check_project_github CHECK (github IS NULL OR github ~ '^https?://|^/[^/]');
+-- Work filter category (e.g. B2B, B2B2C, B2C, AI)
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS category text;
 ALTER TABLE public.projects DROP CONSTRAINT IF EXISTS check_project_image;
 ALTER TABLE public.projects ADD CONSTRAINT check_project_image CHECK (image IS NULL OR image ~ '^https?://|^/[^/]');
+ALTER TABLE public.prototypes DROP CONSTRAINT IF EXISTS check_prototype_image_url;
+ALTER TABLE public.prototypes ADD CONSTRAINT check_prototype_image_url CHECK (image_url IS NULL OR image_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.prototypes DROP CONSTRAINT IF EXISTS check_prototype_video_url;
+ALTER TABLE public.prototypes ADD CONSTRAINT check_prototype_video_url CHECK (video_url IS NULL OR video_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.gallery_items DROP CONSTRAINT IF EXISTS check_gallery_image_url;
+ALTER TABLE public.gallery_items ADD CONSTRAINT check_gallery_image_url CHECK (image_url ~ '^https?://|^/[^/]');
 ALTER TABLE public.project_images DROP CONSTRAINT IF EXISTS check_project_images_url;
 ALTER TABLE public.project_images ADD CONSTRAINT check_project_images_url CHECK (image_url ~ '^https?://|^/[^/]');
 ALTER TABLE public.blog_images DROP CONSTRAINT IF EXISTS check_blog_images_url;
@@ -567,6 +622,12 @@ DROP POLICY IF EXISTS "Public read" ON public.social_links;
 CREATE POLICY "Public read" ON public.social_links FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.contact_emails;
 CREATE POLICY "Public read" ON public.contact_emails FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public read" ON public.prototypes;
+CREATE POLICY "Public read" ON public.prototypes FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public read" ON public.uses_categories;
+CREATE POLICY "Public read" ON public.uses_categories FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public read" ON public.gallery_items;
+CREATE POLICY "Public read" ON public.gallery_items FOR SELECT USING (true);
 
 -- ADMIN-ONLY WRITE (locked to site owner)
 -- ⚠️ SETUP REQUIRED: Replace YOUR-USER-UUID-HERE with your Supabase Auth user ID.
@@ -676,6 +737,27 @@ CREATE POLICY "Admin update" ON public.contact_emails FOR UPDATE USING (auth.uid
 DROP POLICY IF EXISTS "Admin delete" ON public.contact_emails;
 CREATE POLICY "Admin delete" ON public.contact_emails FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
 
+DROP POLICY IF EXISTS "Admin insert" ON public.prototypes;
+CREATE POLICY "Admin insert" ON public.prototypes FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin update" ON public.prototypes;
+CREATE POLICY "Admin update" ON public.prototypes FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin delete" ON public.prototypes;
+CREATE POLICY "Admin delete" ON public.prototypes FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
+DROP POLICY IF EXISTS "Admin insert" ON public.uses_categories;
+CREATE POLICY "Admin insert" ON public.uses_categories FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin update" ON public.uses_categories;
+CREATE POLICY "Admin update" ON public.uses_categories FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin delete" ON public.uses_categories;
+CREATE POLICY "Admin delete" ON public.uses_categories FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
+DROP POLICY IF EXISTS "Admin insert" ON public.gallery_items;
+CREATE POLICY "Admin insert" ON public.gallery_items FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin update" ON public.gallery_items;
+CREATE POLICY "Admin update" ON public.gallery_items FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin delete" ON public.gallery_items;
+CREATE POLICY "Admin delete" ON public.gallery_items FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+
 -- =============================================
 -- FUNCTIONS & TRIGGERS
 -- =============================================
@@ -692,7 +774,7 @@ BEGIN
   END IF;
 
   -- Basic table name validation to prevent SQL injection in dynamic query
-  IF p_table NOT IN ('projects', 'blogs', 'experiences', 'educations', 'skill_categories', 'languages', 'activities', 'certifications', 'project_images', 'blog_images') THEN
+  IF p_table NOT IN ('projects', 'blogs', 'experiences', 'educations', 'skill_categories', 'languages', 'activities', 'certifications', 'project_images', 'blog_images', 'prototypes', 'uses_categories', 'gallery_items') THEN
     RAISE EXCEPTION 'Invalid table name for reordering';
   END IF;
 
@@ -754,6 +836,15 @@ BEGIN
   END IF;
   IF TG_TABLE_NAME = 'section_order' AND (SELECT count(*) FROM section_order) >= 100 THEN
     RAISE EXCEPTION 'Maximum section order entries limit reached (100)';
+  END IF;
+  IF TG_TABLE_NAME = 'prototypes' AND (SELECT count(*) FROM prototypes) >= 100 THEN
+    RAISE EXCEPTION 'Maximum prototypes limit reached (100)';
+  END IF;
+  IF TG_TABLE_NAME = 'uses_categories' AND (SELECT count(*) FROM uses_categories) >= 100 THEN
+    RAISE EXCEPTION 'Maximum uses categories limit reached (100)';
+  END IF;
+  IF TG_TABLE_NAME = 'gallery_items' AND (SELECT count(*) FROM gallery_items) >= 100 THEN
+    RAISE EXCEPTION 'Maximum gallery items limit reached (100)';
   END IF;
   RETURN NEW;
 END;
@@ -899,4 +990,19 @@ CREATE TRIGGER check_easter_eggs_limit
 DROP TRIGGER IF EXISTS check_easter_egg_config_limit ON easter_egg_config;
 CREATE TRIGGER check_easter_egg_config_limit
   BEFORE INSERT ON easter_egg_config
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+DROP TRIGGER IF EXISTS check_prototypes_limit ON prototypes;
+CREATE TRIGGER check_prototypes_limit
+  BEFORE INSERT ON prototypes
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+DROP TRIGGER IF EXISTS check_uses_categories_limit ON uses_categories;
+CREATE TRIGGER check_uses_categories_limit
+  BEFORE INSERT ON uses_categories
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+DROP TRIGGER IF EXISTS check_gallery_items_limit ON gallery_items;
+CREATE TRIGGER check_gallery_items_limit
+  BEFORE INSERT ON gallery_items
   FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();

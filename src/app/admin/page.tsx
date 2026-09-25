@@ -65,6 +65,7 @@ const PROJECT_FIELDS = [
   "github",
   "image",
   "tags",
+  "category",
   "order_index",
   "title_tr",
   "description_tr",
@@ -170,6 +171,7 @@ function AdminDashboardContent() {
     github: "",
     image: "",
     tags: "",
+    category: "",
     additional_images: "",
     linked_experience_id: "",
     linked_education_id: "",
@@ -193,6 +195,7 @@ function AdminDashboardContent() {
     github: "",
     image: "",
     tags: "",
+    category: "",
     additional_images: "",
     linked_experience_id: "",
     linked_education_id: "",
@@ -512,6 +515,7 @@ function AdminDashboardContent() {
       github: "",
       image: "",
       tags: "",
+      category: "",
       additional_images: "",
       linked_experience_id: "",
       linked_education_id: "",
@@ -540,6 +544,7 @@ function AdminDashboardContent() {
       github: work.github || "",
       image: work.image || "",
       tags: Array.isArray(work.tags) ? work.tags.join(", ") : work.tags || "",
+      category: work.category || "",
       additional_images: work.additional_images || "",
       linked_experience_id: work.linked_experience_id || "",
       linked_education_id: work.linked_education_id || "",
@@ -1472,6 +1477,104 @@ function AdminDashboardContent() {
                       junctionTable: "certification_skills",
                       junctionForeignKey: "certification_id",
                       junctionOtherKey: "skill_category_id",
+                    },
+                  ]}
+                />
+              )}
+
+              {/* ───── PROTOTYPES TAB ───── */}
+              {activeTab === "prototypes" && (
+                <AdminCrudTab
+                  title="Prototypes"
+                  tableName="prototypes"
+                  displayField="title"
+                  subtitleField="description"
+                  fields={[
+                    {
+                      key: "title",
+                      label: "Title",
+                      required: true,
+                      placeholder: "Basket prototype",
+                      translatable: true,
+                    },
+                    {
+                      key: "description",
+                      label: "Description",
+                      type: "textarea",
+                      placeholder: "What this prototype shows...",
+                      translatable: true,
+                    },
+                    {
+                      key: "image_url",
+                      label: "Screen Image URL",
+                      placeholder: "https://...",
+                    },
+                    {
+                      key: "video_url",
+                      label: "Video URL",
+                      placeholder: "https://...",
+                    },
+                    {
+                      key: "is_published",
+                      label: "Published",
+                      type: "checkbox",
+                      placeholder: "Visible on the site",
+                    },
+                  ]}
+                />
+              )}
+
+              {/* ───── USES TAB ───── */}
+              {activeTab === "uses" && (
+                <AdminCrudTab
+                  title="Uses"
+                  tableName="uses_categories"
+                  displayField="title"
+                  subtitleField=""
+                  fields={[
+                    {
+                      key: "title",
+                      label: "Category Title",
+                      required: true,
+                      placeholder: "Editor",
+                      translatable: true,
+                    },
+                    {
+                      key: "items",
+                      label: "Items (comma separated)",
+                      type: "textarea",
+                      placeholder: "VS Code, Cursor",
+                      translatable: true,
+                    },
+                  ]}
+                />
+              )}
+
+              {/* ───── GALLERY TAB ───── */}
+              {activeTab === "gallery" && (
+                <AdminCrudTab
+                  title="Gallery"
+                  tableName="gallery_items"
+                  displayField="caption"
+                  subtitleField="image_url"
+                  fields={[
+                    {
+                      key: "image_url",
+                      label: "Image URL",
+                      required: true,
+                      placeholder: "https://...",
+                    },
+                    {
+                      key: "caption",
+                      label: "Caption",
+                      placeholder: "Photo caption...",
+                      translatable: true,
+                    },
+                    {
+                      key: "is_published",
+                      label: "Published",
+                      type: "checkbox",
+                      placeholder: "Visible on the site",
                     },
                   ]}
                 />

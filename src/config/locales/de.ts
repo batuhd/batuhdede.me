@@ -4,8 +4,13 @@ export const de: Record<string, string> = {
   "common.minRead": "Min. Lesezeit",
   // Navigation
   "nav.home": "Startseite",
-  "nav.works": "Projekte",
+  "nav.about": "Über mich",
+  "nav.works": "Arbeit",
   "nav.blog": "Blog",
+  "nav.articles": "Blog",
+  "nav.prototypes": "Prototypen",
+  "nav.uses": "Nutzung",
+  "nav.certifications": "Zertifikate",
   "nav.credits": "Credits",
   "nav.theme": "Design",
   "nav.language": "Sprache",
@@ -46,6 +51,21 @@ export const de: Record<string, string> = {
     "(GITHUB_TOKEN in .env hinzufügen, um echte Daten zu sehen)",
   "home.github.less": "Weniger",
   "home.github.more": "Mehr",
+  "home.hello": "Ich bin",
+  "home.hi": "Hallo!",
+  "home.resume": "Lebenslauf herunterladen",
+  "home.work": "Arbeit",
+  "home.downloadResume": "Lebenslauf herunterladen",
+  "home.workDetails": "Details ansehen",
+  "home.readMore": "Mehr über mich",
+  "home.contactMe": "Kontakt aufnehmen",
+
+  // About
+  "about.hey": "Hallo!",
+  "about.whatLed": "Was ich geleitet habe",
+  "about.follow": "Folgen auf",
+  "about.email": "E-Mail",
+
   "home.contact": "Kontakt",
   "home.contact.name": "Name",
   "home.contact.email": "E-Mail",
@@ -66,17 +86,36 @@ export const de: Record<string, string> = {
   "home.footer": "Mit ❤️ in Sinop gemacht",
 
   // Works
-  "works.title": "Projekte",
-  "works.subtitle": "Eine Sammlung meiner Projekte und Arbeiten.",
+  "works.title": "Ausgewählte Arbeiten",
+  "works.subtitle": "Eine Auswahl von Projekten, die ich entworfen und gebaut habe – von der Recherche bis zur Veröffentlichung.",
   "works.empty": "Noch keine Projekte",
   "works.emptyDesc":
     "Über das Admin-Panel hinzugefügte Projekte werden hier angezeigt.",
   "works.loading": "Projekte werden geladen...",
   "works.liveDemo": "Live-Demo",
   "works.source": "Quellcode",
+  "works.filterAll": "Alle",
+  "works.filter.B2B": "B2B",
+  "works.filter.B2B2C": "B2B2C",
+  "works.filter.B2C": "B2C",
+  "works.filter.AI": "KI",
+
+  // Prototypes
+  "prototypes.title": "Prototypen",
+  "prototypes.subtitle": "Interaktive Experimente, Design-Erkundungen und funktionierende Konzepte.",
+  "prototypes.empty": "Noch keine Prototypen",
+  "prototypes.play": "Abspielen",
+
+  // Uses
+  "uses.title": "Nutzung",
+  "uses.subtitle": "Die Werkzeuge, mit denen ich entwerfe, baue und veröffentliche.",
+  "uses.empty": "Noch keine Einträge",
 
   // Blog
   "blog.title": "Blog",
+  "blog.editorialTitle": "Über Design, Führung und KI",
+  "blog.recent": "Neueste Beiträge",
+  "blog.viewAll": "Alle ansehen",
   "blog.subtitle": "Gedanken, Erkenntnisse und Webentwicklungsartikel.",
   "blog.empty": "Noch keine Beiträge",
   "blog.emptyDesc":

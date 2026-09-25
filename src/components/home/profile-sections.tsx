@@ -1,23 +1,12 @@
 "use client";
 
-import { useState, useMemo, useEffect, useSyncExternalStore } from "react";
-
-const emptySubscribe = () => () => {};
-
-// Fisher-Yates shuffle algorithm
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
-import { ExternalLink, FolderKanban, PenTool, X } from "lucide-react";
+import { ExternalLink, FolderKanban, PenTool, X, ArrowUpRight, Tag } from "lucide-react";
 import Image from "next/image";
 import { ExpandableText } from "@/components/ui/expandable-text";
+import { SectionBox } from "@/components/ui/section-box";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import type {
@@ -192,241 +181,244 @@ function sortRolesByDate(roles: RoleEntry[], today?: Date | null): RoleEntry[] {
   });
 }
 
-function getRolesDateRange(roles: RoleEntry[], today?: Date | null) {
-  if (!roles || roles.length === 0) return null;
-  const sortedStart = [...roles].sort((a, b) => {
-    const da = parseDate(a.start_date, today);
-    const db = parseDate(b.start_date, today);
-    if (!da || !db) return 0;
-    return da.getTime() - db.getTime();
-  });
-  const sortedEnd = [...roles].sort((a, b) => {
-    const da = parseDate(a.is_current ? "Present" : a.end_date, today);
-    const db = parseDate(b.is_current ? "Present" : b.end_date, today);
-    if (!da || !db) return 0;
-    return db.getTime() - da.getTime();
-  });
-  return {
-    start: sortedStart[0]?.start_date,
-    end: sortedEnd[0]?.is_current ? "Present" : sortedEnd[0]?.end_date,
-    is_current: sortedEnd[0]?.is_current ?? false,
-  };
-}
-
-function calculateRolesDuration(
-  roles: RoleEntry[],
+function getCareerDuration(
+  experiences: Experience[],
   locale: string,
   today?: Date | null,
 ): string | null {
-  const range = getRolesDateRange(roles, today);
-  if (!range) return null;
-  return calculateDuration(range.start, range.end, range.is_current, locale, today);
+  if (experiences.length === 0) return null;
+  const starts = experiences
+    .map((exp) => parseDate(exp.start_date, today))
+    .filter((d): d is Date => Boolean(d));
+  const ends = experiences
+    .map((exp) =>
+      exp.is_current
+        ? (today ?? new Date())
+        : parseDate(exp.end_date, today),
+    )
+    .filter((d): d is Date => Boolean(d));
+  if (starts.length === 0) return null;
+  const earliest = new Date(Math.min(...starts.map((d) => d.getTime())));
+  const latest =
+    ends.length > 0
+      ? new Date(Math.max(...ends.map((d) => d.getTime())))
+      : null;
+  if (!latest) return null;
+  return calculateDuration(
+    earliest.toISOString(),
+    latest.toISOString(),
+    false,
+    locale,
+    today,
+  );
+}
+
+function RelatedLinks({
+  projects,
+  blogs,
+}: {
+  projects: Project[];
+  blogs: Blog[];
+}) {
+  const items: { href: string; label: string; icon: typeof PenTool }[] = [
+    ...projects.map((p: Project) => ({
+      href: `/works?project=${p.id}`,
+      label: String(p.title),
+      icon: FolderKanban,
+    })),
+    ...blogs.map((b: Blog) => ({
+      href: `/blog?post=${b.id}`,
+      label: String(b.title),
+      icon: PenTool,
+    })),
+  ];
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mt-4 space-y-2.5 border-t border-[#2a2a2a] pt-4">
+      {items.map((item) => (
+        <Link
+          key={item.href + item.label}
+          href={item.href}
+          className="group flex items-center gap-2.5 text-xs"
+        >
+          <Tag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate text-brand transition-colors group-hover:underline">
+            {item.label}
+          </span>
+          <ArrowUpRight className="h-3 w-3 shrink-0 text-brand opacity-70" />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function RoleLine({
+  title,
+  description,
+  start_date,
+  end_date,
+  is_current,
+  locale,
+}: {
+  title: string;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  is_current: boolean;
+  locale: string;
+}) {
+  const roleEnd = is_current ? "Present" : end_date;
+  const roleDuration = calculateDuration(
+    start_date,
+    end_date,
+    is_current,
+    locale,
+  );
+  return (
+    <div className="space-y-0.5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-0.5">
+        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+        <p className="text-xs text-muted-foreground">
+          {formatDate(start_date, locale)}
+          {roleEnd ? ` - ${formatDate(roleEnd, locale)}` : ""}
+          {roleDuration ? ` · ${roleDuration}` : ""}
+        </p>
+      </div>
+      {description && (
+        <div className="pt-1 text-sm leading-relaxed text-muted-foreground">
+          <ExpandableText text={description} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function Experience() {
   const { locale, getLocalized, t } = useLanguage();
   const { experiences, projects, blogs } = useSiteData();
 
-  // Optimize: Pre-calculate related items to avoid IIFE in render
-  const relatedItemsMap = useMemo(() => {
-    const map: Record<string, { projects: Project[]; blogs: Blog[] }> = {};
-    experiences.forEach((exp: Experience) => {
-      map[exp.id] = {
-        projects: projects.filter(
-          (p: Project) => p.linked_experience_id === exp.id,
-        ),
-        blogs: blogs.filter((b: Blog) => b.linked_experience_id === exp.id),
-      };
-    });
-    return map;
-  }, [experiences, projects, blogs]);
-
   if (experiences.length === 0) return null;
 
+  const careerDuration = getCareerDuration(experiences, locale);
+
   return (
-    <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">
-        {t("home.experience")}
-      </h2>
-      <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
+    <section className="space-y-6" id="experience">
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+          {t("home.experience")}
+        </h2>
+        {careerDuration && (
+          <span className="text-sm text-muted-foreground">{careerDuration}</span>
+        )}
+      </div>
+      <div className="divide-y divide-border border-t border-b">
         {experiences.map((exp: Experience) => {
-          const related = relatedItemsMap[exp.id];
-          const hasRelated =
-            related.projects.length > 0 || related.blogs.length > 0;
+          const relatedProjects = projects.filter(
+            (p: Project) => p.linked_experience_id === exp.id,
+          );
+          const relatedBlogs = blogs.filter(
+            (b: Blog) => b.linked_experience_id === exp.id,
+          );
           const roles = sortRolesByDate(exp.roles || []);
           const hasRoles = roles.length > 0;
-          const allRoles = hasRoles
-            ? sortRolesByDate([
-                {
-                  title: exp.title,
-                  start_date: exp.start_date,
-                  end_date: exp.end_date,
-                  is_current: exp.is_current,
-                  description: exp.description,
-                  title_tr: exp.title_tr,
-                  title_de: exp.title_de,
-                  title_es: exp.title_es,
-                  description_tr: exp.description_tr,
-                  description_de: exp.description_de,
-                  description_es: exp.description_es,
-                },
-                ...roles,
-              ])
-            : [];
 
           return (
-            <div key={exp.id} className="relative pl-6 sm:pl-8 group">
-              <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
-              <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
-                <div className="flex gap-4">
+            <div key={exp.id} className="py-5">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                <div className="flex items-center gap-3 min-w-0">
                   {exp.logo_url ? (
                     <Image
                       src={exp.logo_url}
                       alt={exp.company}
-                      width={48}
-                      height={48}
-                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0"
+                      width={32}
+                      height={32}
+                      className="h-7 w-7 rounded-md object-contain"
                     />
                   ) : (
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
-                      <span className="text-sm font-semibold text-muted-foreground">
-                        {exp.company?.[0]?.toUpperCase()}
-                      </span>
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-xs font-semibold text-muted-foreground">
+                      {exp.company?.[0]?.toUpperCase()}
                     </div>
                   )}
-                  <div className="space-y-1 min-w-0 flex-1">
-                    {hasRoles ? (
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-base">
-                          {exp.company}
-                        </h3>
-                        {exp.location && (
-                          <p className="text-sm font-medium text-muted-foreground">
-                            {exp.location}
-                          </p>
-                        )}
-                        {calculateRolesDuration(allRoles, locale) && (
-                          <p className="text-xs text-muted-foreground/80">
-                            {calculateRolesDuration(allRoles, locale)}
-                          </p>
-                        )}
-                        <div className="relative mt-3 border-l border-primary/20 pl-4 space-y-5">
-                          {allRoles.map((role, idx) => {
-                            const roleEnd = role.is_current
-                              ? "Present"
-                              : role.end_date;
-                            const roleDuration = calculateDuration(
-                              role.start_date,
-                              role.end_date,
-                              role.is_current,
-                              locale,
-                            );
-                            return (
-                              <div key={idx} className="relative">
-                                <span className="absolute -left-[21.5px] top-[5px] h-2 w-2 rounded-full bg-primary/60 ring-4 ring-card/40" />
-                                <h4 className="font-medium text-sm">
-                                  {getLocalized(role, "title")}
-                                </h4>
-                                <p className="text-xs text-muted-foreground/80 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                  <span>
-                                    {formatDate(role.start_date, locale)}
-                                    {roleEnd
-                                      ? ` - ${formatDate(roleEnd, locale)}`
-                                      : ""}
-                                  </span>
-                                  {roleDuration && (
-                                    <>
-                                      <span>·</span>
-                                      <span>{roleDuration}</span>
-                                    </>
-                                  )}
-                                </p>
-                                {role.description && (
-                                  <div className="pt-2 text-sm text-muted-foreground leading-relaxed">
-                                    <ExpandableText
-                                      text={getLocalized(role, "description")}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        <h3 className="font-semibold text-base">
-                          {getLocalized(exp, "title")}
-                        </h3>
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {exp.company}
-                          {exp.location ? ` · ${exp.location}` : ""}
-                        </p>
-                        <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                          <span>
-                            {formatDate(exp.start_date, locale)}
-                            {exp.end_date || exp.is_current
-                              ? ` - ${formatDate(exp.end_date || "Present", locale)}`
-                              : ""}
-                          </span>
-                          {calculateDuration(
-                            exp.start_date,
-                            exp.end_date,
-                            exp.is_current,
-                            locale,
-                          ) && (
-                            <>
-                              <span>·</span>
-                              <span>
-                                {calculateDuration(
-                                  exp.start_date,
-                                  exp.end_date,
-                                  exp.is_current,
-                                  locale,
-                                )}
-                              </span>
-                            </>
-                          )}
-                        </p>
-                        {exp.description && (
-                          <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
-                            <ExpandableText
-                              text={getLocalized(exp, "description")}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {hasRelated && (
-                      <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
-                        {related.projects.map((p: Project) => (
-                          <Link
-                            key={p.id}
-                            href={`/works?project=${p.id}`}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
-                          >
-                            <FolderKanban className="h-3 w-3 opacity-70" />
-                            <span>{getLocalized(p, "title")}</span>
-                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-                          </Link>
-                        ))}
-                        {related.blogs.map((b: Blog) => (
-                          <Link
-                            key={b.id}
-                            href={`/blog?post=${b.id}`}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
-                          >
-                            <PenTool className="h-3 w-3 opacity-70" />
-                            <span>{getLocalized(b, "title")}</span>
-                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-                          </Link>
-                        ))}
-                      </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-foreground">
+                      {exp.company}
+                    </h3>
+                    {exp.location && (
+                      <p className="text-sm text-muted-foreground">
+                        {exp.location}
+                      </p>
                     )}
                   </div>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  {formatDate(exp.start_date, locale)}
+                  {exp.end_date || exp.is_current
+                    ? ` - ${formatDate(exp.end_date || "Present", locale)}`
+                    : ""}
+                  {calculateDuration(
+                    exp.start_date,
+                    exp.end_date,
+                    exp.is_current,
+                    locale,
+                  )
+                    ? ` · ${calculateDuration(
+                        exp.start_date,
+                        exp.end_date,
+                        exp.is_current,
+                        locale,
+                      )}`
+                    : ""}
+                </p>
               </div>
+
+              {hasRoles ? (
+                <div className="mt-3 space-y-3 border-l border-border pl-4">
+                  {sortRolesByDate([
+                    {
+                      title: exp.title,
+                      start_date: exp.start_date,
+                      end_date: exp.end_date,
+                      is_current: exp.is_current,
+                      description: exp.description,
+                      title_tr: exp.title_tr,
+                      title_de: exp.title_de,
+                      title_es: exp.title_es,
+                      description_tr: exp.description_tr,
+                      description_de: exp.description_de,
+                      description_es: exp.description_es,
+                    } as RoleEntry,
+                    ...roles,
+                  ]).map((role, idx) => (
+                    <RoleLine
+                      key={idx}
+                      title={getLocalized(role, "title")}
+                      description={getLocalized(role, "description")}
+                      start_date={role.start_date}
+                      end_date={role.end_date}
+                      is_current={role.is_current}
+                      locale={locale}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {getLocalized(exp, "title")}
+                  </p>
+                  {exp.description && (
+                    <div className="pt-2 text-sm leading-relaxed text-muted-foreground">
+                      <ExpandableText text={getLocalized(exp, "description")} />
+                    </div>
+                  )}
+                </>
+              )}
+
+              <RelatedLinks
+                projects={relatedProjects}
+                blogs={relatedBlogs}
+              />
             </div>
           );
         })}
@@ -439,144 +431,88 @@ export function Education() {
   const { locale, getLocalized, t } = useLanguage();
   const { educations, projects, blogs } = useSiteData();
 
-  // Optimize: Pre-calculate related items to avoid IIFE in render
-  const relatedItemsMap = useMemo(() => {
-    const map: Record<string, { projects: Project[]; blogs: Blog[] }> = {};
-    educations.forEach((edu: Education) => {
-      map[edu.id] = {
-        projects: projects.filter(
-          (p: Project) => p.linked_education_id === edu.id,
-        ),
-        blogs: blogs.filter((b: Blog) => b.linked_education_id === edu.id),
-      };
-    });
-    return map;
-  }, [educations, projects, blogs]);
-
   if (educations.length === 0) return null;
 
   return (
-    <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">
-        {t("home.education")}
-      </h2>
-      <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
+    <section id="education">
+      <SectionBox title={t("home.education")}>
+        <div className="space-y-6">
         {educations.map((edu: Education) => {
-          const related = relatedItemsMap[edu.id];
-          const hasRelated =
-            related.projects.length > 0 || related.blogs.length > 0;
+          const relatedProjects = projects.filter(
+            (p: Project) => p.linked_education_id === edu.id,
+          );
+          const relatedBlogs = blogs.filter(
+            (b: Blog) => b.linked_education_id === edu.id,
+          );
+          const duration = calculateDuration(
+            edu.start_date,
+            edu.end_date,
+            !!edu.is_current,
+            locale,
+          );
 
           return (
-            <div key={edu.id} className="relative pl-6 sm:pl-8 group">
-              <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
-              <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
-                <div className="flex gap-4">
-                  {edu.logo_url ? (
-                    <Image
-                      src={edu.logo_url}
-                      alt={edu.university}
-                      width={48}
-                      height={48}
-                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
-                      <span className="text-sm font-semibold text-muted-foreground">
-                        {edu.university?.[0]?.toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <h3 className="font-semibold text-base">
-                      {getLocalized(edu, "university")}
-                    </h3>
-                    {(edu.degree || edu.major || edu.gpa) && (
-                      <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {getLocalized(edu, "degree")}
-                          {getLocalized(edu, "degree") &&
-                          getLocalized(edu, "major")
-                            ? ` - `
-                            : ""}
-                          {getLocalized(edu, "major")}
-                        </p>
-                        {edu.gpa && (
-                          <span className="inline-flex items-center rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-primary ring-1 ring-inset ring-primary/20 uppercase">
-                            {locale === "tr" ? "GANO" : "GPA"}: {edu.gpa}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span>
-                        {formatDate(edu.start_date, locale)}
-                        {edu.end_date || edu.is_current
-                          ? ` - ${formatDate(edu.end_date || "Present", locale)}`
-                          : ""}
-                        {getLocalized(edu, "location")
-                          ? ` · ${getLocalized(edu, "location")}`
-                          : ""}
-                      </span>
-                      {calculateDuration(
-                        edu.start_date,
-                        edu.end_date,
-                        !!edu.is_current,
-                        locale,
-                      ) && (
-                        <>
-                          <span>·</span>
-                          <span>
-                            {calculateDuration(
-                              edu.start_date,
-                              edu.end_date,
-                              !!edu.is_current,
-                              locale,
-                            )}
-                          </span>
-                        </>
-                      )}
-                    </p>
-
-                    {hasRelated && (
-                      <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
-                        {related.projects.map((p: Project) => (
-                          <Link
-                            key={p.id}
-                            href={`/works?project=${p.id}`}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
-                          >
-                            <FolderKanban className="h-3 w-3 opacity-70" />
-                            <span>{getLocalized(p, "title")}</span>
-                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-                          </Link>
-                        ))}
-                        {related.blogs.map((b: Blog) => (
-                          <Link
-                            key={b.id}
-                            href={`/blog?post=${b.id}`}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
-                          >
-                            <PenTool className="h-3 w-3 opacity-70" />
-                            <span>{getLocalized(b, "title")}</span>
-                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+            <div
+              key={edu.id}
+              className="rounded-2xl bg-card p-5"
+            >
+              <div className="flex items-start gap-4">
+                {edu.logo_url ? (
+                  <Image
+                    src={edu.logo_url}
+                    alt={getLocalized(edu, "university")}
+                    width={44}
+                    height={44}
+                    className="h-11 w-11 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-base font-bold text-foreground">
+                    {getLocalized(edu, "university")?.[0]?.toUpperCase()}
                   </div>
+                )}
+                <div className="min-w-0">
+                  <h3 className="text-[15px] font-bold text-foreground">
+                    {getLocalized(edu, "university")}
+                  </h3>
+                  {(edu.degree || edu.major) && (
+                    <p className="text-sm text-muted-foreground">
+                      {getLocalized(edu, "degree")}
+                      {getLocalized(edu, "degree") &&
+                      getLocalized(edu, "major")
+                        ? " - "
+                        : ""}
+                      {getLocalized(edu, "major")}
+                    </p>
+                  )}
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatDate(edu.start_date, locale)}
+                    {edu.end_date || edu.is_current
+                      ? ` - ${formatDate(edu.end_date || "Present", locale)}`
+                      : ""}
+                    {duration ? ` · ${duration}` : ""}
+                    {getLocalized(edu, "location")
+                      ? ` · ${getLocalized(edu, "location")}`
+                      : ""}
+                    {edu.gpa ? ` · ${locale === "tr" ? "GANO" : "GPA"}: ${edu.gpa}` : ""}
+                  </p>
                 </div>
               </div>
+              <RelatedLinks
+                projects={relatedProjects}
+                blogs={relatedBlogs}
+              />
             </div>
           );
         })}
-      </div>
+        </div>
+      </SectionBox>
     </section>
   );
 }
 
 export function Languages() {
   const { getLocalized, t } = useLanguage();
-  const { languages, projects, blogs } = useSiteData();
+  const { languages } = useSiteData();
 
   if (languages.length === 0) return null;
 
@@ -614,79 +550,41 @@ export function Languages() {
     return null;
   };
 
-  return (
-    <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">
-        {t("home.languages")}
-      </h2>
-      <div className="flex flex-wrap gap-2 sm:gap-3 ml-3">
-        {languages.map((lang: Language) => {
-          const flag = getLanguageFlag(lang.name);
-          return (
-            <span
-              key={lang.id}
-              className="group flex items-center gap-2 rounded-xl border bg-card/40 px-3 py-1.5 sm:px-4 sm:py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              {flag && (
-                <span className="text-base sm:text-lg leading-none">
-                  {flag}
-                </span>
-              )}
-              <span className="text-xs sm:text-sm font-medium text-foreground group-hover:text-accent-foreground">
-                {getLocalized(lang, "name")}
-              </span>
-              {lang.level && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/30 mx-0.5" />
-                  <span className="text-xs sm:text-sm group-hover:text-accent-foreground/80 transition-colors">
-                    {t(`level.${lang.level.toLowerCase()}`) !==
-                    `level.${lang.level.toLowerCase()}`
-                      ? t(`level.${lang.level.toLowerCase()}`)
-                      : lang.level}
-                  </span>
-                </>
-              )}
-              {(() => {
-                const relatedProjects = projects.filter(
-                  (p: Project) => p.linked_language_id === lang.id,
-                );
-                const relatedBlogs = blogs.filter(
-                  (b: Blog) => b.linked_language_id === lang.id,
-                );
-                if (relatedProjects.length === 0 && relatedBlogs.length === 0)
-                  return null;
+  const getLevelLabel = (level: string | null) => {
+    if (!level) return "";
+    const translated = t(`level.${level.toLowerCase()}`);
+    return translated !== `level.${level.toLowerCase()}` ? translated : level;
+  };
 
-                return (
-                  <div className="w-full mt-2 pt-2 border-t border-border/50 flex flex-wrap gap-2">
-                    {relatedProjects.map((p: Project) => (
-                      <Link
-                        key={p.id}
-                        href={`/works?project=${p.id}`}
-                        className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border shadow-sm"
-                      >
-                        <FolderKanban className="h-3 w-3 opacity-70" />
-                        <span>{getLocalized(p, "title")}</span>
-                        <ExternalLink className="h-2 w-2 opacity-0 group-hover/link:opacity-50 -ml-0.5" />
-                      </Link>
-                    ))}
-                    {relatedBlogs.map((b: Blog) => (
-                      <Link
-                        key={b.id}
-                        href={`/blog?post=${b.id}`}
-                        className="inline-flex items-center gap-1.5 rounded-[4px] bg-background/50 px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors group/link border shadow-sm"
-                      >
-                        <PenTool className="h-3 w-3 opacity-70" />
-                        <span>{getLocalized(b, "title")}</span>
-                        <ExternalLink className="h-2 w-2 opacity-0 group-hover/link:opacity-50 -ml-0.5" />
-                      </Link>
-                    ))}
-                  </div>
-                );
-              })()}
-            </span>
-          );
-        })}
-      </div>
+  return (
+    <section id="languages">
+      <SectionBox title={t("home.languages")}>
+        <div className="divide-y divide-[#2a2a2a]">
+          {languages.map((lang: Language) => {
+            const flag = getLanguageFlag(lang.name);
+            return (
+              <div
+                key={lang.id}
+                className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+              >
+                <div className="flex items-center gap-2.5">
+                  {flag && (
+                    <span className="text-base leading-none">{flag}</span>
+                  )}
+                  <span className="text-sm font-medium text-foreground">
+                    {getLocalized(lang, "name")}
+                  </span>
+                </div>
+                {lang.level && (
+                  <span className="text-xs text-muted-foreground">
+                    {getLevelLabel(lang.level)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </SectionBox>
     </section>
   );
 }
@@ -698,226 +596,139 @@ export function Activities() {
   if (activities.length === 0) return null;
 
   return (
-    <section className="space-y-6">
-      <h2 className="text-sm font-semibold tracking-widest text-primary uppercase ml-3">
-        {t("home.activities")}
-      </h2>
-      <div className="relative border-l border-primary/20 ml-3 sm:ml-4 space-y-8 py-2">
-        {activities.map((act: Activity) => {
+    <section id="activities">
+      <SectionBox title={t("home.activities")}>
+        <div className="space-y-6">
+          {activities.map((act: Activity) => {
+          const relatedProjects = projects.filter(
+            (p: Project) => p.linked_activity_id === act.id,
+          );
+          const relatedBlogs = blogs.filter(
+            (b: Blog) => b.linked_activity_id === act.id,
+          );
           const roles = sortRolesByDate(act.roles || []);
           const hasRoles = roles.length > 0;
-          const allRoles = hasRoles
-            ? sortRolesByDate([
-                {
-                  title: act.role,
-                  start_date: act.start_date,
-                  end_date: act.end_date,
-                  is_current: act.is_current,
-                  description: act.description,
-                  title_tr: act.role_tr,
-                  title_de: act.role_de,
-                  title_es: act.role_es,
-                  description_tr: act.description_tr,
-                  description_de: act.description_de,
-                  description_es: act.description_es,
-                },
-                ...roles,
-              ])
-            : [];
+          const actDuration = calculateDuration(
+            act.start_date,
+            act.end_date,
+            !!act.is_current,
+            locale,
+          );
 
           return (
-          <div key={act.id} className="relative pl-6 sm:pl-8 group">
-            <span className="absolute -left-[5.5px] top-[36px] sm:top-[44px] h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-primary bg-background ring-4 ring-background transition-colors group-hover:bg-primary/20" />
-            <div className="rounded-2xl border bg-card/40 p-4 sm:p-5 transition-colors hover:bg-accent/40">
-              <div className="flex gap-4">
-                {act.logo_url ? (
-                  <Image
-                    src={act.logo_url}
-                    alt={act.organization}
-                    width={48}
-                    height={48}
-                    className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl object-contain flex-shrink-0"
-                  />
-                ) : (
-                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl border bg-background/50 flex flex-shrink-0 items-center justify-center">
-                    <span className="text-sm font-semibold text-muted-foreground">
-                      {act.organization?.[0]?.toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <div className="space-y-1 min-w-0 flex-1 break-words">
-                  {hasRoles ? (
-                    <div className="space-y-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-base min-w-0 break-words pr-2">
-                          {getLocalized(act, "organization")}
-                        </h3>
-                        {act.link_url && (
-                          <a
-                            href={act.link_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={getLocalized(act, "organization")}
-                            className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        )}
-                      </div>
-                      {calculateRolesDuration(allRoles, locale) && (
-                        <p className="text-xs text-muted-foreground/80">
-                          {calculateRolesDuration(allRoles, locale)}
-                        </p>
-                      )}
-                      <div className="relative mt-3 border-l border-primary/20 pl-4 space-y-5">
-                        {allRoles.map((role, idx) => {
-                          const roleEnd = role.is_current
-                            ? "Present"
-                            : role.end_date;
-                          const roleDuration = calculateDuration(
-                            role.start_date,
-                            role.end_date,
-                            role.is_current,
-                            locale,
-                          );
-                          return (
-                            <div key={idx} className="relative">
-                              <span className="absolute -left-[21.5px] top-[5px] h-2 w-2 rounded-full bg-primary/60 ring-4 ring-card/40" />
-                              <h4 className="font-medium text-sm">
-                                {getLocalized(role, "title")}
-                              </h4>
-                              <p className="text-xs text-muted-foreground/80 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                <span>
-                                  {formatDate(role.start_date, locale)}
-                                  {roleEnd
-                                    ? ` - ${formatDate(roleEnd, locale)}`
-                                    : ""}
-                                </span>
-                                {roleDuration && (
-                                  <>
-                                    <span>·</span>
-                                    <span>{roleDuration}</span>
-                                  </>
-                                )}
-                              </p>
-                              {role.description && (
-                                <div className="pt-2 text-sm text-muted-foreground leading-relaxed">
-                                  <ExpandableText
-                                    text={getLocalized(role, "description")}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+            <div key={act.id} className="rounded-2xl bg-card p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start gap-4">
+                  {act.logo_url ? (
+                    <Image
+                      src={act.logo_url}
+                      alt={act.organization}
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 shrink-0 rounded-full object-cover"
+                    />
                   ) : (
-                    <div className="space-y-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-base min-w-0 break-words pr-2">
-                          {getLocalized(act, "organization")}
-                        </h3>
-                        {act.link_url && (
-                          <a
-                            href={act.link_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={getLocalized(act, "organization")}
-                            className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0 mt-1"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        )}
-                      </div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        {getLocalized(act, "role")}
-                      </p>
-                      <p className="text-xs text-muted-foreground/80 mt-1 flex items-center gap-1.5 flex-wrap">
-                        <span>
-                          {formatDate(act.start_date, locale)}
-                          {act.end_date || act.is_current
-                            ? ` - ${formatDate(act.end_date || "Present", locale)}`
-                            : ""}
-                        </span>
-                        {calculateDuration(
-                          act.start_date,
-                          act.end_date,
-                          !!act.is_current,
-                          locale,
-                        ) && (
-                          <>
-                            <span>·</span>
-                            <span>
-                              {calculateDuration(
-                                act.start_date,
-                                act.end_date,
-                                !!act.is_current,
-                                locale,
-                              )}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                      {act.description && (
-                        <div className="pt-3 text-sm text-muted-foreground leading-relaxed">
-                          <ExpandableText text={getLocalized(act, "description")} />
-                        </div>
-                      )}
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-base font-bold text-foreground">
+                      {act.organization?.[0]?.toUpperCase()}
                     </div>
                   )}
-                  {(() => {
-                    const relatedProjects = projects.filter(
-                      (p: Project) => p.linked_activity_id === act.id,
-                    );
-                    const relatedBlogs = blogs.filter(
-                      (b: Blog) => b.linked_activity_id === act.id,
-                    );
-                    if (
-                      relatedProjects.length === 0 &&
-                      relatedBlogs.length === 0
-                    )
-                      return null;
+                  <div className="min-w-0">
+                    <h3 className="text-[15px] font-bold text-foreground">
+                      {getLocalized(act, "organization")}
+                    </h3>
+                    {getLocalized(act, "role") && (
+                      <p className="text-sm text-muted-foreground">
+                        {getLocalized(act, "role")}
+                      </p>
+                    )}
+                    {actDuration && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {actDuration}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {act.link_url && (
+                  <a
+                    href={act.link_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={getLocalized(act, "organization")}
+                    className="shrink-0 text-muted-foreground transition-colors hover:text-brand"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
 
+              {hasRoles && (
+                <div className="mt-4 space-y-4 border-l border-[#333] pl-5">
+                  {sortRolesByDate([
+                    {
+                      title: act.role,
+                      start_date: act.start_date,
+                      end_date: act.end_date,
+                      is_current: act.is_current,
+                      description: act.description,
+                      title_tr: act.role_tr,
+                      title_de: act.role_de,
+                      title_es: act.role_es,
+                      description_tr: act.description_tr,
+                      description_de: act.description_de,
+                      description_es: act.description_es,
+                    } as RoleEntry,
+                    ...roles,
+                  ]).map((role, idx) => {
+                    const roleDuration = calculateDuration(
+                      role.start_date,
+                      role.end_date,
+                      !!role.is_current,
+                      locale,
+                    );
                     return (
-                      <div className="pt-4 mt-4 border-t border-border/50 flex flex-wrap gap-2">
-                        {relatedProjects.map((p: Project) => (
-                          <Link
-                            key={p.id}
-                            href={`/works?project=${p.id}`}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
-                          >
-                            <FolderKanban className="h-3 w-3 opacity-70" />
-                            <span>{getLocalized(p, "title")}</span>
-                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-                          </Link>
-                        ))}
-                        {relatedBlogs.map((b: Blog) => (
-                          <Link
-                            key={b.id}
-                            href={`/blog?post=${b.id}`}
-                            className="inline-flex items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/70 transition-colors"
-                          >
-                            <PenTool className="h-3 w-3 opacity-70" />
-                            <span>{getLocalized(b, "title")}</span>
-                            <ExternalLink className="h-2.5 w-2.5 opacity-50" />
-                          </Link>
-                        ))}
+                      <div key={idx} className="relative">
+                        <span className="absolute -left-[24px] top-1.5 h-2 w-2 rounded-full bg-white/40" />
+                        <h4 className="text-sm font-semibold text-foreground">
+                          {getLocalized(role, "title")}
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(role.start_date, locale)}
+                          {role.is_current || !role.end_date
+                            ? " - " + formatDate("Present", locale)
+                            : ` - ${formatDate(role.end_date, locale)}`}
+                          {roleDuration ? ` · ${roleDuration}` : ""}
+                        </p>
+                        {role.description && (
+                          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                            {getLocalized(role, "description")}
+                          </p>
+                        )}
                       </div>
                     );
-                  })()}
+                  })}
                 </div>
-              </div>
+              )}
+
+              {!hasRoles && act.description && (
+                <div className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  <ExpandableText text={getLocalized(act, "description")} />
+                </div>
+              )}
+
+              <RelatedLinks
+                projects={relatedProjects}
+                blogs={relatedBlogs}
+              />
             </div>
-          </div>
-        );
-      })}
-      </div>
+          );
+        })}
+        </div>
+      </SectionBox>
     </section>
   );
 }
 
-export function Certifications() {
+export function Certifications({ variant = "list" }: { variant?: "list" | "marquee" | "grid" }) {
   const { getLocalized, t } = useLanguage();
   const {
     certifications,
@@ -928,19 +739,12 @@ export function Certifications() {
   } = useSiteData();
   const [selectedCert, setSelectedCert] = useState<Certification | null>(null);
   const [showAllCerts, setShowAllCerts] = useState(false);
-  // Mark as client-side only after mount to avoid hydration mismatch
-  const isClient = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
 
   // URL'den sertifika açma (örn: /certifications?cert=uuid)
   useEffect(() => {
     const cert = new URLSearchParams(window.location.search).get("cert");
     if (!cert || certifications.length === 0) return;
     const target = certifications.find((c: Certification) => c.id === cert);
-    // Deep-link: window'a erişim sadece client'ta mümkün, hydration güvenli olduğu için effect'te set edilir
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (target) setSelectedCert(target);
   }, [certifications]);
@@ -966,92 +770,166 @@ export function Certifications() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedCert]);
 
-  // Only shuffle on client side to prevent hydration mismatch
-  // Use memo to prevent reshuffling on every render
-  const displayCerts = useMemo(() => {
-    return isClient ? shuffleArray(certifications) : certifications;
-  }, [isClient, certifications]);
-
   if (certifications.length === 0) return null;
 
-  // Split certifications into two rows for marquee effect
-  const half = Math.floor(displayCerts.length / 2);
-  const firstRow = displayCerts.slice(0, half + (displayCerts.length % 2));
-  const secondRow = displayCerts.slice(half + (displayCerts.length % 2));
-
-  // Duplicate items 3x for seamless infinite loop (prevents visible jump)
-  const duplicatedFirstRow = [...firstRow, ...firstRow, ...firstRow];
-  const duplicatedSecondRow = [...secondRow, ...secondRow, ...secondRow];
-
-  const CertItem = ({ cert }: { cert: Certification }) => {
-    return (
-      <div
-        onClick={() => openCert(cert)}
-        className="group flex items-center gap-2 px-3 sm:px-5 py-2.5 rounded-xl border bg-card/80 transition-all hover:bg-accent/50 cursor-pointer flex-shrink-0 h-12 min-w-0"
-      >
-        {cert.icon_url && (
-          <Image
-            src={cert.icon_url}
-            alt={cert.name}
-            width={24}
-            height={24}
-            className="h-5 w-5 sm:h-6 sm:w-6 rounded object-cover flex-shrink-0"
-          />
-        )}
-        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 overflow-hidden">
-          <span className="text-xs sm:text-sm font-medium truncate max-w-[100px] sm:max-w-[200px]">
-            {getLocalized(cert, "name")}
-          </span>
-          <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
-            ·
-          </span>
-          <span className="text-[10px] sm:text-xs text-muted-foreground truncate max-w-[60px] sm:max-w-[150px]">
-            {cert.issuer}
-          </span>
-        </div>
-        <ExternalLink className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground opacity-70 flex-shrink-0" />
-      </div>
-    );
-  };
+  const visibleCerts = showAllCerts
+    ? certifications
+    : certifications.slice(0, 6);
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold tracking-tight">
-            {t("home.certifications")}
-          </h2>
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-            {certifications.length}
-          </span>
-        </div>
-        <button
-          onClick={() => setShowAllCerts(true)}
-          className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors"
+    <section id="certifications">
+      {variant === "marquee" ? (
+        <SectionBox
+          title={t("home.certifications")}
+          badge={
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {certifications.length}
+            </span>
+          }
+          actions={
+            <button
+              onClick={() => setShowAllCerts(true)}
+              className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-brand"
+            >
+              {t("cert.viewAll")}
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </button>
+          }
         >
-          {t("cert.viewAll")}
-        </button>
-      </div>
-
-      <div className="space-y-3 overflow-hidden py-2 -my-2">
-        {/* First row - scrolls right to left */}
-        <div className="relative pb-2 h-12">
-          <div className="flex gap-3 animate-marquee-left">
-            {duplicatedFirstRow.map((cert, idx) => (
-              <CertItem key={`${cert.id}-row1-${idx}`} cert={cert} />
-            ))}
+          <div className="space-y-4 overflow-hidden">
+          <div className="flex w-max gap-2.5 animate-marquee-left py-1">
+            {[...certifications, ...certifications].map(
+              (cert, idx) => (
+                <button
+                  key={`${cert.id}-1-${idx}`}
+                  onClick={() => openCert(cert)}
+                  className="group flex shrink-0 cursor-pointer items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 transition-all hover:border-brand/70 hover:bg-muted"
+                >
+                  {cert.icon_url && (
+                    <Image
+                      src={cert.icon_url}
+                      alt={cert.name}
+                      width={24}
+                      height={24}
+                      className="h-6 w-6 shrink-0 rounded-md object-cover"
+                    />
+                  )}
+                  <span className="text-sm font-medium text-foreground transition-colors group-hover:text-brand">
+                    {getLocalized(cert, "name")}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {cert.issuer}
+                  </span>
+                  <ArrowUpRight className="h-3.5 w-3.5 text-brand opacity-0 transition-opacity group-hover:opacity-100" />
+                </button>
+              ),
+            )}
+          </div>
+          <div className="flex w-max gap-2.5 animate-marquee-right py-1">
+            {[...certifications, ...certifications].map(
+              (cert, idx) => (
+                <button
+                  key={`${cert.id}-2-${idx}`}
+                  onClick={() => openCert(cert)}
+                  className="group flex shrink-0 cursor-pointer items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 transition-all hover:border-brand/70 hover:bg-muted"
+                >
+                  {cert.icon_url && (
+                    <Image
+                      src={cert.icon_url}
+                      alt={cert.name}
+                      width={24}
+                      height={24}
+                      className="h-6 w-6 shrink-0 rounded-md object-cover"
+                    />
+                  )}
+                  <span className="text-sm font-medium text-foreground transition-colors group-hover:text-brand">
+                    {getLocalized(cert, "name")}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {cert.issuer}
+                  </span>
+                  <ArrowUpRight className="h-3.5 w-3.5 text-brand opacity-0 transition-opacity group-hover:opacity-100" />
+                </button>
+              ),
+            )}
           </div>
         </div>
-
-        {/* Second row - scrolls left to right */}
-        <div className="relative pb-2 h-12">
-          <div className="flex gap-3 animate-marquee-right">
-            {duplicatedSecondRow.map((cert, idx) => (
-              <CertItem key={`${cert.id}-row2-${idx}`} cert={cert} />
+        </SectionBox>
+      ) : (
+        <SectionBox
+          title={t("home.certifications")}
+          badge={
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              {certifications.length}
+            </span>
+          }
+          actions={
+            variant === "grid"
+              ? certifications.length > 6
+                ? (
+                  <button
+                    onClick={() => setShowAllCerts(true)}
+                    className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-brand"
+                  >
+                    {t("cert.viewAll")}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </button>
+                )
+                : undefined
+              : certifications.length > 6
+                ? (
+                  <button
+                    onClick={() => setShowAllCerts((prev) => !prev)}
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-brand"
+                  >
+                    {showAllCerts
+                      ? t("common.showLess")
+                      : t("cert.viewAll")}
+                  </button>
+                )
+                : undefined
+          }
+        >
+          <div className={variant === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : "divide-y divide-border border-y border-border"}>
+            {(variant === "grid"
+              ? certifications.slice(0, 6)
+              : visibleCerts
+            ).map((cert: Certification) => (
+              <button
+                key={cert.id}
+                onClick={() => openCert(cert)}
+                className={
+                  variant === "grid"
+                    ? "group flex min-w-0 items-center justify-between gap-4 rounded-2xl border border-transparent bg-card p-4 text-left transition-colors hover:border-brand/50"
+                    : "group flex w-full items-center justify-between gap-4 py-3 text-left"
+                }
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  {cert.icon_url && (
+                    <Image
+                      src={cert.icon_url}
+                      alt={cert.name}
+                      width={variant === "grid" ? 44 : 40}
+                      height={variant === "grid" ? 44 : 40}
+                      className={variant === "grid" ? "h-11 w-11 shrink-0 rounded-lg object-cover" : "h-10 w-10 shrink-0 rounded-lg object-cover"}
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-bold text-foreground transition-colors group-hover:text-brand">
+                      {getLocalized(cert, "name")}
+                    </div>
+                    <div className="truncate text-xs text-muted-foreground">
+                      {cert.issuer}
+                      {cert.issue_date ? ` · ${cert.issue_date}` : ""}
+                    </div>
+                  </div>
+                </div>
+                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-brand" />
+              </button>
             ))}
           </div>
-        </div>
-      </div>
+        </SectionBox>
+      )}
 
       <AnimatePresence>
         {selectedCert && (
@@ -1059,7 +937,7 @@ export function Certifications() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 px-0 sm:px-6 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-background/80 px-0 backdrop-blur-sm sm:items-center sm:px-6"
             onClick={() => closeCert()}
           >
             <motion.div
@@ -1068,21 +946,22 @@ export function Certifications() {
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl"
+              className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border bg-card shadow-2xl sm:max-h-[85vh] sm:rounded-2xl"
             >
-              <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
+              <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6 sm:py-4">
                 <h2 className="text-sm font-medium text-muted-foreground">
                   {t("cert.details")}
                 </h2>
                 <button
                   onClick={() => closeCert()}
-                  className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label="Close"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="overflow-y-auto p-4 sm:p-8 space-y-6">
+              <div className="space-y-6 overflow-y-auto p-4 sm:p-8">
                 <div className="flex items-start gap-4">
                   {selectedCert.icon_url && (
                     <Image
@@ -1090,14 +969,14 @@ export function Certifications() {
                       alt={selectedCert.name}
                       width={64}
                       height={64}
-                      className="h-16 w-16 rounded-xl object-cover bg-muted/50 p-2 border flex-shrink-0"
+                      className="h-16 w-16 shrink-0 rounded-xl border bg-muted/50 p-2 object-cover"
                     />
                   )}
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <h1 className="text-lg sm:text-2xl font-bold tracking-tight break-words">
+                    <h1 className="text-lg font-bold tracking-tight break-words sm:text-2xl">
                       {getLocalized(selectedCert, "name")}
                     </h1>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">
+                    <p className="mt-1 text-xs break-words text-muted-foreground sm:text-sm">
                       {selectedCert.issuer}{" "}
                       {selectedCert.issue_date &&
                         `· ${selectedCert.issue_date}`}
@@ -1107,7 +986,7 @@ export function Certifications() {
                         href={selectedCert.link_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
+                        className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline"
                       >
                         {t("cert.viewCredential")}{" "}
                         <ExternalLink className="h-3.5 w-3.5" />
@@ -1120,9 +999,12 @@ export function Certifications() {
                   const relatedSkillIds =
                     certificationSkills
                       ?.filter(
-                        (cs: CertificationSkill) => cs.certification_id === selectedCert.id,
+                        (cs: CertificationSkill) =>
+                          cs.certification_id === selectedCert.id,
                       )
-                      .map((cs: CertificationSkill) => cs.skill_category_id) || [];
+                      .map(
+                        (cs: CertificationSkill) => cs.skill_category_id,
+                      ) || [];
                   const relatedSkills =
                     skillCategories?.filter((sc: SkillCategory) =>
                       relatedSkillIds.includes(sc.id),
@@ -1151,19 +1033,23 @@ export function Certifications() {
 
                 {(() => {
                   const relatedProjects = projects.filter(
-                    (p: Project) => p.linked_certification_id === selectedCert.id,
+                    (p: Project) =>
+                      p.linked_certification_id === selectedCert.id,
                   );
                   const relatedBlogs = blogs.filter(
                     (b: Blog) => b.linked_certification_id === selectedCert.id,
                   );
-                  if (relatedProjects.length === 0 && relatedBlogs.length === 0)
+                  if (
+                    relatedProjects.length === 0 &&
+                    relatedBlogs.length === 0
+                  )
                     return null;
 
                   return (
-                    <div className="pt-6 mt-6 border-t flex flex-col gap-4">
+                    <div className="mt-6 flex flex-col gap-4 border-t pt-6">
                       {relatedProjects.length > 0 && (
                         <div className="space-y-3">
-                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                          <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                             <FolderKanban className="h-4 w-4" />{" "}
                             {t("cert.relatedProjects")}
                           </h3>
@@ -1172,12 +1058,12 @@ export function Certifications() {
                               <Link
                                 key={p.id}
                                 href={`/works?project=${p.id}`}
-                                className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                                className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                               >
-                                <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                                <span className="text-sm font-medium transition-colors group-hover:text-primary">
                                   {getLocalized(p, "title")}
                                 </span>
-                                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <ExternalLink className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
                               </Link>
                             ))}
                           </div>
@@ -1185,7 +1071,7 @@ export function Certifications() {
                       )}
                       {relatedBlogs.length > 0 && (
                         <div className="space-y-3">
-                          <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                          <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                             <PenTool className="h-4 w-4" />{" "}
                             {t("cert.relatedArticles")}
                           </h3>
@@ -1194,12 +1080,12 @@ export function Certifications() {
                               <Link
                                 key={b.id}
                                 href={`/blog?post=${b.id}`}
-                                className="group flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                                className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                               >
-                                <span className="text-sm font-medium group-hover:text-primary transition-colors">
+                                <span className="text-sm font-medium transition-colors group-hover:text-primary">
                                   {getLocalized(b, "title")}
                                 </span>
-                                <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                <ExternalLink className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
                               </Link>
                             ))}
                           </div>
@@ -1216,12 +1102,12 @@ export function Certifications() {
 
       {/* All Certifications Modal */}
       <AnimatePresence>
-        {showAllCerts && (
+        {(variant === "marquee" || variant === "grid") && showAllCerts && certifications.length > 6 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 px-0 sm:px-6 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-background/80 px-0 backdrop-blur-sm sm:items-center sm:px-6"
             onClick={() => setShowAllCerts(false)}
           >
             <motion.div
@@ -1230,27 +1116,28 @@ export function Certifications() {
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-[calc(100vw-16px)] sm:max-w-2xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl mx-2 sm:mx-0"
+              className="relative flex max-h-[90vh] w-full max-w-[calc(100vw-16px)] flex-col overflow-hidden rounded-t-2xl border bg-card shadow-2xl sm:max-h-[85vh] sm:max-w-2xl sm:rounded-2xl sm:mx-0 mx-2"
             >
-              <div className="flex items-center justify-between border-b px-3 sm:px-6 py-2.5 sm:py-4">
-                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                  <h2 className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+              <div className="flex items-center justify-between border-b px-3 py-2.5 sm:px-6 sm:py-4">
+                <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                  <h2 className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
                     {t("cert.allCertifications")}
                   </h2>
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium text-primary flex-shrink-0">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary sm:px-2 sm:text-xs">
                     {certifications.length}
                   </span>
                 </div>
                 <button
                   onClick={() => setShowAllCerts(false)}
-                  className="rounded-full p-1.5 sm:p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors flex-shrink-0"
+                  className="shrink-0 rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:p-2"
+                  aria-label="Close"
                 >
                   <X className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
 
-              <div className="overflow-y-auto p-3 sm:p-6 w-full">
-                <div className="grid grid-cols-1 gap-2 sm:gap-3 w-full">
+              <div className="w-full overflow-y-auto p-3 sm:p-6">
+                <div className="grid w-full grid-cols-1 gap-2 sm:gap-3">
                   {certifications.map((cert: Certification) => (
                     <div
                       key={cert.id}
@@ -1258,7 +1145,7 @@ export function Certifications() {
                         setShowAllCerts(false);
                         setTimeout(() => openCert(cert), 300);
                       }}
-                      className="group flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-xl border bg-card/50 transition-all hover:bg-accent/50 cursor-pointer min-w-0 w-full overflow-hidden"
+                      className="group flex w-full min-w-0 cursor-pointer items-start gap-2 overflow-hidden rounded-xl border bg-card/50 p-2.5 transition-all hover:bg-accent/50 sm:gap-3 sm:p-4"
                     >
                       {cert.icon_url && (
                         <Image
@@ -1266,19 +1153,19 @@ export function Certifications() {
                           alt={cert.name}
                           width={40}
                           height={40}
-                          className="h-10 w-10 rounded-lg object-cover flex-shrink-0"
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
                         />
                       )}
                       <div className="min-w-0 flex-1 overflow-hidden">
-                        <h3 className="text-xs sm:text-sm font-medium truncate">
+                        <h3 className="truncate text-xs font-medium sm:text-sm">
                           {getLocalized(cert, "name")}
                         </h3>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                        <p className="truncate text-[10px] text-muted-foreground sm:text-xs">
                           {cert.issuer}
                           {cert.issue_date && ` · ${cert.issue_date}`}
                         </p>
                       </div>
-                      <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground opacity-70 flex-shrink-0 mt-1" />
+                      <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-muted-foreground opacity-70 sm:h-4 sm:w-4" />
                     </div>
                   ))}
                 </div>

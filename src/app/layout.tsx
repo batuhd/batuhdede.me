@@ -8,14 +8,12 @@ import { LanguageProvider } from "@/context/language-context";
 import { SiteDataProvider } from "@/context/site-data-context";
 import { ReactQueryProvider } from "@/components/react-query-provider";
 import { MaintenanceGuard } from "@/components/maintenance-guard";
-import { Dock } from "@/components/navigation/dock";
+import { TopNav } from "@/components/navigation/top-nav";
 import { Intro } from "@/components/home/intro";
 import { EasterEgg } from "@/components/easter-egg";
 import { HtmlLangUpdater } from "@/components/html-lang-updater";
 import { SkipLink } from "@/components/skip-link";
 import { siteConfig } from "@/config/site";
-import Image from "next/image";
-import Link from "next/link";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -119,33 +117,11 @@ export default function RootLayout({
               <HtmlLangUpdater />
               <SiteDataProvider>
                 <MaintenanceGuard>
-                  <Link
-                    href="/"
-                    aria-label="Ana sayfaya dön"
-                    className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 transition-transform hover:scale-105 duration-300"
-                  >
-                    <Image
-                      src="/media/logobeyaz.png"
-                      alt="Logo"
-                      width={44}
-                      height={44}
-                      className="hidden dark:block drop-shadow-lg sm:w-14 sm:h-14 md:w-20 md:h-20"
-                      priority
-                    />
-                    <Image
-                      src="/media/yuvarlaklogo.png"
-                      alt="Logo"
-                      width={44}
-                      height={44}
-                      className="dark:hidden drop-shadow-lg sm:w-14 sm:h-14 md:w-20 md:h-20"
-                      priority
-                    />
-                  </Link>
-                  <main id="main-content" className="relative mx-auto w-full px-4 sm:px-6 py-12 sm:py-16 pb-28 sm:pb-32">
+                  <TopNav />
+                  <main id="main-content" className="relative mx-auto w-full px-4 pb-16 sm:px-6">
                     {children}
                   </main>
                   <EasterEgg />
-                  <Dock />
                 </MaintenanceGuard>
               </SiteDataProvider>
             </LanguageProvider>

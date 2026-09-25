@@ -27,6 +27,7 @@ export interface WorkFormData {
   github: string;
   image: string;
   tags: string;
+  category: string;
   additional_images: string;
   linked_experience_id: string;
   linked_education_id: string;
@@ -157,6 +158,22 @@ export function WorkForm({
                 className={inputClass}
                 placeholder="React, Tailwind"
               />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                Category (Work filter)
+              </label>
+              <select
+                value={form.category}
+                onChange={(e) => updateField("category", e.target.value)}
+                className={inputClass}
+              >
+                <option value="">(None)</option>
+                <option value="B2B">B2B</option>
+                <option value="B2B2C">B2B2C</option>
+                <option value="B2C">B2C</option>
+                <option value="AI">AI</option>
+              </select>
             </div>
           </div>
           <div className="space-y-1">

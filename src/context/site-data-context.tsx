@@ -23,6 +23,7 @@ import type {
   SocialLink,
   ContactEmail,
   EasterEgg,
+  GalleryItem,
 } from "@/types";
 
 interface SiteData {
@@ -40,6 +41,7 @@ interface SiteData {
   socialLinks: SocialLink[];
   contactEmails: ContactEmail[];
   easterEggs: EasterEgg[];
+  galleryItems: GalleryItem[];
   loaded: boolean;
   isMaintenance: boolean;
 }
@@ -59,6 +61,7 @@ const defaultData: SiteData = {
   socialLinks: [],
   contactEmails: [],
   easterEggs: [],
+  galleryItems: [],
   loaded: false,
   isMaintenance: false,
 };
@@ -105,6 +108,7 @@ export function SiteDataProvider({
         projectsRes,
         blogsRes,
         easterEggsRes,
+        galleryRes,
       ] = await Promise.all([
         sb.from("about_me").select("*").limit(1),
         sb
@@ -152,6 +156,11 @@ export function SiteDataProvider({
           .from("easter_eggs")
           .select("*")
           .order("order_index", { ascending: true }),
+        sb
+          .from("gallery_items")
+          .select("*")
+          .eq("is_published", true)
+          .order("order_index", { ascending: true }),
       ]);
 
       if (cancelled) return;
@@ -171,6 +180,7 @@ export function SiteDataProvider({
         socialLinks: [],
         contactEmails: [],
         easterEggs: (easterEggsRes?.data || []) as unknown as EasterEgg[],
+        galleryItems: (galleryRes?.data || []) as unknown as GalleryItem[],
         loaded: true,
         isMaintenance:
           sectionRes?.data?.some(

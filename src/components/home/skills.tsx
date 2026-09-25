@@ -3,6 +3,7 @@
 import { userConfig } from "@/config/user";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
+import { SectionBox } from "@/components/ui/section-box";
 
 interface SkillsCategory {
   id: string;
@@ -50,31 +51,30 @@ export function Skills() {
   };
 
   return (
-    <section className="space-y-6">
-      <h2 className="text-xl font-semibold tracking-tight">
-        {t("home.skills")}
-      </h2>
-      <div className="grid gap-6 sm:grid-cols-3">
-        {displayCategories.map((category) => (
-          <div key={category.id} className="space-y-3">
-            <h3 className="text-sm font-medium text-muted-foreground">
-              {skillCategories.length > 0
-                ? getLocalized(category, "title")
-                : category.title}
-            </h3>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {getLocalizedSkills(category).map((skill: string) => (
-                <span
-                  key={skill}
-                  className="rounded-lg border bg-card px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  {skill}
-                </span>
-              ))}
+    <section id="skills">
+      <SectionBox title={t("home.skills")}>
+        <div className="space-y-5">
+          {displayCategories.map((category) => (
+            <div key={category.id}>
+              <h3 className="mb-2.5 text-sm font-semibold text-foreground">
+                {skillCategories.length > 0
+                  ? getLocalized(category, "title")
+                  : category.title}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {getLocalizedSkills(category).map((skill) => (
+                  <span
+                    key={skill}
+                    className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </SectionBox>
     </section>
   );
 }

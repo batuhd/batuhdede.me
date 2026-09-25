@@ -23,7 +23,7 @@ import { ShareButtons } from "@/components/blog/share-buttons";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
 import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
-import Image from "next/image";
+import { SectionBox } from "@/components/ui/section-box";
 import type { BlogWithImages } from "@/lib/data";
 import type { LinkedEntity } from "@/types";
 
@@ -32,10 +32,18 @@ interface BlogContentProps {
   entityMap: Record<string, LinkedEntity>;
 }
 
+function parseDate(dateStr: string | null): number {
+  if (!dateStr) return 0;
+  const parsed = new Date(dateStr);
+  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
 export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
-  // Sadece yayınlanmış blogları göster
+  // Sadece yayınlanmış blogları göster, en yeni üstte
   const [posts] = useState<BlogWithImages[]>(
-    initialBlogs.filter((blog) => blog.is_published),
+    initialBlogs
+      .filter((blog) => blog.is_published)
+      .sort((a, b) => parseDate(b.date) - parseDate(a.date)),
   );
   const [loading] = useState(false);
   const [selectedPost, setSelectedPost] = useState<BlogWithImages | null>(null);
@@ -109,179 +117,83 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
 
   return (
     <>
-      <div className="space-y-8 sm:space-y-12 pb-24 max-w-2xl mx-auto w-full">
-        <FadeIn>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h1 className="flex items-center gap-3 text-2xl sm:text-4xl font-bold tracking-tight">
-                <PenTool className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />
-                {t("blog.title")}
-              </h1>
-              <a
-                href="/feed.xml"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="RSS Feed"
-                className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <Rss className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">RSS</span>
-              </a>
-            </div>
-            <p className="text-base sm:text-lg text-muted-foreground">
+      <div className="mx-auto w-full max-w-7xl px-4 pt-12 sm:px-6 sm:pt-16">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-5xl">
+              {t("blog.editorialTitle")}
+            </h1>
+            <p className="mt-3 max-w-2xl text-base text-muted-foreground">
               {t("blog.subtitle")}
             </p>
           </div>
-        </FadeIn>
+          <a
+            href="/feed.xml"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="RSS Feed"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Rss className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">RSS</span>
+          </a>
+        </div>
 
         {loading ? (
-          <FadeIn delay={0.1}>
-            <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-card/50 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                {t("blog.loading")}
-              </p>
-            </div>
-          </FadeIn>
+          <div className="flex h-64 flex-col items-center justify-center gap-4 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">{t("blog.loading")}</p>
+          </div>
         ) : posts.length === 0 ? (
-          <FadeIn delay={0.1}>
-            <div className="flex h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-card/50 text-center px-4">
-              <PenTool className="h-10 w-10 text-muted-foreground/50" />
-              <div className="space-y-1">
-                <p className="font-medium text-foreground">{t("blog.empty")}</p>
-                <p className="text-sm text-muted-foreground">
-                  {t("blog.emptyDesc")}
-                </p>
-              </div>
+          <div className="flex h-64 flex-col items-center justify-center gap-4 px-4 text-center">
+            <PenTool className="h-10 w-10 text-muted-foreground" />
+            <div className="space-y-1">
+              <p className="font-medium text-foreground">{t("blog.empty")}</p>
+              <p className="text-sm text-muted-foreground">{t("blog.emptyDesc")}</p>
             </div>
-          </FadeIn>
+          </div>
         ) : (
-          <div className="grid gap-4 sm:gap-6">
-            {posts.map((post, index) => (
-              <FadeIn key={post.id} delay={0.1 + index * 0.05}>
-                <article
-                  onClick={() => openPost(post)}
-                  className="group flex flex-col justify-between rounded-2xl border bg-card p-5 sm:p-6 shadow-sm transition-all hover:shadow-md cursor-pointer hover:border-primary/50 active:scale-[0.99]"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {String(post.date || "Unknown date")}
-                      </span>
-                      <span className="hidden sm:inline">&middot;</span>
-                      <span className="hidden sm:inline">
-                        {String(post.read_time || "5 min read").replace(
-                          "min read",
-                          t("common.minRead"),
+          <div className="mt-10">
+            <SectionBox
+              title={t("blog.title")}
+              badge={
+                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                  {posts.length}
+                </span>
+              }
+            >
+              <div className="grid gap-6">
+                {posts.map((post, index) => (
+                  <FadeIn key={post.id} delay={0.05 + index * 0.03}>
+                    <article
+                      onClick={() => openPost(post)}
+                      className="group flex h-full cursor-pointer flex-col rounded-2xl border border-border bg-card p-6 transition-colors hover:border-brand/40 sm:p-7"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {String(post.date || "Unknown date")}
+                        </span>
+                        {post.read_time && (
+                          <span className="text-xs text-muted-foreground/70">
+                            {String(post.read_time).replace(
+                              "min read",
+                              t("common.minRead"),
+                            )}
+                          </span>
                         )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-start gap-4">
-                      <h2 className="text-lg sm:text-xl font-semibold tracking-tight transition-colors">
+                      </div>
+                      <h2 className="mt-4 text-xl font-bold leading-snug text-foreground transition-colors group-hover:text-brand">
                         {getLocalized(post, "title", "Untitled")}
                       </h2>
-                      <ExternalLink className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary flex-shrink-0 mt-1 hidden sm:block" />
-                    </div>
-
-                    {post.image_url && typeof post.image_url === "string" && (
-                      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted mt-2 mb-2">
-                        <Image
-                          src={
-                            post.image_url.startsWith("http") ||
-                            post.image_url.startsWith("/")
-                              ? post.image_url
-                              : `/${post.image_url}`
-                          }
-                          alt={String(post.title || "")}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 672px"
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      </div>
-                    )}
-
-                    {/* Linked Entity Badges */}
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {[
-                        {
-                          id: post.linked_project_id,
-                          icon: FolderKanban,
-                          section: null,
-                        },
-                        {
-                          id: post.linked_experience_id,
-                          icon: Briefcase,
-                          section: "/#experience",
-                        },
-                        {
-                          id: post.linked_education_id,
-                          icon: GraduationCap,
-                          section: "/#education",
-                        },
-                        ...(post.linked_skill_category_ids || []).map(
-                          (id: string) => ({
-                            id,
-                            icon: Code,
-                            section: "/#skills",
-                          }),
-                        ),
-                        {
-                          id: post.linked_language_id,
-                          icon: MessageSquare,
-                          section: "/#languages",
-                        },
-                        {
-                          id: post.linked_activity_id,
-                          icon: Trophy,
-                          section: "/#activities",
-                        },
-                        {
-                          id: post.linked_certification_id,
-                          icon: Award,
-                          section: "/#certifications",
-                        },
-                      ].map(({ id, icon: Icon, section }) => {
-                        if (!id) return null;
-                        const entity = entityMap[id];
-                        if (!entity) return null;
-
-                        return (
-                          <div
-                            key={id}
-                            className="inline-flex w-fit items-center gap-1.5 rounded-md bg-secondary/50 px-2 py-1 text-xs font-medium text-secondary-foreground cursor-pointer hover:bg-secondary/70 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (entity.type === "project") {
-                                window.location.href = `/works?project=${entity.id}`;
-                              } else if (entity.type === "certification") {
-                                window.location.href = `/certifications?cert=${entity.id}`;
-                              } else {
-                                window.location.href = section || "#";
-                              }
-                            }}
-                          >
-                            <span className="opacity-70 flex items-center">
-                              <Icon className="h-3.5 w-3.5" />
-                            </span>
-                            <span className="truncate max-w-[200px]">
-                              {entity.type === "project"
-                                ? t("blog.entityType.work")
-                                : getEntityTitle(entity)}
-                            </span>
-                            <ExternalLink className="h-3 w-3 opacity-50 ml-0.5" />
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <p className="text-sm sm:text-base text-muted-foreground line-clamp-3 leading-relaxed">
-                      {getLocalized(post, "excerpt")}
-                    </p>
-                  </div>
-                </article>
-              </FadeIn>
-            ))}
+                      <p className="mt-3 line-clamp-3 text-base leading-relaxed text-muted-foreground">
+                        {getLocalized(post, "excerpt")}
+                      </p>
+                    </article>
+                  </FadeIn>
+                ))}
+              </div>
+            </SectionBox>
           </div>
         )}
       </div>
@@ -292,7 +204,7 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-background/80 px-0 sm:px-6 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 px-0 backdrop-blur-sm sm:items-center sm:px-6"
             onClick={() => closePost()}
           >
             <motion.div
@@ -301,9 +213,9 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
               exit={{ opacity: 0, y: 40 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative flex max-h-[90vh] sm:max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border bg-card shadow-2xl"
+              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-border bg-card shadow-2xl sm:max-h-[85vh] sm:rounded-2xl"
             >
-              <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
+              <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
@@ -324,7 +236,8 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
                   />
                   <button
                     onClick={() => closePost()}
-                    className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="Close"
                   >
                     <X className="h-5 w-5" />
                   </button>
@@ -345,10 +258,10 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
                     />
                   </div>
                 )}
-                <h1 className="mb-6 text-xl sm:text-3xl font-bold tracking-tight">
+                <h1 className="mb-6 text-xl font-bold tracking-tight text-foreground sm:text-3xl">
                   {getLocalized(selectedPost, "title", "Untitled")}
                 </h1>
-                <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed">
+                <div className="prose prose-sm max-w-none leading-relaxed sm:prose-base">
                   <MarkdownRenderer
                     content={getLocalized(selectedPost, "content") || ""}
                   />
@@ -368,7 +281,7 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
                   if (!hasEntities) return null;
 
                   return (
-                    <div className="mt-8 pt-6 border-t space-y-6">
+                    <div className="mt-8 space-y-6 border-t border-border pt-6">
                       {[
                         {
                           id: selectedPost.linked_project_id,
@@ -421,7 +334,7 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
 
                         return (
                           <div key={id}>
-                            <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-4">
+                            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                               <Icon className="h-4 w-4" />
                               {t("blog.related")} {typeLabel}
                             </h3>
@@ -435,19 +348,19 @@ export function BlogContent({ initialBlogs, entityMap }: BlogContentProps) {
                                   window.location.href = section || "#";
                                 }
                               }}
-                              className="flex items-center justify-between rounded-xl border p-4 transition-all hover:bg-muted/50 hover:border-primary/30 cursor-pointer group"
+                              className="group flex cursor-pointer items-center justify-between rounded-xl border border-border p-4 transition-all hover:bg-muted"
                             >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
                                   <Icon className="h-5 w-5" />
                                 </div>
                                 <div className="min-w-0">
-                                  <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                                  <h4 className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-brand">
                                     {getEntityTitle(entity)}
                                   </h4>
                                 </div>
                               </div>
-                              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                              <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-brand" />
                             </div>
                           </div>
                         );

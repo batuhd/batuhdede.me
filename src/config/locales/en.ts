@@ -4,8 +4,13 @@ export const en: Record<string, string> = {
   "common.minRead": "min read",
   // Navigation
   "nav.home": "Home",
-  "nav.works": "Works",
+  "nav.about": "About",
+  "nav.works": "Work",
   "nav.blog": "Blog",
+  "nav.articles": "Blog",
+  "nav.prototypes": "Prototypes",
+  "nav.uses": "Uses",
+  "nav.certifications": "Certifications",
   "nav.credits": "Credits",
   "nav.theme": "Theme",
   "nav.language": "Language",
@@ -24,6 +29,20 @@ export const en: Record<string, string> = {
   "user.stats.started": "Started Coding",
   "user.stats.projects": "Projects Completed",
   "user.stats.experience": "Years Experience",
+  "home.hello": "I'm",
+  "home.hi": "Hi!",
+  "home.resume": "Download Resume",
+  "home.work": "Work",
+  "home.downloadResume": "Download Resume",
+  "home.workDetails": "View details",
+  "home.readMore": "More about me",
+  "home.contactMe": "Get in touch",
+
+  // About
+  "about.hey": "Hey!",
+  "about.whatLed": "What I've led",
+  "about.follow": "Follow on",
+  "about.email": "Email",
 
   // Language Levels
   "level.native": "Native",
@@ -67,16 +86,35 @@ export const en: Record<string, string> = {
   "home.footer": "Made in Sinop with ❤️",
 
   // Works
-  "works.title": "Works",
-  "works.subtitle": "A collection of my projects and things I've built.",
+  "works.title": "Selected work",
+  "works.subtitle": "A selection of projects I've designed and built, from research through to what shipped.",
   "works.empty": "No projects yet",
   "works.emptyDesc": "Projects added via Admin Panel will appear here.",
   "works.loading": "Loading projects...",
   "works.liveDemo": "Live Demo",
   "works.source": "Source",
+  "works.filterAll": "All",
+  "works.filter.B2B": "B2B",
+  "works.filter.B2B2C": "B2B2C",
+  "works.filter.B2C": "B2C",
+  "works.filter.AI": "AI",
+
+  // Prototypes
+  "prototypes.title": "Prototypes",
+  "prototypes.subtitle": "Interactive experiments, design explorations and working concepts.",
+  "prototypes.empty": "No prototypes yet",
+  "prototypes.play": "Play",
+
+  // Uses
+  "uses.title": "Uses",
+  "uses.subtitle": "The tools I use to design, build and ship.",
+  "uses.empty": "No items yet",
 
   // Blog
   "blog.title": "Blog",
+  "blog.editorialTitle": "On Design, Leadership and AI",
+  "blog.recent": "Latest posts",
+  "blog.viewAll": "View all",
   "blog.subtitle": "Thoughts, learnings, and web development articles.",
   "blog.empty": "No posts yet",
   "blog.emptyDesc": "Blog posts added via Admin Panel will appear here.",

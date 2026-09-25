@@ -4,8 +4,13 @@ export const tr: Record<string, string> = {
   "common.minRead": "dk okuma",
   // Navigation
   "nav.home": "Ana Sayfa",
-  "nav.works": "Projeler",
+  "nav.about": "Hakkımda",
+  "nav.works": "Çalışmalar",
   "nav.blog": "Blog",
+  "nav.articles": "Blog",
+  "nav.prototypes": "Prototipler",
+  "nav.uses": "Kullandıklarım",
+  "nav.certifications": "Sertifikalar",
   "nav.credits": "Credits",
   "nav.theme": "Tema",
   "nav.language": "Dil",
@@ -25,6 +30,20 @@ export const tr: Record<string, string> = {
   "user.stats.started": "Kodlamaya Başlangıç",
   "user.stats.projects": "Tamamlanan Proje",
   "user.stats.experience": "Yıllık Deneyim",
+  "home.hello": "Ben",
+  "home.hi": "Merhaba!",
+  "home.resume": "Özgeçmişi İndir",
+  "home.work": "Deneyim",
+  "home.downloadResume": "Özgeçmişi İndir",
+  "home.workDetails": "Detayları gör",
+  "home.readMore": "Daha fazla",
+  "home.contactMe": "Benimle iletişime geçin",
+
+  // About
+  "about.hey": "Merhaba!",
+  "about.whatLed": "Yönettiğim İşler",
+  "about.follow": "Takip Et",
+  "about.email": "E-posta",
 
   // Language Levels
   "level.native": "Anadil",
@@ -69,16 +88,35 @@ export const tr: Record<string, string> = {
   "home.footer": "Sinop'ta ❤️ ile yapıldı",
 
   // Works
-  "works.title": "Projeler",
-  "works.subtitle": "Projelerim ve üzerinde çalıştığım şeyler.",
+  "works.title": "Seçilmiş İşler",
+  "works.subtitle": "Tasarlayıp geliştirdiğim, araştırmadan yayına kadar olan projelerden bir seçki.",
   "works.empty": "Henüz proje yok",
   "works.emptyDesc": "Admin panelinden eklenen projeler burada görünecek.",
   "works.loading": "Projeler yükleniyor...",
   "works.liveDemo": "Canlı Demo",
   "works.source": "Kaynak",
+  "works.filterAll": "Tümü",
+  "works.filter.B2B": "B2B",
+  "works.filter.B2B2C": "B2B2C",
+  "works.filter.B2C": "B2C",
+  "works.filter.AI": "AI",
+
+  // Prototypes
+  "prototypes.title": "Prototipler",
+  "prototypes.subtitle": "Etkileşimli deneyler, tasarım keşifleri ve çalışan konseptler.",
+  "prototypes.empty": "Henüz prototip yok",
+  "prototypes.play": "Oynat",
+
+  // Uses
+  "uses.title": "Kullandıklarım",
+  "uses.subtitle": "Tasarım, geliştirme ve yayınlama sürecinde kullandığım araçlar.",
+  "uses.empty": "Henüz öğe yok",
 
   // Blog
   "blog.title": "Blog",
+  "blog.editorialTitle": "Tasarım, Liderlik ve Yapay Zeka Üzerine",
+  "blog.recent": "Son Yazılar",
+  "blog.viewAll": "Tümünü gör",
   "blog.subtitle": "Düşünceler, öğrenmeler ve web geliştirme yazıları.",
   "blog.empty": "Henüz yazı yok",
   "blog.emptyDesc": "Admin panelinden eklenen yazılar burada görünecek.",
@@ -130,7 +168,7 @@ export const tr: Record<string, string> = {
   "cert.skillsEvaluated": "Değerlendirilen Yetenekler",
   "cert.relatedProjects": "İlgili Projeler",
   "cert.relatedArticles": "İlgili Yazılar",
-  "cert.viewAll": "Tümünü Gör",
+  "cert.viewAll": "Tümünü Görüntüle",
   "cert.allCertifications": "Tüm Sertifikalar",
 
   // Works page

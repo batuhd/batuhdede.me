@@ -21,6 +21,9 @@ import {
   Menu,
   X,
   ExternalLink,
+  Smartphone,
+  Wrench,
+  Image as ImageIcon,
 } from "lucide-react";
 import { AdminButton } from "./ui/admin-button";
 
@@ -38,7 +41,10 @@ export type AdminTab =
   | "contact_emails"
   | "settings"
   | "section_layout"
-  | "easter_eggs";
+  | "easter_eggs"
+  | "prototypes"
+  | "uses"
+  | "gallery";
 
 interface AdminLayoutProps {
   userEmail?: string | null;
@@ -71,6 +77,9 @@ const SIDEBAR_CATEGORIES = [
     tabs: [
       { key: "works", icon: FolderKanban, label: "Works" },
       { key: "blog", icon: PenTool, label: "Blog" },
+      { key: "prototypes", icon: Smartphone, label: "Prototypes" },
+      { key: "gallery", icon: ImageIcon, label: "Gallery" },
+      { key: "uses", icon: Wrench, label: "Uses" },
     ],
   },
   {
