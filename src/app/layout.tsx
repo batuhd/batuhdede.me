@@ -10,7 +10,6 @@ import { ReactQueryProvider } from "@/components/react-query-provider";
 import { MaintenanceGuard } from "@/components/maintenance-guard";
 import { TopNav } from "@/components/navigation/top-nav";
 import { Intro } from "@/components/home/intro";
-import { EasterEgg } from "@/components/easter-egg";
 import { HtmlLangUpdater } from "@/components/html-lang-updater";
 import { SkipLink } from "@/components/skip-link";
 import { siteConfig } from "@/config/site";
@@ -121,7 +120,6 @@ export default function RootLayout({
                   <main id="main-content" className="relative mx-auto w-full px-4 pb-16 sm:px-6">
                     {children}
                   </main>
-                  <EasterEgg />
                 </MaintenanceGuard>
               </SiteDataProvider>
             </LanguageProvider>

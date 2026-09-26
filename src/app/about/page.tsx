@@ -3,7 +3,7 @@ import { fetchHomeData } from "@/lib/data";
 import { SiteDataProvider } from "@/context/site-data-context";
 import { LanguageProvider } from "@/context/language-context";
 import { AboutContent } from "@/components/home/about-content";
-import type { Project, Blog, GalleryItem } from "@/types";
+import type { Project, Blog } from "@/types";
 
 export const revalidate = 60;
 
@@ -27,7 +27,6 @@ export default async function AboutPage() {
     sectionOrder: data.sectionOrder,
     projects: (data.projects || []) as Project[],
     blogs: (data.blogs || []) as Blog[],
-    galleryItems: (data.galleryItems || []) as GalleryItem[],
     socialLinks: data.socialLinks,
     contactEmails: data.contactEmails,
     loaded: true,

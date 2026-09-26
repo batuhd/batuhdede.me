@@ -3,7 +3,7 @@ import { userConfig } from "@/config/user";
 import { siteConfig } from "@/config/site";
 import { sanitizeUrl } from "@/lib/utils";
 import { SiteDataProvider } from "@/context/site-data-context";
-import type { Project, Blog, GalleryItem } from "@/types";
+import type { Project, Blog } from "@/types";
 import { JsonLd, personJsonLd, websiteJsonLd } from "@/components/json-ld";
 import { Hero } from "@/components/home/hero";
 import { Certifications } from "@/components/home/profile-sections";
@@ -36,7 +36,6 @@ export default async function Home() {
     sectionOrder: data.sectionOrder,
     projects: (data.projects || []) as Project[],
     blogs: (data.blogs || []) as Blog[],
-    galleryItems: (data.galleryItems || []) as GalleryItem[],
     contactEmails: data.contactEmails,
     loaded: true, // Server'da yüklendi
     isMaintenance: data.sectionOrder.some(

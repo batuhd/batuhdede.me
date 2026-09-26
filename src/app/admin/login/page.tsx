@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { FadeIn } from "@/components/motion/fade-in";
 import {
   LogIn,
   Loader2,
@@ -14,7 +13,6 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
 import Script from "next/script";
 
 export default function AdminLoginPage() {
@@ -58,10 +56,7 @@ export default function AdminLoginPage() {
     const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
     if (!turnstile || !container || !siteKey) return;
 
-    // Remove any previously rendered widget before re-rendering
     removeTurnstile();
-
-    // Clear previous content safely (XSS prevention)
     while (container.firstChild) {
       container.removeChild(container.firstChild);
     }
@@ -72,10 +67,9 @@ export default function AdminLoginPage() {
         callback: (token: string) => setCaptchaToken(token),
         "expired-callback": () => setCaptchaToken(""),
         "error-callback": () => setCaptchaToken(""),
-        theme: "light",
+        theme: "dark",
       });
     } catch (e) {
-      // Silent fail for production, log only in development
       if (process.env.NODE_ENV === "development") {
         console.error("Turnstile render error", e);
       }
@@ -83,10 +77,7 @@ export default function AdminLoginPage() {
   }, [removeTurnstile]);
 
   useEffect(() => {
-    // Attempt render in case the script is already loaded
     renderTurnstile();
-
-    // Cleanup widget on unmount to prevent "Cannot find Widget" warnings
     return () => {
       removeTurnstile();
     };
@@ -94,10 +85,11 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (!supabase) return;
-
+    const sb = supabase;
     const checkSession = async () => {
-      if (!supabase) return;
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await sb.auth.getSession();
       if (session) {
         setIsLoggedIn(true);
         router.push("/admin");
@@ -134,16 +126,13 @@ export default function AdminLoginPage() {
 
       if (!res.ok) {
         if (res.status === 429) {
-          // Locked out — redirect
           router.push("/?unauthorized=true");
           return;
         }
-
         setError(data.error || "Invalid credentials.");
         setPassword("");
         resetTurnstile();
       } else {
-        // Session cookies are set by the API; just navigate to the dashboard.
         removeTurnstile();
         setIsLoggedIn(true);
         router.push("/admin");
@@ -157,11 +146,11 @@ export default function AdminLoginPage() {
   };
 
   const inputClass =
-    "w-full rounded-lg border bg-background px-3 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary";
+    "w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/40";
 
   if (isLoggedIn) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center space-y-4 bg-muted/30 px-4">
+      <div className="relative flex min-h-screen flex-col items-center justify-center space-y-4 bg-background px-4">
         <button
           onClick={async () => {
             if (supabase) {
@@ -173,10 +162,10 @@ export default function AdminLoginPage() {
           }}
           className="absolute top-4 right-4 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground"
         >
-          <LogOut className="h-4 w-4" /> Log Out
+          <LogOut className="h-4 w-4" /> Çıkış Yap
         </button>
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm text-muted-foreground">Redirecting to Dashboard...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Panele yönlendiriliyor...</p>
       </div>
     );
   }
@@ -191,117 +180,92 @@ export default function AdminLoginPage() {
           onLoad={renderTurnstile}
         />
       )}
-      <div className="flex min-h-screen flex-col bg-muted/30 md:flex-row">
-        {/* Brand panel */}
-        <div className="relative flex flex-1 items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background p-8 md:p-12">
-          <FadeIn className="max-w-sm text-center md:max-w-md md:text-left">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg md:mx-0">
-              <ShieldCheck className="h-8 w-8" />
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
+        <div className="w-full max-w-sm">
+          <div className="mb-6 flex flex-col items-center gap-2">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-foreground text-background">
+              <ShieldCheck className="h-6 w-6" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-              Admin Portal
-            </h1>
-            <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-              Secure access to your portfolio content management system.
-              Manage projects, blog posts, and site settings from one place.
-            </p>
-          </FadeIn>
-        </div>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">Admin</h1>
+          </div>
 
-        {/* Form panel */}
-        <div className="flex flex-1 items-center justify-center p-4 sm:p-8">
-          <FadeIn delay={0.1} className="w-full max-w-sm">
-            <div className="space-y-6 rounded-2xl border bg-card p-6 shadow-xl sm:p-8">
-              <div className="space-y-2 text-center md:text-left">
-                <h2 className="text-2xl font-bold tracking-tight">
-                  Welcome back
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Enter your credentials to continue.
-                </p>
+          <div className="space-y-6 rounded-2xl border border-border bg-card p-6 sm:p-8">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold text-foreground">Hoş geldin</h2>
+              <p className="text-sm text-muted-foreground">Devam etmek için giriş yap.</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
+                  E-posta
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className={`${inputClass} pl-10`}
+                    placeholder="admin@example.com"
+                  />
+                </div>
               </div>
 
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="email"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className={`${inputClass} pl-10`}
-                      placeholder="admin@example.com"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label
-                    htmlFor="password"
-                    className="text-sm font-medium text-foreground"
-                  >
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className={`${inputClass} pl-10`}
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-
-                {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
-                  <div
-                    ref={turnstileRef}
-                    className="flex w-full justify-center py-2"
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium text-muted-foreground">
+                  Şifre
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className={`${inputClass} pl-10`}
+                    placeholder="••••••••"
                   />
-                )}
+                </div>
+              </div>
 
-                {error && (
-                  <p className="rounded border border-destructive/20 bg-destructive/10 p-2.5 text-center text-sm font-medium text-destructive transition-colors">
-                    {error}
-                  </p>
-                )}
+              {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                <div ref={turnstileRef} className="flex w-full justify-center py-2" />
+              )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="mt-2 flex h-11 w-full min-h-[44px] items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-3 text-sm font-medium text-background transition-all hover:opacity-90 disabled:opacity-50"
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <LogIn className="h-4 w-4" />
-                      Authenticate
-                    </>
-                  )}
-                </button>
-              </form>
+              {error && (
+                <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-center text-sm font-medium text-destructive">
+                  {error}
+                </p>
+              )}
 
-              <Link
-                href="/"
-                className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Back to website
-              </Link>
-            </div>
-          </FadeIn>
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4" />
+                    Giriş Yap
+                  </>
+                )}
+              </button>
+            </form>
+
+            <Link
+              href="/"
+              className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Siteye dön
+            </Link>
+          </div>
         </div>
       </div>
     </>

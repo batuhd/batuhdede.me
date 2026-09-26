@@ -8,8 +8,6 @@ export const tr: Record<string, string> = {
   "nav.works": "Çalışmalar",
   "nav.blog": "Blog",
   "nav.articles": "Blog",
-  "nav.prototypes": "Prototipler",
-  "nav.uses": "Kullandıklarım",
   "nav.certifications": "Sertifikalar",
   "nav.credits": "Credits",
   "nav.theme": "Tema",
@@ -101,16 +99,8 @@ export const tr: Record<string, string> = {
   "works.filter.B2C": "B2C",
   "works.filter.AI": "AI",
 
-  // Prototypes
-  "prototypes.title": "Prototipler",
-  "prototypes.subtitle": "Etkileşimli deneyler, tasarım keşifleri ve çalışan konseptler.",
-  "prototypes.empty": "Henüz prototip yok",
-  "prototypes.play": "Oynat",
 
   // Uses
-  "uses.title": "Kullandıklarım",
-  "uses.subtitle": "Tasarım, geliştirme ve yayınlama sürecinde kullandığım araçlar.",
-  "uses.empty": "Henüz öğe yok",
 
   // Blog
   "blog.title": "Blog",

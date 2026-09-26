@@ -177,6 +177,12 @@ export interface Experience {
   title_tr?: string;
   title_de?: string;
   title_es?: string;
+  company_tr?: string;
+  company_de?: string;
+  company_es?: string;
+  location_tr?: string;
+  location_de?: string;
+  location_es?: string;
   description_tr?: string;
   description_de?: string;
   description_es?: string;
@@ -274,6 +280,7 @@ export interface CertificationSkill {
 export interface SkillCategory {
   id: string;
   title: string;
+  subtitle?: string;
   skills: string[];
   skills_en?: string[];
   skills_tr?: string[];
@@ -284,6 +291,9 @@ export interface SkillCategory {
   title_tr?: string;
   title_de?: string;
   title_es?: string;
+  subtitle_tr?: string;
+  subtitle_de?: string;
+  subtitle_es?: string;
   created_at: string;
 }
 
@@ -307,6 +317,7 @@ export interface SocialLink {
   platform: string;
   url: string;
   icon?: string;
+  account_type?: string;
   order_index: number;
   created_at: string;
 }
@@ -384,74 +395,8 @@ export interface WorkFormData {
 }
 
 
-// ============================================
-// Easter Eggs
-// ============================================
 
-export interface EasterEgg {
-  id: string;
-  image_url: string;
-  caption?: string;
-  is_active: boolean;
-  order_index: number;
-  created_at: string;
-}
 
-// ============================================
-// Prototypes (Prototypes page)
-// ============================================
-
-export interface Prototype {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  video_url: string | null;
-  is_published: boolean;
-  order_index: number;
-  // Translations
-  title_tr?: string;
-  title_de?: string;
-  title_es?: string;
-  description_tr?: string;
-  description_de?: string;
-  description_es?: string;
-  created_at?: string;
-}
-
-// ============================================
-// Uses Categories (Uses page)
-// ============================================
-
-export interface UsesCategory {
-  id: string;
-  title: string;
-  items: string[];
-  items_tr?: string[];
-  items_de?: string[];
-  items_es?: string[];
-  title_tr?: string;
-  title_de?: string;
-  title_es?: string;
-  order_index: number;
-  created_at?: string;
-}
-
-// ============================================
-// Gallery Items (Home polaroid gallery)
-// ============================================
-
-export interface GalleryItem {
-  id: string;
-  image_url: string;
-  caption?: string;
-  caption_tr?: string;
-  caption_de?: string;
-  caption_es?: string;
-  is_published: boolean;
-  order_index: number;
-  created_at?: string;
-}
 
 declare global {
   interface Window {

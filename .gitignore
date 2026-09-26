@@ -12,11 +12,17 @@
 
 # Testing
 /coverage
+/playwright-report/
+/test-results/
+blob-report/
 
 # Next.js
 /.next/
 /out/
 /build
+
+# Stray screenshots / temp captures
+/admin-*.png
 
 # Debug
 npm-debug.log*

@@ -290,53 +290,7 @@ export interface ContactEmail {
   order_index: number;
 }
 
-export interface EasterEgg {
-  id: string;
-  image_url: string;
-  caption: string | null;
-  is_active: boolean;
-  order_index: number;
-}
 
-export interface Prototype {
-  id: string;
-  title: string;
-  description: string | null;
-  image_url: string | null;
-  video_url: string | null;
-  is_published: boolean;
-  order_index: number;
-  title_tr?: string;
-  title_de?: string;
-  title_es?: string;
-  description_tr?: string;
-  description_de?: string;
-  description_es?: string;
-}
-
-export interface UsesCategory {
-  id: string;
-  title: string;
-  items: string[];
-  items_tr?: string[];
-  items_de?: string[];
-  items_es?: string[];
-  title_tr?: string;
-  title_de?: string;
-  title_es?: string;
-  order_index: number;
-}
-
-export interface GalleryItem {
-  id: string;
-  image_url: string;
-  caption: string | null;
-  caption_tr?: string;
-  caption_de?: string;
-  caption_es?: string;
-  is_published: boolean;
-  order_index: number;
-}
 
 export interface SiteData {
   aboutMe: AboutMe | null;
@@ -352,8 +306,6 @@ export interface SiteData {
   blogs: Blog[];
   socialLinks: SocialLink[];
   contactEmails: ContactEmail[];
-  easterEggs: EasterEgg[];
-  galleryItems: GalleryItem[];
 }
 
 export interface BlogWithImages extends Blog {
@@ -383,8 +335,6 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
     blogsRes,
     socialLinksRes,
     contactEmailsRes,
-    easterEggsRes,
-    galleryRes,
   ] = await Promise.all([
     supabase.from("about_me").select("*").limit(1).single(),
     supabase
@@ -432,15 +382,6 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
       .from("contact_emails")
       .select("*")
       .order("order_index", { ascending: true }),
-    supabase
-      .from("easter_eggs")
-      .select("*")
-      .order("order_index", { ascending: true }),
-    supabase
-      .from("gallery_items")
-      .select("*")
-      .eq("is_published", true)
-      .order("order_index", { ascending: true }),
   ]);
 
   return {
@@ -457,8 +398,6 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
     blogs: (blogsRes.data || []) as unknown as Blog[],
     socialLinks: socialLinksRes.data || [],
     contactEmails: contactEmailsRes.data || [],
-    easterEggs: (easterEggsRes.data || []) as EasterEgg[],
-    galleryItems: (galleryRes.data || []) as unknown as GalleryItem[],
   };
 });
 
@@ -485,7 +424,6 @@ export const fetchHomeData = cache(async () => {
     contactEmailsRes,
     projectsRes,
     blogsRes,
-    galleryRes,
   ] = await Promise.all([
     supabase.from("about_me").select("*").limit(1).single(),
     supabase
@@ -538,11 +476,6 @@ export const fetchHomeData = cache(async () => {
       )
       .eq("is_published", true)
       .order("order_index", { ascending: true }),
-    supabase
-      .from("gallery_items")
-      .select("*")
-      .eq("is_published", true)
-      .order("order_index", { ascending: true }),
   ]);
 
   return {
@@ -559,7 +492,6 @@ export const fetchHomeData = cache(async () => {
     contactEmails: contactEmailsRes.data || [],
     projects: (projectsRes.data || []) as unknown as Project[],
     blogs: (blogsRes.data || []) as unknown as Blog[],
-    galleryItems: (galleryRes.data || []) as unknown as GalleryItem[],
   };
 });
 
@@ -798,27 +730,6 @@ export const fetchWorksData = cache(async () => {
   const relatedBlogs = (blogsRes.data || []) as unknown as Blog[];
 
   return { projects, entityMap, relatedBlogs };
-});
-
-// Prototypes Page Data
-export const fetchPrototypesData = cache(async () => {
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from("prototypes")
-    .select("*")
-    .eq("is_published", true)
-    .order("order_index", { ascending: true });
-  return { prototypes: (data || []) as unknown as Prototype[] };
-});
-
-// Uses Page Data
-export const fetchUsesData = cache(async () => {
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from("uses_categories")
-    .select("*")
-    .order("order_index", { ascending: true });
-  return { usesCategories: (data || []) as unknown as UsesCategory[] };
 });
 
 // Helper: Localized field getter

@@ -35,32 +35,38 @@ This is **not** a static portfolio template. It's a production-grade **Content M
 
 **Key idea:** Clone it, connect your Supabase, and you have a fully functional portfolio site with an admin panel - no backend code to write.
 
+> 📄 **Architecture:** The admin panel is **config-driven** — every content section is described by a single config in `src/components/admin/sections.ts` and rendered by reusable building blocks. The full database schema lives in [`supabase_schema.sql`](./supabase_schema.sql).
+
 ---
 
 ## 🌟 Feature Highlights
 
 ### 🛠️ Built-in Admin Dashboard (`/admin`)
 
-A complete CMS dashboard with categorized sidebar navigation for managing every piece of your portfolio:
+A complete, **config-driven CMS dashboard**. Every content section is described by a config in `src/components/admin/sections.ts` and rendered by a small set of reusable building blocks (`entity-form`, `entity-list`, `entity-manager`) — adding a new section is a ~15-line config, never boilerplate:
 
-| Category               | What You Can Manage                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------- |
-| **Profile & Identity** | Name, role, tagline, bio, profile photo, favorite quote, custom stats                 |
-| **Portfolio Content**  | Projects/works (with live links, GitHub, tags, multi-image galleries) and blog posts  |
-| **Resume Data**        | Experience, education, skills, languages, certifications, activities                  |
-| **Content Linking**    | Relationally link any work or blog to skills, experiences, education, certs, and more |
-| **Configuration**      | Social links, section reordering, visibility toggles, maintenance mode                |
+| Bölüm | Yönetilenler |
+| ----- | ------------ |
+| **Panel** | Bölüm sayıları + hızlı erişim |
+| **Profil** | İsim, unvan, slogan, biyografi, fotoğraf (tek satır form) |
+| **Deneyim / Eğitim / Yetenekler / Diller / Liderlik / Sertifikalar** | Özgeçmiş verileri (alt pozisyonlar, tarihler, logolar) |
+| **Sertifikalar** | + çoktan-çoğa **yetenek bağlantısı** (`certification_skills`) |
+| **Projeler / Blog** | Kartlar, kapak görselleri, **galeri yönetimi**, markdown içerik, bağlı varlıklar, yayınla/gizle |
+| **Sosyal Linkler / İletişim Mailleri** | Ana sayfa + iletişim popup'ı bağlantıları |
+| **Ayarlar** | Bakım modu |
 
-Every field supports **4 languages** (EN, TR, DE, ES). Works and blog posts use a clean **stepper form** (Basic Info → Media → Links → Translations) for a better editing experience, while other sections keep their language tab switcher. The dashboard is **fully responsive** and includes a collapsible desktop sidebar, mobile drawer, sticky form actions, and reusable UI components.
+**Turkish-first content entry (TR → EN → DE → ES):** forms open on the Turkish tab, Turkish is the required language, and other languages show "missing translation" badges without blocking saves. All language columns are written in a single save.
+
+Every record supports **list, search, add, edit, delete (confirmed), reorder** and **publish/unpublish**. A consistent **toast notification system** gives instant, actionable feedback for every operation (including specific error reasons such as permission, foreign-key conflicts or network issues). Reusable primitives in `src/components/admin/components/ui/` — no external UI library.
 
 ### 🔗 Deep Content Linking System
 
-The CMS features a powerful **relational linking engine** that lets you connect content across all sections:
+The CMS features a **relational linking engine** that lets you connect content across sections:
 
 - **Works & Blogs** can be linked to Experiences, Education, Skills, Languages, Activities, and Certifications
-- **Multi-select skill binding** - assign multiple skill categories to a single work or blog via interactive pill-tag checkboxes
-- **Bidirectional display** - linked content appears as interactive badges on both the source item and the target section's homepage card
-- All links are managed through a clean **"Link Related Items"** accordion in the admin forms
+- **Multi-select skill binding** — assign multiple skill categories to a single work or blog
+- **Bidirectional display** — linked content appears as interactive links on both sides
+- All links are managed via `select`/`multi_select` fields sourced from the relevant tables
 
 ### 🏆 Interactive Certification Modals
 
@@ -80,15 +86,6 @@ Blog posts support optional **featured images** (cover photos):
 - Images render as aspect-ratio cover photos on both the blog card grid and the expanded blog modal
 - Fully responsive with smooth hover-scale animations
 
-### 🥚 Secret Easter Eggs
-
-A hidden keyboard-surprise feature for visitors who discover the secret code:
-
-- Configure the secret code, title, subtitle, and footer text in `easter_egg_config`
-- Upload multiple surprise images to `easter_eggs`
-- Toggle individual images on/off via `is_active`
-- Fully managed through the database — no code changes needed
-
 ### 🌍 Multilingual System (i18n)
 
 - Real-time language switching without page reloads
@@ -99,7 +96,7 @@ A hidden keyboard-surprise feature for visitors who discover the secret code:
 ### 🎨 Kinetic UI Design
 
 - **Staggered fade-in animations** on every section via a reusable `<FadeIn />` component
-- **Apple-style Dock navigation** with magnetic hover magnification effect
+- **Pill top navigation** with active-state lime underline, avatar, language & theme toggles
 - **Spring-animated modals** for blog posts, project details, and certifications
 - **Maintenance & Error Screens** - Enhanced maintenance mode with randomized dynamic media (cat macros!) and local 401 Unauthorized fallbacks
 <br />
@@ -138,18 +135,19 @@ Unlike typical starter templates, this project implements a rigorous, multi-laye
 
 The public site includes keyboard and screen-reader friendly enhancements:
 
-- **Skip-to-content link** — `SkipLink` component lets keyboard users jump straight to `#main-content` without tabbing through the dock
+- **Skip-to-content link** — `SkipLink` component lets keyboard users jump straight to `#main-content` without tabbing through the navigation
 - **Reduced-motion support** — animations respect `prefers-reduced-motion`, with a targeted CSS exception only where continuous motion is intentional
 - **Semantic landmarks** — main content is wrapped in a `<main>` region and nav uses proper ARIA attributes
 
 ### 🔔 Smart Toast Notification System
 
-Real-time visual feedback for all admin operations with a polished, non-intrusive notification system:
+Real-time, actionable feedback for every admin operation (add, edit, delete, reorder, publish):
 
-- **Success/Error Feedback**: Instant confirmation for saves, updates, and deletions
-- **Fixed Positioning**: Bottom-right corner with 3-second auto-dismiss
-- **Solid Design**: Non-transparent backgrounds matching your theme
-- **Multilingual**: Toast messages in your selected language
+- **Every CRUD operation notifies**: success, error, and in-progress ("Kaydediliyor...") states
+- **Specific error reasons**: permission/RLS, foreign-key conflicts, duplicate values, resource limits and network failures are reported clearly instead of a generic "something went wrong"
+- **Loading → result transitions**: loading toasts resolve into success/error
+- **Compact stack**: bottom-right, ~3.5s auto-dismiss, never floods the screen
+- **Validation**: inline errors under each field + a summary toast on save attempts
 
 ### 📝 Advanced Markdown Editor
 
@@ -167,7 +165,7 @@ Manage multiple contact emails directly from the admin panel with smart organiza
 
 - **Multiple Email Types**: Personal, School, Work, Club, and custom labels
 - **Multilingual Labels**: Each email label can be translated (label_tr, label_de, label_es)
-- **Integrated Contact Modal**: Reorganized dock navigation with Contact button opening a popup
+- **Integrated Contact Modal**: "Benimle iletişime geçin" button on the homepage opens a popup with the contact form + managed email addresses
 - **Smart Display**: Shows both social links and contact emails in the modal
 - **One-Click Copy**: Copy email addresses with visual feedback
 
@@ -177,7 +175,7 @@ Additional security measures beyond the enterprise-grade foundation:
 
 - **Input Validation**: Zod schemas validate all API inputs and form submissions
 - **URL Sanitization**: `sanitizeUrl` helper prevents XSS via malicious URLs
-- **Safe Image Loading**: All image URLs validated before rendering (info.tsx, blog, etc.)
+- **Safe Image Loading**: All image URLs validated before rendering (hero, cards, etc.)
 - **Production Logging**: Console logs hidden in production, visible only in development
 - **Type Safety**: Centralized TypeScript interfaces prevent runtime errors
 
@@ -236,24 +234,35 @@ Additional security measures beyond the enterprise-grade foundation:
     │
     ├── components/
     │   ├── admin/
-    │   │   ├── admin-layout.tsx     # Reusable admin shell (sidebar, header, mobile drawer)
-    │   │   ├── admin-dashboard.tsx  # Overview with stats, quick links, and recent content
-    │   │   ├── admin-tabs.tsx       # CMS forms: About, Skills, CRUD, Social, Layout, Contact Emails
-    │   │   ├── work-form.tsx        # Stepper form for adding/editing works
-    │   │   ├── blog-form.tsx        # Stepper form for adding/editing blog posts
-    │   │   ├── markdown-editor.tsx  # Rich markdown editor with toolbar & preview
-    │   │   └── ui/                  # Reusable admin UI primitives (cards, inputs, lists, dialogs, stepper)
+    │   │   ├── sections.ts          # All section configs (single source)
+    │   │   ├── types.ts             # Field / SectionConfig / Junction / Gallery types
+    │   │   ├── lib/                 # languages (TR-first), errors, notifications, crud helpers
+    │   │   ├── components/
+    │   │   │   ├── ui/              # Reusable primitives (button, input, modal, switch, ...)
+    │   │   │   ├── fields/          # Per-field-type inputs (markdown, image, role-list, gallery, ...)
+    │   │   │   ├── entity-form.tsx  # Generic form: field→input, TR-first tabs, validation, all-language save
+    │   │   │   ├── entity-list.tsx  # Search, badges, reorder, publish toggle
+    │   │   │   ├── entity-manager.tsx # Orchestrates list + form + confirm for a section
+    │   │   │   ├── language-tabs.tsx # TR→EN→DE→ES tabs + missing-translation badges
+    │   │   │   ├── recent-images.tsx # "Recent images" picker
+    │   │   │   ├── shell.tsx        # Sidebar + topbar layout (always-dark, violet accent)
+    │   │   │   ├── dashboard.tsx    # Section counts + quick access
+    │   │   │   └── settings.tsx     # Maintenance mode
+    │   │   └── markdown-editor.tsx  # Markdown textarea + live preview
     │   ├── home/
-    │   │   ├── info.tsx         # Hero section (name, photo, tagline)
-    │   │   ├── about.tsx        # Bio + custom stats
-    │   │   ├── skills.tsx       # Skill categories grid + linked works/blogs
-    │   │   ├── profile-sections.tsx  # Experience, Education, Activities, Certs (modals)
-    │   │   ├── github-contribution.tsx  # Live GitHub heatmap
-    │   │   └── contact-form.tsx # Contact section
+    │   │   ├── hero.tsx         # Hero: photo, "Hi!/I'm", bio, socials, contact
+    │   │   ├── work-card.tsx    # Experience card (Deneyim) + detail modal
+    │   │   ├── skills.tsx       # Skill categories (chips)
+    │   │   ├── profile-sections.tsx  # Education, Languages, Activities, Certs
+    │   │   ├── experience-detail.tsx # Full experience (About page)
+    │   │   ├── recent-posts.tsx # Latest 3 blog posts (home)
+    │   │   └── contact-form.tsx # Contact form (popup)
     │   ├── motion/
     │   │   └── fade-in.tsx      # Reusable staggered animation wrapper
 │   ├── navigation/
-│   │   └── dock.tsx         # Apple-style magnetic dock navigation
+│   │   └── top-nav.tsx       # Pill top navigation (links + lang + theme)
+│   ├── ui/
+│   │   └── section-box.tsx   # Section box (title on top border)
 │   ├── skip-link.tsx        # Keyboard skip-to-content link
 │   └── theme-provider.tsx   # Dark/light mode provider
     │
@@ -294,11 +303,9 @@ The Supabase database consists of **17 tables**, all with Row Level Security ena
 | `project_images`       | Multi-image gallery per project | project_id, image_url, order_index                                    |
 | `blogs`                | Blog posts (Markdown)           | title, excerpt, content, date, image_url, is_published, linked\_\* IDs |
 | `blog_images`          | Multi-image gallery per blog    | blog_id, image_url, order_index                                       |
-| `social_links`         | Dock navigation links           | platform, URL, icon, account_type                                     |
+| `social_links`         | Public social links             | platform, URL, icon, account_type                                     |
 | `contact_emails`       | Contact email addresses         | label, email, label_tr/de/es, order_index                             |
-| `section_order`        | Homepage section ordering       | section_id, order_index                                               |
-| `easter_eggs`          | Secret keyboard surprise images | image_url, caption, is_active, order_index                            |
-| `easter_egg_config`    | Easter egg secret & display     | secret_code, display_title, display_subtitle, footer_text             |
+| `section_order`        | Section config (e.g. maintenance) | section_id, order_index                                             |
 
 ### Entity-Relationship Diagram
 
@@ -336,8 +343,6 @@ erDiagram
     about_me { uuid id PK }
     social_links { uuid id PK }
     section_order { text section_id PK }
-    easter_eggs { uuid id PK }
-    easter_egg_config { uuid id PK }
 ```
 
 ### Content Linking Columns
@@ -524,8 +529,6 @@ If you have existing CSV backups, import them in this order to satisfy foreign-k
 13. `contact_emails`
 14. `section_order`
 15. `about_me`
-16. `easter_egg_config`
-17. `easter_eggs`
 
 #### 3.6 - Lock down sign-ups
 
@@ -586,7 +589,7 @@ npm run dev
 | **Favorite quote**   | Admin → About Me             | Toggle visibility on/off with checkbox    |
 | **Maintenance mode** | Admin → Page Layout          | Toggle to temporarily block public access (displays dynamic random images) |
 | **Link content**     | Admin → Works/Blogs edit     | Use "Link Related Items" in the Links step  |
-| **Admin UI theme**   | `src/components/admin/ui/`   | Reusable Tailwind primitives - no external UI lib |
+| **Admin UI theme**   | `src/components/admin/components/ui/`   | Reusable Tailwind primitives - no external UI lib |
 
 ---
 

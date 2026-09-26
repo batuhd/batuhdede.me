@@ -22,8 +22,6 @@ import type {
   Blog,
   SocialLink,
   ContactEmail,
-  EasterEgg,
-  GalleryItem,
 } from "@/types";
 
 interface SiteData {
@@ -40,8 +38,6 @@ interface SiteData {
   blogs: Blog[];
   socialLinks: SocialLink[];
   contactEmails: ContactEmail[];
-  easterEggs: EasterEgg[];
-  galleryItems: GalleryItem[];
   loaded: boolean;
   isMaintenance: boolean;
 }
@@ -60,8 +56,6 @@ const defaultData: SiteData = {
   blogs: [],
   socialLinks: [],
   contactEmails: [],
-  easterEggs: [],
-  galleryItems: [],
   loaded: false,
   isMaintenance: false,
 };
@@ -107,8 +101,6 @@ export function SiteDataProvider({
         sectionRes,
         projectsRes,
         blogsRes,
-        easterEggsRes,
-        galleryRes,
       ] = await Promise.all([
         sb.from("about_me").select("*").limit(1),
         sb
@@ -152,15 +144,6 @@ export function SiteDataProvider({
             "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id",
           )
           .order("order_index", { ascending: true }),
-        sb
-          .from("easter_eggs")
-          .select("*")
-          .order("order_index", { ascending: true }),
-        sb
-          .from("gallery_items")
-          .select("*")
-          .eq("is_published", true)
-          .order("order_index", { ascending: true }),
       ]);
 
       if (cancelled) return;
@@ -179,8 +162,6 @@ export function SiteDataProvider({
         blogs: (blogsRes?.data || []) as unknown as Blog[],
         socialLinks: [],
         contactEmails: [],
-        easterEggs: (easterEggsRes?.data || []) as unknown as EasterEgg[],
-        galleryItems: (galleryRes?.data || []) as unknown as GalleryItem[],
         loaded: true,
         isMaintenance:
           sectionRes?.data?.some(

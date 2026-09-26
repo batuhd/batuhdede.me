@@ -1,6 +1,10 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Next.js 16.3.0: root proxy.ts Turbopack'te tanınmıyor (GH #93328).
+// Kullanıcının onayladığı "mevcut auth akışını koru" gereği root
+// middleware.ts (deprecated ama desteklenen) konvansiyonu kullanılır.
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 

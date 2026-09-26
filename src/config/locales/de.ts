@@ -8,8 +8,6 @@ export const de: Record<string, string> = {
   "nav.works": "Arbeit",
   "nav.blog": "Blog",
   "nav.articles": "Blog",
-  "nav.prototypes": "Prototypen",
-  "nav.uses": "Nutzung",
   "nav.certifications": "Zertifikate",
   "nav.credits": "Credits",
   "nav.theme": "Design",
@@ -100,16 +98,8 @@ export const de: Record<string, string> = {
   "works.filter.B2C": "B2C",
   "works.filter.AI": "KI",
 
-  // Prototypes
-  "prototypes.title": "Prototypen",
-  "prototypes.subtitle": "Interaktive Experimente, Design-Erkundungen und funktionierende Konzepte.",
-  "prototypes.empty": "Noch keine Prototypen",
-  "prototypes.play": "Abspielen",
 
   // Uses
-  "uses.title": "Nutzung",
-  "uses.subtitle": "Die Werkzeuge, mit denen ich entwerfe, baue und veröffentliche.",
-  "uses.empty": "Noch keine Einträge",
 
   // Blog
   "blog.title": "Blog",
