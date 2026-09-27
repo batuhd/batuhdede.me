@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
+import { MarkdownGuide } from "./markdown-guide";
 
 interface MarkdownEditorProps {
   value: string;
@@ -37,6 +38,8 @@ export function MarkdownEditor({ value, onChange, placeholder }: MarkdownEditorP
           </button>
         ))}
       </div>
+
+      <MarkdownGuide />
 
       {mode === "write" ? (
         <textarea

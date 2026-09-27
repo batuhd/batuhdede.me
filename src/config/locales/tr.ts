@@ -111,6 +111,10 @@ export const tr: Record<string, string> = {
   "blog.empty": "Henüz yazı yok",
   "blog.emptyDesc": "Admin panelinden eklenen yazılar burada görünecek.",
   "blog.loading": "Yazılar yükleniyor...",
+  "blog.rss.title": "RSS Feed",
+  "blog.rss.desc": "Hangi dildeki RSS akışını görmek istersiniz?",
+  "blog.rss.tr": "Türkçe RSS",
+  "blog.rss.en": "English RSS",
 
   // Credits
   "credits.title": "Credits",
@@ -140,7 +144,7 @@ export const tr: Record<string, string> = {
     "Sayfa yüklendiğinde gösterilen giriş sekansı videosu.",
   "credits.media.introCredit": "Özel / Kendi üretimimdir",
   "credits.footer":
-    "Batuhan Dede tarafından tasarlandı ve geliştirildi, Antigravity IDE destekli Claude Opus 4.6 kullanılarak inşa edildi.",
+    "Batuhan Dede tarafından tasarlandı ve geliştirildi, VSCode'da DeepSeek v4 kullanılarak inşa edildi.",
   "credits.translationTitle": "Çeviri",
   "credits.translationNote":
     "Orijinal olarak İngilizce kodlandı, DeepL ile çevrildi.",

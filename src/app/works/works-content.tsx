@@ -23,7 +23,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BlogImageGallery } from "@/components/blog/blog-image-gallery";
 import { cn } from "@/lib/utils";
-import type { ProjectWithImages } from "@/lib/data";
+import type { ProjectWithImages, ProjectCategory } from "@/lib/data";
 import type { LinkedEntity } from "@/types";
 
 interface RelatedBlog {
@@ -39,6 +39,7 @@ interface WorksContentProps {
   initialProjects: ProjectWithImages[];
   entityMap: Record<string, LinkedEntity>;
   relatedBlogs: RelatedBlog[];
+  projectCategories: ProjectCategory[];
 }
 
 const GRADIENTS = [
@@ -63,14 +64,28 @@ export function WorksContent({
   initialProjects,
   entityMap,
   relatedBlogs,
+  projectCategories,
 }: WorksContentProps) {
   const [projects] = useState<ProjectWithImages[]>(initialProjects);
   const [loading] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selectedProject, setSelectedProject] =
     useState<ProjectWithImages | null>(null);
   const { t, getLocalized } = useLanguage();
   const searchParams = useSearchParams();
   const projectIdFromUrl = searchParams.get("project");
+
+  const categoryById = new Map(projectCategories.map((c) => [c.id, c]));
+  const categoryName = (categoryId?: string | null) => {
+    if (!categoryId) return "";
+    const cat = categoryById.get(categoryId);
+    return cat ? getLocalized(cat, "name") : "";
+  };
+
+  const filteredProjects =
+    activeCategory === "all"
+      ? projects
+      : projects.filter((p) => p.category_id === activeCategory);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   // URL'den proje açma/kapatma — client-only deep link senkronizasyonu
@@ -158,23 +173,50 @@ export function WorksContent({
             </div>
           </div>
         ) : (
-          <div className="mt-10 grid gap-6 sm:grid-cols-2">
-            {projects.map((project, index) => {
-              const title = getLocalized(project, "title", "Untitled Project");
-              const description = getLocalized(project, "description");
-              const label =
-                String(project.category || "") ||
-                (Array.isArray(project.tags) && project.tags[0]
-                  ? String(project.tags[0])
-                  : "");
-              const image =
-                project.image &&
-                (project.image.startsWith("http") || project.image.startsWith("/"))
-                  ? project.image
-                  : project.image
-                    ? `/${project.image}`
-                    : null;
-              const gradient = GRADIENTS[index % GRADIENTS.length];
+          <>
+            {projectCategories.length > 0 && (
+              <div className="mt-8 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setActiveCategory("all")}
+                  className={cn(
+                    "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+                    activeCategory === "all"
+                      ? "border-brand bg-brand text-black"
+                      : "border-border bg-card text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {t("works.filterAll")}
+                </button>
+                {projectCategories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={cn(
+                      "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+                      activeCategory === cat.id
+                        ? "border-brand bg-brand text-black"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {getLocalized(cat, "name")}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-10 grid gap-6 sm:grid-cols-2">
+              {filteredProjects.map((project, index) => {
+                const title = getLocalized(project, "title", "Untitled Project");
+                const description = getLocalized(project, "description");
+                const label = categoryName(project.category_id);
+                const image =
+                  project.image &&
+                  (project.image.startsWith("http") || project.image.startsWith("/"))
+                    ? project.image
+                    : project.image
+                      ? `/${project.image}`
+                      : null;
+                const gradient = GRADIENTS[index % GRADIENTS.length];
 
               return (
                 <FadeIn key={project.id} delay={0.05 + index * 0.03}>
@@ -221,7 +263,8 @@ export function WorksContent({
                 </FadeIn>
               );
             })}
-          </div>
+            </div>
+          </>
         )}
       </div>
 

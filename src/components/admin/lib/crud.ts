@@ -65,6 +65,8 @@ const REORDER_RPC_TABLES = [
   "certifications",
   "project_images",
   "blog_images",
+  "project_categories",
+  "blog_categories",
 ];
 
 /**

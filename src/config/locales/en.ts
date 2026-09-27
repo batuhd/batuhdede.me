@@ -109,6 +109,10 @@ export const en: Record<string, string> = {
   "blog.empty": "No posts yet",
   "blog.emptyDesc": "Blog posts added via Admin Panel will appear here.",
   "blog.loading": "Loading posts...",
+  "blog.rss.title": "RSS Feed",
+  "blog.rss.desc": "Which language RSS feed would you like?",
+  "blog.rss.tr": "Turkish RSS",
+  "blog.rss.en": "English RSS",
 
   // Credits
   "credits.title": "Credits",
@@ -137,7 +141,7 @@ export const en: Record<string, string> = {
   "credits.media.introDesc": "The intro sequence video displayed on page load.",
   "credits.media.introCredit": "Custom / Self-produced",
   "credits.footer":
-    "Designed and developed by Batuhan Dede, built using Antigravity IDE powered by Claude Opus 4.6.",
+    "Designed and developed by Batuhan Dede, built using DeepSeek v4 in VSCode.",
   "credits.translationTitle": "Translation",
   "credits.translationNote":
     "Originally coded in English, translated with DeepL.",

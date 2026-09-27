@@ -28,6 +28,7 @@ interface EntityListProps {
   loading: boolean;
   search: string;
   filter: string;
+  filterOptions?: Array<{ value: string; label: string }>;
   onSearchChange: (v: string) => void;
   onFilterChange: (v: string) => void;
   onAdd: () => void;
@@ -52,6 +53,7 @@ export function EntityList({
   loading,
   search,
   filter,
+  filterOptions,
   onSearchChange,
   onFilterChange,
   onAdd,
@@ -62,14 +64,18 @@ export function EntityList({
   reorderDisabled,
   busyId,
 }: EntityListProps) {
+  // filterSourceTable tanımlıysa dropdown kaynaktan gelir (UUID yerine isim gösterir),
+  // değilse mevcut satır değerlerinden türetilir.
   const filterValues = config.filterField
-    ? Array.from(
-        new Set(
-          items
-            .map((it) => String(it[config.filterField as string] ?? "").trim())
-            .filter(Boolean),
-        ),
-      )
+    ? filterOptions && filterOptions.length > 0
+      ? filterOptions
+      : Array.from(
+          new Set(
+            items
+              .map((it) => String(it[config.filterField as string] ?? "").trim())
+              .filter(Boolean),
+          ),
+        ).map((v) => ({ value: v, label: v }))
     : [];
 
   if (loading) {
@@ -103,9 +109,9 @@ export function EntityList({
             className="w-44"
           >
             <option value="">Tümü</option>
-            {filterValues.map((value) => (
-              <option key={value} value={value}>
-                {value}
+            {filterValues.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </Select>

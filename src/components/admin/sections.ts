@@ -1,12 +1,14 @@
 import {
   Award,
   Briefcase,
+  FileText,
   FolderKanban,
   Globe,
   GraduationCap,
   Languages,
   Mail,
   PenTool,
+  Tags,
   Trophy,
   UserRound,
   Wrench,
@@ -27,6 +29,7 @@ export const SECTION_CONFIGS: SectionConfig[] = [
     description: "İsim, unvan, slogan ve biyografi (tek satır form).",
     displayField: "name",
     singleRow: true,
+    group: "Profil",
 fields: [
       { key: "name", label: "İsim", type: "text", required: true, placeholder: "Batuhan Dede" },
       { key: "role", label: "Unvan", type: "text", translatable: true, placeholder: "Frontend Developer" },
@@ -34,6 +37,21 @@ fields: [
       { key: "bio", label: "Biyografi", type: "textarea", translatable: true, textareaRows: 6, placeholder: "Kendinizi tanıtın..." },
       { key: "profile_photo_url", label: "Profil Fotoğrafı", type: "image_url", validate: "url", placeholder: "https://..." },
       { key: "show_profile_photo", label: "Fotoğrafı Göster", type: "checkbox", placeholder: "Sitede göster" },
+    ],
+  },
+  {
+    id: "about_page",
+    label: "Hakkımda Sayfası",
+    icon: FileText,
+    table: "about_me",
+    title: "Hakkımda Sayfası",
+    description: "Hakkımda sayfasına özel yazı ve portre (ana sayfadan bağımsız).",
+    displayField: "name",
+    singleRow: true,
+    group: "Profil",
+    fields: [
+      { key: "about_bio", label: "Hakkımda Yazısı", type: "markdown", translatable: true, textareaRows: 10, fullWidth: true, placeholder: "Hakkımda sayfası için uzun tanıtım yazısı (markdown destekli)..." },
+      { key: "about_photo_url", label: "Hakkımda Fotoğrafı", type: "image_url", validate: "url", placeholder: "https://..." },
     ],
   },
   {
@@ -46,6 +64,7 @@ fields: [
     displayField: "title",
     subtitleField: "company",
     imageField: "logo_url",
+    group: "Kariyer",
     fields: [
       { key: "title", label: "Pozisyon", type: "text", required: true, translatable: true, placeholder: "Software Engineer" },
       { key: "company", label: "Şirket", type: "text", required: true, translatable: true, placeholder: "Google" },
@@ -68,6 +87,7 @@ fields: [
     displayField: "university",
     subtitleField: "degree",
     imageField: "logo_url",
+    group: "Kariyer",
     fields: [
       { key: "university", label: "Üniversite", type: "text", required: true, translatable: true, placeholder: "Anadolu Üniversitesi" },
       { key: "degree", label: "Derece", type: "text", translatable: true, placeholder: "Lisans" },
@@ -88,6 +108,7 @@ fields: [
     title: "Yetenek Kategorileri",
     description: "Yetenek gruplarını ve becerileri yönetin.",
     displayField: "title",
+    group: "Kariyer",
     fields: [
       { key: "title", label: "Kategori", type: "text", required: true, translatable: true, placeholder: "Frontend" },
       { key: "subtitle", label: "Alt Başlık", type: "text", translatable: true, placeholder: "Kısa açıklama" },
@@ -103,6 +124,7 @@ fields: [
     description: "Konuştuğunuz dilleri ve seviyelerini yönetin.",
     displayField: "name",
     subtitleField: "level",
+    group: "Kariyer",
     fields: [
       { key: "name", label: "Dil", type: "text", required: true, translatable: true, placeholder: "English" },
       {
@@ -131,6 +153,7 @@ fields: [
     displayField: "organization",
     subtitleField: "role",
     imageField: "logo_url",
+    group: "Kariyer",
     fields: [
       { key: "organization", label: "Kurum", type: "text", required: true, translatable: true, placeholder: "AI & Robotik Kulübü" },
       { key: "role", label: "Rol", type: "text", required: true, translatable: true, placeholder: "Başkan" },
@@ -153,6 +176,7 @@ fields: [
     displayField: "name",
     subtitleField: "issuer",
     imageField: "icon_url",
+    group: "Kariyer",
     junction: {
       table: "certification_skills",
       parentColumn: "certification_id",
@@ -169,6 +193,19 @@ fields: [
     ],
   },
   {
+    id: "project_categories",
+    label: "Proje Kategorileri",
+    icon: Tags,
+    table: "project_categories",
+    title: "Proje Kategorileri",
+    description: "Projeleri gruplamak için kategorileri yönetin (Web, Mobil...).",
+    displayField: "name",
+    group: "İçerik",
+    fields: [
+      { key: "name", label: "Kategori Adı", type: "text", required: true, translatable: true, placeholder: "Web" },
+    ],
+  },
+  {
     id: "projects",
     label: "Projeler",
     icon: FolderKanban,
@@ -177,13 +214,17 @@ fields: [
     description: "Portfolyo projelerinizi ve galeri görsellerini yönetin.",
     displayField: "title",
     imageField: "image",
-    filterField: "category",
+    filterField: "category_id",
+    filterSourceTable: "project_categories",
+    filterSourceValueField: "id",
+    filterSourceLabelField: "name",
+    group: "İçerik",
     gallery: { table: "project_images", parentColumn: "project_id" },
     fields: [
       { key: "title", label: "Başlık", type: "text", required: true, translatable: true, placeholder: "Portföy Sitesi" },
       { key: "description", label: "Açıklama", type: "textarea", translatable: true, textareaRows: 4 },
       { key: "image", label: "Kapak Görseli", type: "image_url", validate: "url", placeholder: "https://..." },
-      { key: "category", label: "Kategori", type: "text", placeholder: "web, mobil, ai..." },
+      { key: "category_id", label: "Kategori", type: "select", sourceTable: "project_categories", sourceValueField: "id", sourceLabelField: "name", placeholder: "Web, Mobil..." },
       { key: "tags", label: "Etiketler", type: "json_array", placeholder: "React, Tailwind" },
       { key: "link", label: "Canlı Link", type: "text", validate: "url", placeholder: "https://..." },
       { key: "github", label: "GitHub", type: "text", validate: "url", placeholder: "https://github.com/..." },
@@ -193,6 +234,19 @@ fields: [
       { key: "linked_activity_id", label: "Bağlı Etkinlik", type: "select", sourceTable: "activities", sourceValueField: "id", sourceLabelField: "organization" },
       { key: "linked_certification_id", label: "Bağlı Sertifika", type: "select", sourceTable: "certifications", sourceValueField: "id", sourceLabelField: "name" },
       { key: "linked_skill_category_ids", label: "Bağlı Yetenekler", type: "multi_select", sourceTable: "skill_categories", sourceValueField: "id", sourceLabelField: "title" },
+    ],
+  },
+  {
+    id: "blog_categories",
+    label: "Blog Kategorileri",
+    icon: Tags,
+    table: "blog_categories",
+    title: "Blog Kategorileri",
+    description: "Yazıları gruplamak için kategorileri yönetin (Teknoloji, Linux...).",
+    displayField: "name",
+    group: "İçerik",
+    fields: [
+      { key: "name", label: "Kategori Adı", type: "text", required: true, translatable: true, placeholder: "Teknoloji" },
     ],
   },
   {
@@ -206,11 +260,17 @@ fields: [
     imageField: "image_url",
     publishedField: "is_published",
     publishedLabel: "Yayında",
+    filterField: "category_id",
+    filterSourceTable: "blog_categories",
+    filterSourceValueField: "id",
+    filterSourceLabelField: "name",
+    group: "İçerik",
     gallery: { table: "blog_images", parentColumn: "blog_id" },
     fields: [
       { key: "title", label: "Başlık", type: "text", required: true, translatable: true, placeholder: "Yazı başlığı" },
       { key: "excerpt", label: "Özet", type: "textarea", translatable: true, textareaRows: 2 },
       { key: "content", label: "İçerik (Markdown)", type: "markdown", translatable: true, textareaRows: 12 },
+      { key: "category_id", label: "Kategori", type: "select", sourceTable: "blog_categories", sourceValueField: "id", sourceLabelField: "name", placeholder: "Teknoloji, Linux..." },
       { key: "date", label: "Tarih", type: "date", placeholder: "22 Eyl 2026" },
       { key: "read_time", label: "Okuma Süresi", type: "text", placeholder: "5 dk" },
       { key: "image_url", label: "Kapak Görseli", type: "image_url", validate: "url", placeholder: "https://..." },
@@ -233,6 +293,7 @@ fields: [
     description: "Sosyal medya bağlantılarını yönetin.",
     displayField: "platform",
     subtitleField: "url",
+    group: "İletişim",
     fields: [
       {
         key: "platform",
@@ -278,6 +339,7 @@ fields: [
     description: "Görüntülenen e-posta adreslerini yönetin.",
     displayField: "label",
     subtitleField: "email",
+    group: "İletişim",
     fields: [
       { key: "label", label: "Etiket", type: "text", required: true, translatable: true, placeholder: "Kişisel" },
       { key: "email", label: "E-posta", type: "text", required: true, validate: "email", placeholder: "ornek@site.com" },

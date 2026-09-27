@@ -84,8 +84,14 @@ export interface SectionConfig {
   publishedLabel?: string;
   /** about_me gibi tek satır form. */
   singleRow?: boolean;
-  /** liste filtresi (ör. projects.category). */
+  /** Liste filtresi sütunu (örn. projects.category_id). */
   filterField?: string;
+  /** filterField UUID ise, filtre dropdown'ı bu kaynak tablodan etiket çeker. */
+  filterSourceTable?: string;
+  filterSourceValueField?: string;
+  filterSourceLabelField?: string;
+  /** Sidebar'da bölümleri gruplandırmak için. */
+  group?: string;
   /** certification_skills gibi çoktan-çoğa bağlantı. */
   junction?: JunctionConfig;
   /** project_images / blog_images galerisi. */

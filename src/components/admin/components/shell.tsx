@@ -27,6 +27,41 @@ function currentTitle(view: AdminView): string {
   return SECTION_CONFIGS.find((s) => s.id === view)?.title ?? "Panel";
 }
 
+const GROUP_ORDER = ["Profil", "Kariyer", "İçerik", "İletişim"];
+
+function SidebarButton({
+  item,
+  active,
+  onNavigate,
+  setMobileOpen,
+}: {
+  item: { key: AdminView; label: string; icon: React.ComponentType<{ className?: string }> };
+  active: AdminView;
+  onNavigate: (view: AdminView) => void;
+  setMobileOpen: (open: boolean) => void;
+}) {
+  const isActive = active === item.key;
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onNavigate(item.key);
+        setMobileOpen(false);
+      }}
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        "flex w-full items-center gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
+        isActive
+          ? "border-violet-500/30 bg-violet-600/15 text-violet-200"
+          : "border-transparent text-zinc-400 hover:bg-zinc-800/70 hover:text-zinc-100",
+      )}
+    >
+      <item.icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{item.label}</span>
+    </button>
+  );
+}
+
 /**
  * Admin çerçevesi: her zaman koyu tema, sol sabit sidebar + üst topbar.
  * Mobilde sidebar hamburger ile açılan çekmeceye dönüşür.
@@ -34,15 +69,57 @@ function currentTitle(view: AdminView): string {
 export function Shell({ active, onNavigate, userEmail, onSignOut, children }: ShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navItems = [
-    { key: "dashboard" as AdminView, label: "Panel", icon: LayoutDashboard },
-    ...SECTION_CONFIGS.map((section) => ({
-      key: section.id as AdminView,
-      label: section.label,
-      icon: section.icon,
-    })),
-    { key: "settings" as AdminView, label: "Ayarlar", icon: Settings },
-  ];
+  const navItems = SECTION_CONFIGS.map((section) => ({
+    key: section.id as AdminView,
+    label: section.label,
+    icon: section.icon,
+    group: section.group,
+  }));
+
+  const grouped = GROUP_ORDER.map((group) => ({
+    group,
+    items: navItems.filter((item) => item.group === group),
+  })).filter((g) => g.items.length > 0);
+
+  const renderSidebarItems = () => (
+    <>
+      <SidebarButton
+        item={{ key: "dashboard", label: "Panel", icon: LayoutDashboard }}
+        active={active}
+        onNavigate={onNavigate}
+        setMobileOpen={setMobileOpen}
+      />
+      {grouped.map(({ group, items }) => (
+        <div key={group} className="pt-3">
+          <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+            {group}
+          </p>
+          <div className="space-y-0.5">
+            {items.map((item) => (
+              <SidebarButton
+                key={item.key}
+                item={item}
+                active={active}
+                onNavigate={onNavigate}
+                setMobileOpen={setMobileOpen}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+      <div className="pt-3">
+        <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+          Sistem
+        </p>
+        <SidebarButton
+          item={{ key: "settings", label: "Ayarlar", icon: Settings }}
+          active={active}
+          onNavigate={onNavigate}
+          setMobileOpen={setMobileOpen}
+        />
+      </div>
+    </>
+  );
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -57,29 +134,7 @@ export function Shell({ active, onNavigate, userEmail, onSignOut, children }: Sh
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4" aria-label="Bölümler">
-        {navItems.map((item) => {
-          const isActive = active === item.key;
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => {
-                onNavigate(item.key);
-                setMobileOpen(false);
-              }}
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex w-full items-center gap-2.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "border-violet-500/30 bg-violet-600/15 text-violet-200"
-                  : "border-transparent text-zinc-400 hover:bg-zinc-800/70 hover:text-zinc-100",
-              )}
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              <span className="truncate">{item.label}</span>
-            </button>
-          );
-        })}
+        {renderSidebarItems()}
       </nav>
 
       <div className="space-y-0.5 border-t border-white/5 p-3">

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
 import { sanitizeUrl } from "@/lib/utils";
+import { MarkdownRenderer } from "@/components/markdown/markdown-renderer";
 import { Skills } from "@/components/home/skills";
 import { ExperienceDetail } from "@/components/home/experience-detail";
 import {
@@ -18,11 +19,17 @@ export function AboutContent() {
   const { aboutMe } = useSiteData();
 
   const name = aboutMe?.name || "";
-  const bio = aboutMe ? getLocalized(aboutMe, "bio") : "";
-  const paragraphs = bio.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-  const portrait = aboutMe?.profile_photo_url
-    ? sanitizeUrl(aboutMe.profile_photo_url)
-    : null;
+  const aboutBio = aboutMe
+    ? getLocalized(aboutMe, "about_bio") || getLocalized(aboutMe, "bio")
+    : "";
+  const portrait = aboutMe?.about_photo_url
+    ? sanitizeUrl(aboutMe.about_photo_url) ||
+      (aboutMe.profile_photo_url
+        ? sanitizeUrl(aboutMe.profile_photo_url)
+        : null)
+    : aboutMe?.profile_photo_url
+      ? sanitizeUrl(aboutMe.profile_photo_url)
+      : null;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pt-12 sm:px-6 sm:pt-16">
@@ -32,13 +39,11 @@ export function AboutContent() {
           <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-6xl">
             {t("about.hey")}
           </h1>
-          <div className="mt-6 max-w-2xl space-y-4">
-            {paragraphs.map((para, i) => (
-              <p key={i} className="text-base leading-relaxed text-muted-foreground">
-                {para}
-              </p>
-            ))}
-          </div>
+          {aboutBio && (
+            <div className="mt-6 max-w-2xl space-y-4">
+              <MarkdownRenderer content={aboutBio} />
+            </div>
+          )}
         </div>
 
         {/* Right: portrait */}
@@ -49,7 +54,7 @@ export function AboutContent() {
               alt={name}
               width={640}
               height={800}
-              className="w-full rounded-2xl border border-border object-cover grayscale transition-all duration-500 hover:grayscale-0"
+              className="w-full rounded-2xl border border-border object-cover"
             />
           )}
         </div>

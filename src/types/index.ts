@@ -13,6 +13,8 @@ export interface AboutMe {
   role: string;
   hero_tagline: string;
   bio: string;
+  about_bio: string;
+  about_photo_url: string;
   profile_photo_url: string;
   started_coding_year: number;
   projects_count: number;
@@ -35,6 +37,9 @@ export interface AboutMe {
   bio_tr?: string;
   bio_de?: string;
   bio_es?: string;
+  about_bio_tr?: string;
+  about_bio_de?: string;
+  about_bio_es?: string;
   role_tr?: string;
   role_de?: string;
   role_es?: string;
@@ -57,6 +62,26 @@ export interface AboutMe {
 // Portfolio (Works)
 // ============================================
 
+export interface ProjectCategory {
+  id: string;
+  name: string;
+  name_tr?: string;
+  name_de?: string;
+  name_es?: string;
+  order_index: number;
+  created_at: string;
+}
+
+export interface BlogCategory {
+  id: string;
+  name: string;
+  name_tr?: string;
+  name_de?: string;
+  name_es?: string;
+  order_index: number;
+  created_at: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -65,7 +90,7 @@ export interface Project {
   github: string;
   image: string;
   tags: string[];
-  category?: string;
+  category_id?: string | null;
   order_index: number;
   // Translations
   title_tr?: string;
@@ -120,6 +145,8 @@ export interface Blog {
   title_es?: string;
   excerpt_es?: string;
   content_es?: string;
+  // Category
+  category_id?: string | null;
   // Linked items
   linked_project_id?: string;
   linked_experience_id?: string;

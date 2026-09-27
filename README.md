@@ -49,9 +49,11 @@ A complete, **config-driven CMS dashboard**. Every content section is described 
 | ----- | ------------ |
 | **Panel** | Bölüm sayıları + hızlı erişim |
 | **Profil** | İsim, unvan, slogan, biyografi, fotoğraf (tek satır form) |
+| **Hakkımda Sayfası** | Hakkımda sayfasına özel uzun tanıtım yazısı (markdown) + ayrı portre (ana sayfadan bağımsız) |
 | **Deneyim / Eğitim / Yetenekler / Diller / Liderlik / Sertifikalar** | Özgeçmiş verileri (alt pozisyonlar, tarihler, logolar) |
 | **Sertifikalar** | + çoktan-çoğa **yetenek bağlantısı** (`certification_skills`) |
 | **Projeler / Blog** | Kartlar, kapak görselleri, **galeri yönetimi**, markdown içerik, bağlı varlıklar, yayınla/gizle |
+| **Proje / Blog Kategorileri** | Kategorileri yönetin (Web, Mobil, AI... / Teknoloji, Linux, Haber...) |
 | **Sosyal Linkler / İletişim Mailleri** | Ana sayfa + iletişim popup'ı bağlantıları |
 | **Ayarlar** | Bakım modu |
 
@@ -115,9 +117,13 @@ Seamless theme switching via `next-themes` with system preference detection. All
 
 A custom-built contribution heatmap that fetches your real GitHub activity through a serverless API route (`/api/github`), using the GitHub GraphQL API. Includes interactive tooltips with contribution counts per day.
 
-### 📡 RSS Feed
+### 📡 RSS Feed (TR / EN)
 
-Auto-generated RSS feed at `/feed.xml` for blog syndication, built as a Next.js Route Handler.
+Auto-generated, **language-separated** RSS feeds for blog syndication, built as Next.js Route Handlers:
+
+- **`/feed.xml`** — Turkish feed (`title_tr`/`excerpt_tr`/`content_tr`, `<language>tr</language>`)
+- **`/feed-en.xml`** — English feed (`title`/`excerpt`/`content`, `<language>en</language>`)
+- The blog page RSS button opens a dialog letting visitors pick TR or EN
 
 ### 🔒 Enterprise-Grade Security Architecture
 
@@ -128,6 +134,9 @@ Unlike typical starter templates, this project implements a rigorous, multi-laye
 - **Next.js Middleware Protection**: HTTP-Only, Secure cookies enforce strict access control to all `/admin` routes.
 - **Strict Content-Security-Policy (CSP)**: Robust headers mitigating XSS, Clickjacking, and framing attacks.
 - **Row Level Security (RLS)** on every table - write access is locked to your specific user UUID.
+- **RLS InitPlan optimization**: all admin policies use `(SELECT auth.uid())` so the auth check is evaluated once per query, not per row.
+- **RPC lockdown**: `reorder_items` and `rls_auto_enable` are revoked from `anon`/`PUBLIC` — only `authenticated`/`service_role` (or `postgres`) may invoke them.
+- **`SET search_path` hardening** on every function to prevent search-path hijacking.
 - **Sign-up disabled** - no one can create accounts on your Supabase instance.
 - **PostgreSQL Triggers & Limits**: Database resource quotas prevent spam creation and URL validation constraints block cross-site exploits.
 
@@ -151,11 +160,11 @@ Real-time, actionable feedback for every admin operation (add, edit, delete, reo
 
 ### 📝 Advanced Markdown Editor
 
-A full-featured WYSIWYG markdown editor for blog posts with live preview and comprehensive help:
+A full-featured WYSIWYG markdown editor for blog posts and the About page with live preview and comprehensive help:
 
 - **Rich Toolbar**: Bold, italic, headings, lists, links, inline code, code blocks, tables, horizontal rules
 - **Live Preview**: Side-by-side editing mode to see rendered output instantly
-- **Built-in Help Guide**: Comprehensive syntax reference with examples for all supported formats
+- **Built-in Help Guide**: A collapsible **"Markdown nasıl kullanılır?"** syntax reference with copy-paste examples appears on every markdown field
 - **XSS Protection**: Automatic sanitization via `rehype-sanitize`
 - **Full Multilingual Support**: Available in EN/TR/DE/ES tabs for both create and edit modes
 
@@ -236,6 +245,8 @@ Additional security measures beyond the enterprise-grade foundation:
     │   ├── admin/
     │   │   ├── sections.ts          # All section configs (single source)
     │   │   ├── types.ts             # Field / SectionConfig / Junction / Gallery types
+    │   │   ├── markdown-guide.tsx   # Collapsible "Markdown nasıl kullanılır?" cheat sheet
+    │   │   ├── markdown-editor.tsx  # Markdown textarea + live preview
     │   │   ├── lib/                 # languages (TR-first), errors, notifications, crud helpers
     │   │   ├── components/
     │   │   │   ├── ui/              # Reusable primitives (button, input, modal, switch, ...)
@@ -248,7 +259,6 @@ Additional security measures beyond the enterprise-grade foundation:
     │   │   │   ├── shell.tsx        # Sidebar + topbar layout (always-dark, violet accent)
     │   │   │   ├── dashboard.tsx    # Section counts + quick access
     │   │   │   └── settings.tsx     # Maintenance mode
-    │   │   └── markdown-editor.tsx  # Markdown textarea + live preview
     │   ├── home/
     │   │   ├── hero.tsx         # Hero: photo, "Hi!/I'm", bio, socials, contact
     │   │   ├── work-card.tsx    # Experience card (Deneyim) + detail modal
@@ -291,7 +301,9 @@ The Supabase database consists of **17 tables**, all with Row Level Security ena
 
 | Table                  | Purpose                         | Key Fields                                                            |
 | ---------------------- | ------------------------------- | --------------------------------------------------------------------- |
-| `about_me`             | Profile information             | name, role, bio, photo, stats, quote + translations                   |
+| `about_me`             | Profile information             | name, role, bio, about_bio (About page), photos + translations        |
+| `project_categories`   | Project categories (Web, Mobile...) | name + translations, order_index                                   |
+| `blog_categories`      | Blog categories (Tech, Linux...)   | name + translations, order_index                                   |
 | `skill_categories`     | Grouped skills                  | title, subtitle, skills (JSON array) + translations                   |
 | `experiences`          | Work history                    | title, company, location, dates, description + translations           |
 | `educations`           | Academic history                | university, degree, major, dates                                      |
@@ -299,9 +311,9 @@ The Supabase database consists of **17 tables**, all with Row Level Security ena
 | `activities`           | Leadership & extracurriculars   | organization, role, description + translations                        |
 | `certifications`       | Professional certifications     | name, issuer, date, link, icon + translations                         |
 | `certification_skills` | Junction: certs ↔ skills        | certification_id, skill_category_id                                   |
-| `projects`             | Portfolio works                 | title, description, links, tags, image, linked\_\* IDs + translations |
+| `projects`             | Portfolio works                 | title, description, links, tags, image, category_id, linked\_\* IDs + translations |
 | `project_images`       | Multi-image gallery per project | project_id, image_url, order_index                                    |
-| `blogs`                | Blog posts (Markdown)           | title, excerpt, content, date, image_url, is_published, linked\_\* IDs |
+| `blogs`                | Blog posts (Markdown)           | title, excerpt, content, date, image_url, category_id, is_published, linked\_\* IDs |
 | `blog_images`          | Multi-image gallery per blog    | blog_id, image_url, order_index                                       |
 | `social_links`         | Public social links             | platform, URL, icon, account_type                                     |
 | `contact_emails`       | Contact email addresses         | label, email, label_tr/de/es, order_index                             |
@@ -499,7 +511,7 @@ with the UUID you copied. For example:
 
 ```diff
 - auth.uid() = 'YOUR-USER-UUID-HERE'::uuid
-+ auth.uid() = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'::uuid
++ (SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid
 ```
 
 > **💡 Tip:** Use `Ctrl+H` (Windows) or `Cmd+H` (Mac) to replace all occurrences at once.
@@ -565,7 +577,8 @@ npm run dev
 | `http://localhost:3000/works`           | Portfolio works feed          |
 | `http://localhost:3000/certifications`  | Certification detail page     |
 | `http://localhost:3000/credits`         | Tech credits page             |
-| `http://localhost:3000/feed.xml`        | RSS feed                      |
+| `http://localhost:3000/feed.xml`        | RSS feed (TR)                   |
+| `http://localhost:3000/feed-en.xml`     | RSS feed (EN)                   |
 
 ### 5. Deploy to Vercel
 

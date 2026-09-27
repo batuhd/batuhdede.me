@@ -81,6 +81,14 @@ export function EntityManager({ config }: EntityManagerProps) {
         label: config.junction.sourceLabelField,
       });
     }
+    if (config.filterSourceTable && config.filterSourceValueField && config.filterSourceLabelField) {
+      sources.push({
+        key: "__filter",
+        table: config.filterSourceTable,
+        value: config.filterSourceValueField,
+        label: config.filterSourceLabelField,
+      });
+    }
     const next: Record<string, SelectOption[]> = {};
     await Promise.all(
       sources.map(async (source) => {
@@ -268,6 +276,7 @@ export function EntityManager({ config }: EntityManagerProps) {
           loading={loading}
           search={search}
           filter={filter}
+          filterOptions={sourceOptions["__filter"] ?? []}
           onSearchChange={setSearch}
           onFilterChange={setFilter}
           onAdd={startAdd}

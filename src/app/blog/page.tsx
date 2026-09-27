@@ -65,7 +65,7 @@ export default async function BlogPage({
   searchParams: Promise<{ post?: string }>;
 }) {
   const { post } = await searchParams;
-  const { blogs, entityMap } = await fetchBlogData();
+  const { blogs, entityMap, blogCategories } = await fetchBlogData();
 
   const selectedBlog = post ? blogs.find((b) => b.id === post) : null;
   const articleSchema = selectedBlog
@@ -101,7 +101,7 @@ export default async function BlogPage({
       <JsonLd data={breadcrumbSchema} />
       {articleSchema && <JsonLd data={articleSchema} />}
       <Suspense fallback={<div className="min-h-screen" />}>
-        <BlogContent initialBlogs={blogs} entityMap={entityMap} />
+        <BlogContent initialBlogs={blogs} entityMap={entityMap} blogCategories={blogCategories} />
       </Suspense>
     </>
   );

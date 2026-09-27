@@ -211,7 +211,7 @@ export interface Project {
   github: string | null;
   image: string | null;
   tags: string[];
-  category?: string | null;
+  category_id?: string | null;
   order_index: number;
   title_tr?: string;
   title_de?: string;
@@ -254,6 +254,7 @@ export interface Blog {
   title_es?: string;
   excerpt_es?: string;
   content_es?: string;
+  category_id?: string | null;
   linked_project_id?: string | null;
   linked_experience_id?: string | null;
   linked_education_id?: string | null;
@@ -290,6 +291,26 @@ export interface ContactEmail {
   order_index: number;
 }
 
+export interface ProjectCategory {
+  id: string;
+  name: string;
+  name_tr?: string;
+  name_de?: string;
+  name_es?: string;
+  order_index: number;
+  created_at: string;
+}
+
+export interface BlogCategory {
+  id: string;
+  name: string;
+  name_tr?: string;
+  name_de?: string;
+  name_es?: string;
+  order_index: number;
+  created_at: string;
+}
+
 
 
 export interface SiteData {
@@ -306,6 +327,8 @@ export interface SiteData {
   blogs: Blog[];
   socialLinks: SocialLink[];
   contactEmails: ContactEmail[];
+  projectCategories: ProjectCategory[];
+  blogCategories: BlogCategory[];
 }
 
 export interface BlogWithImages extends Blog {
@@ -335,6 +358,8 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
     blogsRes,
     socialLinksRes,
     contactEmailsRes,
+    projectCategoriesRes,
+    blogCategoriesRes,
   ] = await Promise.all([
     supabase.from("about_me").select("*").limit(1).single(),
     supabase
@@ -382,6 +407,14 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
       .from("contact_emails")
       .select("*")
       .order("order_index", { ascending: true }),
+    supabase
+      .from("project_categories")
+      .select("*")
+      .order("order_index", { ascending: true }),
+    supabase
+      .from("blog_categories")
+      .select("*")
+      .order("order_index", { ascending: true }),
   ]);
 
   return {
@@ -398,6 +431,8 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
     blogs: (blogsRes.data || []) as unknown as Blog[],
     socialLinks: socialLinksRes.data || [],
     contactEmails: contactEmailsRes.data || [],
+    projectCategories: (projectCategoriesRes.data || []) as unknown as ProjectCategory[],
+    blogCategories: (blogCategoriesRes.data || []) as unknown as BlogCategory[],
   };
 });
 
@@ -424,6 +459,8 @@ export const fetchHomeData = cache(async () => {
     contactEmailsRes,
     projectsRes,
     blogsRes,
+    projectCategoriesRes,
+    blogCategoriesRes,
   ] = await Promise.all([
     supabase.from("about_me").select("*").limit(1).single(),
     supabase
@@ -476,6 +513,14 @@ export const fetchHomeData = cache(async () => {
       )
       .eq("is_published", true)
       .order("order_index", { ascending: true }),
+    supabase
+      .from("project_categories")
+      .select("*")
+      .order("order_index", { ascending: true }),
+    supabase
+      .from("blog_categories")
+      .select("*")
+      .order("order_index", { ascending: true }),
   ]);
 
   return {
@@ -492,6 +537,8 @@ export const fetchHomeData = cache(async () => {
     contactEmails: contactEmailsRes.data || [],
     projects: (projectsRes.data || []) as unknown as Project[],
     blogs: (blogsRes.data || []) as unknown as Blog[],
+    projectCategories: (projectCategoriesRes.data || []) as unknown as ProjectCategory[],
+    blogCategories: (blogCategoriesRes.data || []) as unknown as BlogCategory[],
   };
 });
 
@@ -509,6 +556,7 @@ export const fetchBlogData = cache(async () => {
     langsRes,
     actsRes,
     certsRes,
+    blogCategoriesRes,
   ] = await Promise.all([
     supabase
       .from("blogs")
@@ -539,6 +587,10 @@ export const fetchBlogData = cache(async () => {
     supabase
       .from("certifications")
       .select("id, name, name_tr, name_de, name_es"),
+    supabase
+      .from("blog_categories")
+      .select("*")
+      .order("order_index", { ascending: true }),
   ]);
 
   // Blog images map
@@ -613,7 +665,11 @@ export const fetchBlogData = cache(async () => {
     }),
   );
 
-  return { blogs, entityMap };
+  return {
+    blogs,
+    entityMap,
+    blogCategories: (blogCategoriesRes.data || []) as unknown as BlogCategory[],
+  };
 });
 
 // Works Page Data - İlişkili verilerle birlikte
@@ -630,6 +686,7 @@ export const fetchWorksData = cache(async () => {
     langsRes,
     actsRes,
     certsRes,
+    projectCategoriesRes,
   ] = await Promise.all([
     supabase
       .from("projects")
@@ -661,6 +718,10 @@ export const fetchWorksData = cache(async () => {
     supabase
       .from("certifications")
       .select("id, name, name_tr, name_de, name_es"),
+    supabase
+      .from("project_categories")
+      .select("*")
+      .order("order_index", { ascending: true }),
   ]);
 
   // Project images map
@@ -729,7 +790,12 @@ export const fetchWorksData = cache(async () => {
 
   const relatedBlogs = (blogsRes.data || []) as unknown as Blog[];
 
-  return { projects, entityMap, relatedBlogs };
+  return {
+    projects,
+    entityMap,
+    relatedBlogs,
+    projectCategories: (projectCategoriesRes.data || []) as unknown as ProjectCategory[],
+  };
 });
 
 // Helper: Localized field getter

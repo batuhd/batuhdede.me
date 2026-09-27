@@ -19,6 +19,8 @@ import {
   ArrowRight,
   ExternalLink,
   Mail,
+  Copy,
+  Check,
   X as XIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -63,6 +65,17 @@ export function Hero() {
   const [pendingLink, setPendingLink] = useState<string | null>(null);
   const [pendingLabel, setPendingLabel] = useState<string>("");
   const [contactOpen, setContactOpen] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
+
+  const handleCopyEmail = async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiedEmail(email);
+      setTimeout(() => setCopiedEmail(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy email:", err);
+    }
+  };
 
   const handleSocialClick = (href: string, label: string) => {
     setPendingLink(href);
@@ -133,7 +146,7 @@ export function Hero() {
               width={128}
               height={128}
               priority
-              className="h-28 w-28 rounded-2xl border border-border object-cover grayscale transition-all duration-500 hover:grayscale-0 sm:h-32 sm:w-32"
+              className="h-28 w-28 rounded-2xl border border-border object-cover sm:h-32 sm:w-32"
             />
           )}
           <p className="mt-6 text-xl font-bold text-brand">{t("home.hi")}</p>
@@ -223,14 +236,39 @@ export function Hero() {
                     {t("about.email")}
                   </p>
                   {contactEmails.map((ce) => (
-                    <a
+                    <div
                       key={ce.email}
-                      href={`mailto:${ce.email}`}
-                      className="flex items-center gap-2.5 text-sm text-muted-foreground transition-colors hover:text-brand"
+                      className="group flex items-center gap-2.5 rounded-lg py-1.5"
                     >
-                      <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{ce.email}</span>
-                    </a>
+                      <a
+                        href={`mailto:${ce.email}`}
+                        className="flex min-w-0 flex-1 items-start gap-2.5 transition-colors hover:text-brand"
+                      >
+                        <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-brand" />
+                        <span className="min-w-0">
+                          {getLocalized(ce, "label") && (
+                            <span className="block truncate text-sm font-medium text-foreground transition-colors group-hover:text-brand">
+                              {getLocalized(ce, "label")}
+                            </span>
+                          )}
+                          <span className="block truncate text-sm text-muted-foreground transition-colors group-hover:text-brand">
+                            {ce.email}
+                          </span>
+                        </span>
+                      </a>
+                      <button
+                        onClick={() => handleCopyEmail(ce.email)}
+                        className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                        aria-label={copiedEmail === ce.email ? "Copied!" : `Copy ${ce.email}`}
+                        title={copiedEmail === ce.email ? "Kopyalandı!" : "E-posta adresini kopyala"}
+                      >
+                        {copiedEmail === ce.email ? (
+                          <Check className="h-4 w-4 text-brand" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}

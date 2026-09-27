@@ -69,7 +69,7 @@ export default async function WorksPage({
   searchParams: Promise<{ project?: string }>;
 }) {
   const { project } = await searchParams;
-  const { projects, entityMap, relatedBlogs } = await fetchWorksData();
+  const { projects, entityMap, relatedBlogs, projectCategories } = await fetchWorksData();
 
   const selectedProject = project ? projects.find((p) => p.id === project) : null;
   const softwareSchema = selectedProject
@@ -112,6 +112,7 @@ export default async function WorksPage({
           initialProjects={projects}
           entityMap={entityMap}
           relatedBlogs={relatedBlogs}
+          projectCategories={projectCategories}
         />
       </Suspense>
     </>

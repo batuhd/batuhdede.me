@@ -50,7 +50,7 @@ export default function CreditsPage() {
             <div className="flex-1 min-w-0">
               <p className="font-medium">{t("credits.sourceCode")}</p>
               <p className="text-sm text-muted-foreground truncate">
-                github.com/batuhd/batuhdede.me
+                {t("credits.sourceCodeDesc")}
               </p>
             </div>
             <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -73,7 +73,7 @@ export default function CreditsPage() {
               <TechStackRow label={t("credits.tech.auth")} value="Supabase Auth · Cloudflare Turnstile" />
               <TechStackRow label={t("credits.tech.forms")} value="Zod · Sonner" />
               <TechStackRow label={t("credits.tech.icons")} value="Lucide React" />
-              <TechStackRow label={t("credits.tech.security")} value="Next.js Middleware · CSP Headers" />
+              <TechStackRow label={t("credits.tech.security")} value="RLS · Middleware · CSP · Turnstile" />
               <TechStackRow label={t("credits.tech.hosting")} value="Vercel" />
             </div>
           </div>
@@ -107,6 +107,9 @@ export default function CreditsPage() {
                 <p className="text-xs text-muted-foreground">Logo</p>
               </a>
             </div>
+            <p className="text-xs text-muted-foreground leading-relaxed mt-2">
+              {t("credits.typo.logoNote")}
+            </p>
           </div>
         </FadeIn>
 
@@ -117,6 +120,9 @@ export default function CreditsPage() {
               <Film className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">{t("credits.media")}</span>
             </div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary mb-1">
+              {t("credits.media.introTitle")}
+            </p>
             <p className="text-sm text-muted-foreground">
               {t("credits.media.introDesc")}
             </p>
@@ -144,7 +150,7 @@ export default function CreditsPage() {
         {/* Footer */}
         <FadeIn delay={0.3}>
           <p className="text-center text-sm text-muted-foreground pt-4">
-            {t("home.footer")}
+            {t("credits.footer")}
           </p>
         </FadeIn>
       </div>

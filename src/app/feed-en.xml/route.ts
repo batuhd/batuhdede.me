@@ -4,7 +4,7 @@ import { buildFeed } from "@/lib/rss";
 export const revalidate = 3600;
 
 export async function GET() {
-  const xml = await buildFeed("tr");
+  const xml = await buildFeed("en");
 
   return new NextResponse(xml, {
     headers: {

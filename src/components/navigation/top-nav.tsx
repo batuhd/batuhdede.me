@@ -12,9 +12,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Sun, Moon, Globe, X, Menu, Sparkles } from "lucide-react";
-import { cn, sanitizeUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
-import { useSiteData } from "@/context/site-data-context";
 import { type Locale } from "@/config/translations";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -38,7 +37,6 @@ export function TopNav() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { locale, setLocale, t } = useLanguage();
-  const { aboutMe } = useSiteData();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
@@ -65,11 +63,6 @@ export function TopNav() {
 
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
-  const avatarUrl =
-    aboutMe?.profile_photo_url && sanitizeUrl(aboutMe.profile_photo_url)
-      ? sanitizeUrl(aboutMe.profile_photo_url)
-      : null;
-
   return (
     <>
       {/* Top glow line */}
@@ -86,25 +79,14 @@ export function TopNav() {
                 aria-label={t("nav.home")}
                 className="block shrink-0"
               >
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt=""
-                    width={36}
-                    height={36}
-                    priority
-                    className="h-8 w-8 rounded-full object-cover grayscale transition-all hover:grayscale-0 sm:h-9 sm:w-9"
-                  />
-                ) : (
-                  <Image
-                    src="/media/yuvarlaklogobeyaz.png"
-                    alt=""
-                    width={36}
-                    height={36}
-                    priority
-                    className="h-8 w-8 rounded-full object-cover sm:h-9 sm:w-9"
-                  />
-                )}
+                <Image
+                  src="/media/yuvarlaklogobeyaz.png"
+                  alt=""
+                  width={36}
+                  height={36}
+                  priority
+                  className="h-8 w-8 rounded-full object-cover sm:h-9 sm:w-9"
+                />
               </Link>
 
               <nav

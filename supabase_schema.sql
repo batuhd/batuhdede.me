@@ -21,6 +21,11 @@ CREATE TABLE IF NOT EXISTS public.about_me (
     role text,
     hero_tagline text,
     bio text,
+    about_bio text,
+    about_bio_tr text,
+    about_bio_de text,
+    about_bio_es text,
+    about_photo_url text,
     profile_photo_url text,
     started_coding_year integer,
     projects_count integer,
@@ -76,6 +81,27 @@ CREATE TABLE IF NOT EXISTS public.skill_categories (
     subtitle_tr text,
     subtitle_de text,
     subtitle_es text,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Content Categories
+CREATE TABLE IF NOT EXISTS public.project_categories (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    name text NOT NULL,
+    name_tr text,
+    name_de text,
+    name_es text,
+    order_index integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.blog_categories (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    name text NOT NULL,
+    name_tr text,
+    name_de text,
+    name_es text,
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -217,6 +243,8 @@ CREATE TABLE IF NOT EXISTS public.projects (
     description_de text,
     title_es text,
     description_es text,
+    -- Category
+    category_id uuid REFERENCES public.project_categories(id) ON DELETE SET NULL,
     -- Linked entities
     linked_experience_id uuid REFERENCES public.experiences(id) ON DELETE SET NULL,
     linked_education_id uuid REFERENCES public.educations(id) ON DELETE SET NULL,
@@ -257,6 +285,8 @@ CREATE TABLE IF NOT EXISTS public.blogs (
     excerpt_es text,
     content_es text,
     is_published boolean DEFAULT true,
+    -- Category
+    category_id uuid REFERENCES public.blog_categories(id) ON DELETE SET NULL,
     -- Linked entities
     linked_project_id uuid REFERENCES public.projects(id) ON DELETE SET NULL,
     linked_experience_id uuid REFERENCES public.experiences(id) ON DELETE SET NULL,
@@ -327,6 +357,8 @@ CREATE TABLE IF NOT EXISTS public.contact_emails (
 -- URL Validations to prevent stored XSS or bad links
 ALTER TABLE public.about_me DROP CONSTRAINT IF EXISTS check_about_photo_url;
 ALTER TABLE public.about_me ADD CONSTRAINT check_about_photo_url CHECK (profile_photo_url IS NULL OR profile_photo_url ~ '^https?://|^/[^/]');
+ALTER TABLE public.about_me DROP CONSTRAINT IF EXISTS check_about_page_photo_url;
+ALTER TABLE public.about_me ADD CONSTRAINT check_about_page_photo_url CHECK (about_photo_url IS NULL OR about_photo_url ~ '^https?://|^/[^/]');
 ALTER TABLE public.experiences DROP CONSTRAINT IF EXISTS check_exp_logo_url;
 ALTER TABLE public.experiences ADD CONSTRAINT check_exp_logo_url CHECK (logo_url IS NULL OR logo_url ~ '^https?://|^/[^/]');
 ALTER TABLE public.educations DROP CONSTRAINT IF EXISTS check_edu_logo_url;
@@ -343,8 +375,8 @@ ALTER TABLE public.projects DROP CONSTRAINT IF EXISTS check_project_link;
 ALTER TABLE public.projects ADD CONSTRAINT check_project_link CHECK (link IS NULL OR link ~ '^https?://|^/[^/]');
 ALTER TABLE public.projects DROP CONSTRAINT IF EXISTS check_project_github;
 ALTER TABLE public.projects ADD CONSTRAINT check_project_github CHECK (github IS NULL OR github ~ '^https?://|^/[^/]');
--- Work filter category (e.g. B2B, B2B2C, B2C, AI)
-ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS category text;
+-- Category FK (eski serbest-text 'category' sütunu yerine project_categories FK)
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS category_id uuid REFERENCES public.project_categories(id) ON DELETE SET NULL;
 ALTER TABLE public.projects DROP CONSTRAINT IF EXISTS check_project_image;
 ALTER TABLE public.projects ADD CONSTRAINT check_project_image CHECK (image IS NULL OR image ~ '^https?://|^/[^/]');
 ALTER TABLE public.project_images DROP CONSTRAINT IF EXISTS check_project_images_url;
@@ -365,6 +397,14 @@ ALTER TABLE public.about_me DROP CONSTRAINT IF EXISTS check_bio_de_length;
 ALTER TABLE public.about_me ADD CONSTRAINT check_bio_de_length CHECK (bio_de IS NULL OR char_length(bio_de) <= 5000);
 ALTER TABLE public.about_me DROP CONSTRAINT IF EXISTS check_bio_es_length;
 ALTER TABLE public.about_me ADD CONSTRAINT check_bio_es_length CHECK (bio_es IS NULL OR char_length(bio_es) <= 5000);
+ALTER TABLE public.about_me DROP CONSTRAINT IF EXISTS check_about_bio_length;
+ALTER TABLE public.about_me ADD CONSTRAINT check_about_bio_length CHECK (about_bio IS NULL OR char_length(about_bio) <= 10000);
+ALTER TABLE public.about_me DROP CONSTRAINT IF EXISTS check_about_bio_tr_length;
+ALTER TABLE public.about_me ADD CONSTRAINT check_about_bio_tr_length CHECK (about_bio_tr IS NULL OR char_length(about_bio_tr) <= 10000);
+ALTER TABLE public.about_me DROP CONSTRAINT IF EXISTS check_about_bio_de_length;
+ALTER TABLE public.about_me ADD CONSTRAINT check_about_bio_de_length CHECK (about_bio_de IS NULL OR char_length(about_bio_de) <= 10000);
+ALTER TABLE public.about_me DROP CONSTRAINT IF EXISTS check_about_bio_es_length;
+ALTER TABLE public.about_me ADD CONSTRAINT check_about_bio_es_length CHECK (about_bio_es IS NULL OR char_length(about_bio_es) <= 10000);
 
 ALTER TABLE public.experiences DROP CONSTRAINT IF EXISTS check_exp_desc_length;
 ALTER TABLE public.experiences ADD CONSTRAINT check_exp_desc_length CHECK (char_length(description) <= 5000);
@@ -539,6 +579,8 @@ ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_emails ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.project_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.blog_categories ENABLE ROW LEVEL SECURITY;
 
 -- PUBLIC READ
 DROP POLICY IF EXISTS "Public read" ON public.section_order;
@@ -571,114 +613,132 @@ DROP POLICY IF EXISTS "Public read" ON public.social_links;
 CREATE POLICY "Public read" ON public.social_links FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.contact_emails;
 CREATE POLICY "Public read" ON public.contact_emails FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public read" ON public.project_categories;
+CREATE POLICY "Public read" ON public.project_categories FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public read" ON public.blog_categories;
+CREATE POLICY "Public read" ON public.blog_categories FOR SELECT USING (true);
 
 -- ADMIN-ONLY WRITE (locked to site owner)
 -- ⚠️ SETUP REQUIRED: Replace YOUR-USER-UUID-HERE with your Supabase Auth user ID.
 
 DROP POLICY IF EXISTS "Admin insert" ON public.section_order;
-CREATE POLICY "Admin insert" ON public.section_order FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.section_order FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.section_order;
-CREATE POLICY "Admin update" ON public.section_order FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.section_order FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.section_order;
-CREATE POLICY "Admin delete" ON public.section_order FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.section_order FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.about_me;
-CREATE POLICY "Admin insert" ON public.about_me FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.about_me FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.about_me;
-CREATE POLICY "Admin update" ON public.about_me FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.about_me FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.about_me;
-CREATE POLICY "Admin delete" ON public.about_me FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.about_me FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.skill_categories;
-CREATE POLICY "Admin insert" ON public.skill_categories FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.skill_categories FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.skill_categories;
-CREATE POLICY "Admin update" ON public.skill_categories FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.skill_categories FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.skill_categories;
-CREATE POLICY "Admin delete" ON public.skill_categories FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.skill_categories FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.experiences;
-CREATE POLICY "Admin insert" ON public.experiences FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.experiences FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.experiences;
-CREATE POLICY "Admin update" ON public.experiences FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.experiences FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.experiences;
-CREATE POLICY "Admin delete" ON public.experiences FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.experiences FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.educations;
-CREATE POLICY "Admin insert" ON public.educations FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.educations FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.educations;
-CREATE POLICY "Admin update" ON public.educations FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.educations FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.educations;
-CREATE POLICY "Admin delete" ON public.educations FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.educations FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.languages;
-CREATE POLICY "Admin insert" ON public.languages FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.languages FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.languages;
-CREATE POLICY "Admin update" ON public.languages FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.languages FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.languages;
-CREATE POLICY "Admin delete" ON public.languages FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.languages FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.activities;
-CREATE POLICY "Admin insert" ON public.activities FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.activities FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.activities;
-CREATE POLICY "Admin update" ON public.activities FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.activities FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.activities;
-CREATE POLICY "Admin delete" ON public.activities FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.activities FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.certifications;
-CREATE POLICY "Admin insert" ON public.certifications FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.certifications FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.certifications;
-CREATE POLICY "Admin update" ON public.certifications FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.certifications FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.certifications;
-CREATE POLICY "Admin delete" ON public.certifications FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.certifications FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.certification_skills;
-CREATE POLICY "Admin insert" ON public.certification_skills FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.certification_skills FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.certification_skills;
-CREATE POLICY "Admin update" ON public.certification_skills FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.certification_skills FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.certification_skills;
-CREATE POLICY "Admin delete" ON public.certification_skills FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.certification_skills FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.projects;
-CREATE POLICY "Admin insert" ON public.projects FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.projects FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.projects;
-CREATE POLICY "Admin update" ON public.projects FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.projects FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.projects;
-CREATE POLICY "Admin delete" ON public.projects FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.projects FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.project_images;
-CREATE POLICY "Admin insert" ON public.project_images FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.project_images FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.project_images;
-CREATE POLICY "Admin update" ON public.project_images FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.project_images FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.project_images;
-CREATE POLICY "Admin delete" ON public.project_images FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.project_images FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.blogs;
-CREATE POLICY "Admin insert" ON public.blogs FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.blogs FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.blogs;
-CREATE POLICY "Admin update" ON public.blogs FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.blogs FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.blogs;
-CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.blogs FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.blog_images;
-CREATE POLICY "Admin insert" ON public.blog_images FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.blog_images FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.blog_images;
-CREATE POLICY "Admin update" ON public.blog_images FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.blog_images FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.blog_images;
-CREATE POLICY "Admin delete" ON public.blog_images FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.blog_images FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.social_links;
-CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.social_links FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.social_links;
-CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.social_links FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.social_links;
-CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.social_links FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 DROP POLICY IF EXISTS "Admin insert" ON public.contact_emails;
-CREATE POLICY "Admin insert" ON public.contact_emails FOR INSERT WITH CHECK (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin insert" ON public.contact_emails FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin update" ON public.contact_emails;
-CREATE POLICY "Admin update" ON public.contact_emails FOR UPDATE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin update" ON public.contact_emails FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 DROP POLICY IF EXISTS "Admin delete" ON public.contact_emails;
-CREATE POLICY "Admin delete" ON public.contact_emails FOR DELETE USING (auth.uid() = 'YOUR-USER-UUID-HERE'::uuid);
+CREATE POLICY "Admin delete" ON public.contact_emails FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
+
+DROP POLICY IF EXISTS "Admin insert" ON public.project_categories;
+CREATE POLICY "Admin insert" ON public.project_categories FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin update" ON public.project_categories;
+CREATE POLICY "Admin update" ON public.project_categories FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin delete" ON public.project_categories;
+CREATE POLICY "Admin delete" ON public.project_categories FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
+
+DROP POLICY IF EXISTS "Admin insert" ON public.blog_categories;
+CREATE POLICY "Admin insert" ON public.blog_categories FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin update" ON public.blog_categories;
+CREATE POLICY "Admin update" ON public.blog_categories FOR UPDATE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
+DROP POLICY IF EXISTS "Admin delete" ON public.blog_categories;
+CREATE POLICY "Admin delete" ON public.blog_categories FOR DELETE USING ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);
 
 
 -- =============================================
@@ -697,7 +757,7 @@ BEGIN
   END IF;
 
   -- Basic table name validation to prevent SQL injection in dynamic query
-  IF p_table NOT IN ('projects', 'blogs', 'experiences', 'educations', 'skill_categories', 'languages', 'activities', 'certifications', 'project_images', 'blog_images') THEN
+  IF p_table NOT IN ('projects', 'blogs', 'experiences', 'educations', 'skill_categories', 'languages', 'activities', 'certifications', 'project_images', 'blog_images', 'project_categories', 'blog_categories') THEN
     RAISE EXCEPTION 'Invalid table name for reordering';
   END IF;
 
@@ -707,6 +767,8 @@ BEGIN
   END LOOP;
 END;
 $$ LANGUAGE plpgsql SECURITY INVOKER SET search_path = public;
+-- SECURITY: reorder_items EXECUTE yalnızca authenticated + service_role'da;
+-- PUBLIC/anon'dan REVOKE uygulandı.
 
 -- Resource Creation Limits (Fix #16)
 CREATE OR REPLACE FUNCTION enforce_resource_limits()
@@ -754,9 +816,19 @@ BEGIN
   IF TG_TABLE_NAME = 'section_order' AND (SELECT count(*) FROM section_order) >= 100 THEN
     RAISE EXCEPTION 'Maximum section order entries limit reached (100)';
   END IF;
+  IF TG_TABLE_NAME = 'project_categories' AND (SELECT count(*) FROM project_categories) >= 50 THEN
+    RAISE EXCEPTION 'Maximum project categories limit reached (50)';
+  END IF;
+  IF TG_TABLE_NAME = 'blog_categories' AND (SELECT count(*) FROM blog_categories) >= 50 THEN
+    RAISE EXCEPTION 'Maximum blog categories limit reached (50)';
+  END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
+
+-- SECURITY: rls_auto_enable() (Supabase ensure_rls event trigger fonksiyonu)
+-- sadece postgres + service_role çağırabilir: PUBLIC/anon/authenticated'ten REVOKE uygulandı.
+-- reorder_items SECURITY INVOKER + RLS korumalıdır; anon çağırırsa auth.uid() null olduğundan reddedilir.
 
 DROP TRIGGER IF EXISTS check_projects_limit ON projects;
 CREATE TRIGGER check_projects_limit
@@ -839,3 +911,34 @@ DROP TRIGGER IF EXISTS check_section_order_limit ON section_order;
 CREATE TRIGGER check_section_order_limit
 BEFORE INSERT ON section_order
    FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+DROP TRIGGER IF EXISTS check_project_categories_limit ON project_categories;
+CREATE TRIGGER check_project_categories_limit
+  BEFORE INSERT ON project_categories
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+DROP TRIGGER IF EXISTS check_blog_categories_limit ON blog_categories;
+CREATE TRIGGER check_blog_categories_limit
+  BEFORE INSERT ON blog_categories
+  FOR EACH ROW EXECUTE FUNCTION enforce_resource_limits();
+
+-- =============================================
+-- INDEXES (FK covering indexes — query performance)
+-- =============================================
+CREATE INDEX IF NOT EXISTS idx_projects_category_id ON public.projects(category_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_category_id ON public.blogs(category_id);
+CREATE INDEX IF NOT EXISTS idx_blog_images_blog_id ON public.blog_images(blog_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_linked_activity ON public.blogs(linked_activity_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_linked_certification ON public.blogs(linked_certification_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_linked_education ON public.blogs(linked_education_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_linked_experience ON public.blogs(linked_experience_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_linked_language ON public.blogs(linked_language_id);
+CREATE INDEX IF NOT EXISTS idx_blogs_linked_project ON public.blogs(linked_project_id);
+CREATE INDEX IF NOT EXISTS idx_certification_skills_skill_category ON public.certification_skills(skill_category_id);
+CREATE INDEX IF NOT EXISTS idx_certification_skills_certification ON public.certification_skills(certification_id);
+CREATE INDEX IF NOT EXISTS idx_project_images_project_id ON public.project_images(project_id);
+CREATE INDEX IF NOT EXISTS idx_projects_linked_activity ON public.projects(linked_activity_id);
+CREATE INDEX IF NOT EXISTS idx_projects_linked_certification ON public.projects(linked_certification_id);
+CREATE INDEX IF NOT EXISTS idx_projects_linked_education ON public.projects(linked_education_id);
+CREATE INDEX IF NOT EXISTS idx_projects_linked_experience ON public.projects(linked_experience_id);
+CREATE INDEX IF NOT EXISTS idx_projects_linked_language ON public.projects(linked_language_id);

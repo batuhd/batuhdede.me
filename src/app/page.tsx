@@ -37,6 +37,8 @@ export default async function Home() {
     projects: (data.projects || []) as Project[],
     blogs: (data.blogs || []) as Blog[],
     contactEmails: data.contactEmails,
+    projectCategories: data.projectCategories,
+    blogCategories: data.blogCategories,
     loaded: true, // Server'da yüklendi
     isMaintenance: data.sectionOrder.some(
       (s) => s.section_id === "maintenance_mode",

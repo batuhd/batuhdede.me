@@ -19,7 +19,9 @@ import type {
   CertificationSkill,
   SectionOrder,
   Project,
+  ProjectCategory,
   Blog,
+  BlogCategory,
   SocialLink,
   ContactEmail,
 } from "@/types";
@@ -38,6 +40,8 @@ interface SiteData {
   blogs: Blog[];
   socialLinks: SocialLink[];
   contactEmails: ContactEmail[];
+  projectCategories: ProjectCategory[];
+  blogCategories: BlogCategory[];
   loaded: boolean;
   isMaintenance: boolean;
 }
@@ -56,6 +60,8 @@ const defaultData: SiteData = {
   blogs: [],
   socialLinks: [],
   contactEmails: [],
+  projectCategories: [],
+  blogCategories: [],
   loaded: false,
   isMaintenance: false,
 };
@@ -101,6 +107,8 @@ export function SiteDataProvider({
         sectionRes,
         projectsRes,
         blogsRes,
+        projectCategoriesRes,
+        blogCategoriesRes,
       ] = await Promise.all([
         sb.from("about_me").select("*").limit(1),
         sb
@@ -144,6 +152,14 @@ export function SiteDataProvider({
             "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id",
           )
           .order("order_index", { ascending: true }),
+        sb
+          .from("project_categories")
+          .select("*")
+          .order("order_index", { ascending: true }),
+        sb
+          .from("blog_categories")
+          .select("*")
+          .order("order_index", { ascending: true }),
       ]);
 
       if (cancelled) return;
@@ -162,6 +178,8 @@ export function SiteDataProvider({
         blogs: (blogsRes?.data || []) as unknown as Blog[],
         socialLinks: [],
         contactEmails: [],
+        projectCategories: (projectCategoriesRes?.data || []) as unknown as ProjectCategory[],
+        blogCategories: (blogCategoriesRes?.data || []) as unknown as BlogCategory[],
         loaded: true,
         isMaintenance:
           sectionRes?.data?.some(

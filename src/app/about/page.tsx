@@ -29,6 +29,8 @@ export default async function AboutPage() {
     blogs: (data.blogs || []) as Blog[],
     socialLinks: data.socialLinks,
     contactEmails: data.contactEmails,
+    projectCategories: data.projectCategories,
+    blogCategories: data.blogCategories,
     loaded: true,
     isMaintenance: data.sectionOrder.some(
       (s) => s.section_id === "maintenance_mode",
