@@ -6,15 +6,15 @@ import { join } from "path";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const postId = searchParams.get("post");
+  const postSlug = searchParams.get("slug");
 
   let title = "Blog";
   let subtitle = "Batuhan Dede";
 
-  if (postId) {
+  if (postSlug) {
     try {
       const { blogs } = await fetchBlogData();
-      const post = blogs.find((b) => b.id === postId && b.is_published);
+      const post = blogs.find((b) => b.slug === postSlug && b.is_published);
       if (post) {
         title = post.title || title;
         subtitle = post.excerpt || subtitle;

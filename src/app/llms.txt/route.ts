@@ -38,7 +38,7 @@ export async function GET() {
     lines.push("## Recent Blog Posts", "");
     publishedBlogs.slice(0, 10).forEach((blog) => {
       const title = blog.title || "Untitled";
-      lines.push(`- ${baseUrl}/blog?post=${blog.id} - ${title}`);
+      lines.push(`- ${baseUrl}/blog/${blog.slug} - ${title}`);
     });
     lines.push("");
   }
@@ -47,7 +47,7 @@ export async function GET() {
     lines.push("## Portfolio Works", "");
     worksData.projects.slice(0, 10).forEach((project) => {
       const title = project.title || "Untitled Project";
-      lines.push(`- ${baseUrl}/works?project=${project.id} - ${title}`);
+      lines.push(`- ${baseUrl}/works/${project.slug} - ${title}`);
     });
     lines.push("");
   }
@@ -56,7 +56,7 @@ export async function GET() {
     lines.push("## Certifications", "");
     homeData.certifications.slice(0, 10).forEach((cert) => {
       const name = cert.name || "Untitled Certification";
-      lines.push(`- ${baseUrl}/certifications?cert=${cert.id} - ${name}`);
+      lines.push(`- ${baseUrl}/certifications/${cert.slug} - ${name}`);
     });
     lines.push("");
   }

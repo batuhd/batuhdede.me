@@ -6,15 +6,15 @@ import { join } from "path";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const certId = searchParams.get("cert");
+  const certSlug = searchParams.get("slug");
 
   let title = "Certifications";
   let subtitle = "Batuhan Dede";
 
-  if (certId) {
+  if (certSlug) {
     try {
       const { certifications } = await fetchHomeData();
-      const cert = certifications.find((c) => c.id === certId);
+      const cert = certifications.find((c) => c.slug === certSlug);
       if (cert) {
         title = cert.name || title;
         subtitle = cert.issuer || subtitle;

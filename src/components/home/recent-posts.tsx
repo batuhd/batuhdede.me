@@ -47,7 +47,7 @@ export function RecentPosts() {
           {posts.map((post: Blog) => (
             <Link
               key={post.id}
-              href={`/blog?post=${post.id}`}
+              href={`/blog/${post.slug || post.id}`}
               className="group flex items-start justify-between gap-4 py-3.5"
             >
               <div className="min-w-0">

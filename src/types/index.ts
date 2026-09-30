@@ -85,6 +85,7 @@ export interface BlogCategory {
 export interface Project {
   id: string;
   title: string;
+  slug: string;
   description: string;
   link: string;
   github: string;
@@ -128,6 +129,7 @@ export interface ProjectImage {
 export interface Blog {
   id: string;
   title: string;
+  slug: string;
   excerpt: string;
   content: string;
   date: string;
@@ -284,6 +286,7 @@ export interface Activity {
 export interface Certification {
   id: string;
   name: string;
+  slug: string;
   issuer: string;
   issue_date: string;
   icon_url: string;

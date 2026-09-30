@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useModalHistory } from "@/lib/use-modal-history";
 import { FadeIn } from "@/components/motion/fade-in";
 import {
   ExternalLink,
@@ -28,6 +28,7 @@ import type { LinkedEntity } from "@/types";
 
 interface RelatedBlog {
   id: string;
+  slug: string;
   title: string;
   excerpt: string | null;
   date: string;
@@ -40,6 +41,7 @@ interface WorksContentProps {
   entityMap: Record<string, LinkedEntity>;
   relatedBlogs: RelatedBlog[];
   projectCategories: ProjectCategory[];
+  initialSelectedSlug?: string;
 }
 
 const GRADIENTS = [
@@ -65,6 +67,7 @@ export function WorksContent({
   entityMap,
   relatedBlogs,
   projectCategories,
+  initialSelectedSlug,
 }: WorksContentProps) {
   const [projects] = useState<ProjectWithImages[]>(initialProjects);
   const [loading] = useState(false);
@@ -72,8 +75,6 @@ export function WorksContent({
   const [selectedProject, setSelectedProject] =
     useState<ProjectWithImages | null>(null);
   const { t, getLocalized } = useLanguage();
-  const searchParams = useSearchParams();
-  const projectIdFromUrl = searchParams.get("project");
 
   const categoryById = new Map(projectCategories.map((c) => [c.id, c]));
   const categoryName = (categoryId?: string | null) => {
@@ -87,28 +88,14 @@ export function WorksContent({
       ? projects
       : projects.filter((p) => p.category_id === activeCategory);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  // URL'den proje açma/kapatma — client-only deep link senkronizasyonu
-  useEffect(() => {
-    if (!projectIdFromUrl) {
-      setSelectedProject(null);
-      return;
-    }
-    if (projects.length === 0) return;
-    const target = projects.find((p) => p.id === projectIdFromUrl);
-    if (target) setSelectedProject(target);
-  }, [projectIdFromUrl, projects]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const openProject = (project: ProjectWithImages) => {
-    setSelectedProject(project);
-    window.history.pushState(null, "", `/works?project=${project.id}`);
-  };
-
-  const closeProject = () => {
-    setSelectedProject(null);
-    window.history.replaceState(null, "", "/works");
-  };
+  const { open: openProject, close: closeProject } = useModalHistory({
+    basePath: "/works",
+    items: projects,
+    initialSlug: initialSelectedSlug,
+    getSlug: (p) => p.slug,
+    getId: (p) => p.id,
+    setSelected: setSelectedProject,
+  });
 
   // ESC ile kapatma
   useEffect(() => {
@@ -396,7 +383,7 @@ export function WorksContent({
                             key={id}
                             href={
                               entity.type === "certification"
-                                ? `/certifications?cert=${entity.id}`
+                                ? `/certifications/${entity.originalObj?.slug || entity.id}`
                                 : section
                             }
                             onClick={() => setSelectedProject(null)}
@@ -454,7 +441,7 @@ export function WorksContent({
                         {projectBlogs.map((blog) => (
                           <Link
                             key={blog.id}
-                            href={`/blog?post=${blog.id}`}
+                            href={`/blog/${blog.slug || blog.id}`}
                             onClick={() => setSelectedProject(null)}
                             className="group flex items-start gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-muted"
                           >

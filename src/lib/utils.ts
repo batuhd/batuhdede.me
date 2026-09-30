@@ -103,3 +103,22 @@ export function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+
+/**
+ * Converts a string to a URL-friendly slug (Turkish-aware).
+ * "Merhaba Dünya!" -> "merhaba-dunya"
+ */
+export function slugify(value: string): string {
+  const normalized = value
+    .toLowerCase()
+    .replace(/ş/g, "s")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ö/g, "o")
+    .replace(/ı/g, "i")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return normalized || "untitled";
+}

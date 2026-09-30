@@ -6,15 +6,15 @@ import { join } from "path";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const projectId = searchParams.get("project");
+  const projectSlug = searchParams.get("slug");
 
   let title = "Works";
   let subtitle = "Batuhan Dede";
 
-  if (projectId) {
+  if (projectSlug) {
     try {
       const { projects } = await fetchWorksData();
-      const project = projects.find((p) => p.id === projectId);
+      const project = projects.find((p) => p.slug === projectSlug);
       if (project) {
         title = project.title || title;
         subtitle = project.description || subtitle;

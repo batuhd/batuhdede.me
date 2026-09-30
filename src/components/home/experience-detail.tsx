@@ -196,11 +196,11 @@ export function ExperienceDetail() {
               {(() => {
                 const items: { href: string; label: string }[] = [
                   ...relatedProjects.map((p) => ({
-                    href: `/works?project=${p.id}`,
+                    href: `/works/${p.slug || p.id}`,
                     label: String(p.title),
                   })),
                   ...relatedBlogs.map((b) => ({
-                    href: `/blog?post=${b.id}`,
+                    href: `/blog/${b.slug || b.id}`,
                     label: String(b.title),
                   })),
                 ];

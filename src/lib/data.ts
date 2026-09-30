@@ -180,6 +180,7 @@ export interface Activity {
 export interface Certification {
   id: string;
   name: string;
+  slug: string;
   issuer: string;
   issue_date: string | null;
   icon_url: string | null;
@@ -206,6 +207,7 @@ export interface SectionOrder {
 export interface Project {
   id: string;
   title: string;
+  slug: string;
   description: string | null;
   link: string | null;
   github: string | null;
@@ -238,6 +240,7 @@ export interface ProjectImage {
 export interface Blog {
   id: string;
   title: string;
+  slug: string;
   excerpt: string | null;
   content: string | null;
   date: string;
@@ -503,13 +506,13 @@ export const fetchHomeData = cache(async () => {
     supabase
       .from("projects")
       .select(
-        "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
+        "id, title, slug, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
       )
       .order("order_index", { ascending: true }),
     supabase
       .from("blogs")
       .select(
-        "id, title, title_tr, title_de, title_es, excerpt, excerpt_tr, excerpt_de, excerpt_es, date, read_time, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
+        "id, title, slug, title_tr, title_de, title_es, excerpt, excerpt_tr, excerpt_de, excerpt_es, date, read_time, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
       )
       .eq("is_published", true)
       .order("order_index", { ascending: true }),
@@ -568,7 +571,7 @@ export const fetchBlogData = cache(async () => {
       .order("order_index", { ascending: true }),
     supabase
       .from("projects")
-      .select("id, title, title_tr, title_de, title_es, link"),
+      .select("id, title, slug, title_tr, title_de, title_es, link"),
     supabase
       .from("experiences")
       .select("id, title, title_tr, title_de, title_es, company"),
@@ -578,7 +581,7 @@ export const fetchBlogData = cache(async () => {
     supabase
       .from("skill_categories")
       .select("id, title, title_tr, title_de, title_es"),
-    supabase.from("languages").select("id, name, name_tr, name_de, name_es"),
+    supabase.from("languages").select("id, name, slug, name_tr, name_de, name_es"),
     supabase
       .from("activities")
       .select(
@@ -586,7 +589,7 @@ export const fetchBlogData = cache(async () => {
       ),
     supabase
       .from("certifications")
-      .select("id, name, name_tr, name_de, name_es"),
+      .select("id, name, slug, name_tr, name_de, name_es"),
     supabase
       .from("blog_categories")
       .select("*")
@@ -698,7 +701,7 @@ export const fetchWorksData = cache(async () => {
       .order("order_index", { ascending: true }),
     supabase
       .from("blogs")
-      .select("id, title, excerpt, date, read_time, linked_project_id")
+      .select("id, slug, title, excerpt, date, read_time, linked_project_id")
       .not("linked_project_id", "is", null),
     supabase
       .from("experiences")
@@ -709,7 +712,7 @@ export const fetchWorksData = cache(async () => {
     supabase
       .from("skill_categories")
       .select("id, title, title_tr, title_de, title_es"),
-    supabase.from("languages").select("id, name, name_tr, name_de, name_es"),
+    supabase.from("languages").select("id, name, slug, name_tr, name_de, name_es"),
     supabase
       .from("activities")
       .select(
@@ -717,7 +720,7 @@ export const fetchWorksData = cache(async () => {
       ),
     supabase
       .from("certifications")
-      .select("id, name, name_tr, name_de, name_es"),
+      .select("id, name, slug, name_tr, name_de, name_es"),
     supabase
       .from("project_categories")
       .select("*")

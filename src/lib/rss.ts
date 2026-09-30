@@ -59,9 +59,9 @@ export async function buildFeed(lang: "tr" | "en"): Promise<string> {
 
           const title = escapeXml(String(titleRaw || "Untitled"));
           const excerpt = escapeXml(String(excerptRaw || ""));
-          const link = `${siteConfig.url}/blog`;
+          const link = `${siteConfig.url}/blog/${String(post.slug || post.id)}`;
           const pubDate = parseDate(String(post.date || ""));
-          const guid = `${siteConfig.url}/blog#${post.id}`;
+          const guid = `${siteConfig.url}/blog/${String(post.slug || post.id)}`;
           // Escape CDATA terminator to prevent XML injection via blog content
           const content = String(contentRaw || "").replace(
             /]]>/g,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/context/language-context";
+import { useModalHistory } from "@/lib/use-modal-history";
 import { useSiteData } from "@/context/site-data-context";
 import { ExternalLink, FolderKanban, PenTool, X, ArrowUpRight, Tag } from "lucide-react";
 import Image from "next/image";
@@ -222,12 +223,12 @@ function RelatedLinks({
 }) {
   const items: { href: string; label: string; icon: typeof PenTool }[] = [
     ...projects.map((p: Project) => ({
-      href: `/works?project=${p.id}`,
+      href: `/works/${p.slug || p.id}`,
       label: String(p.title),
       icon: FolderKanban,
     })),
     ...blogs.map((b: Blog) => ({
-      href: `/blog?post=${b.id}`,
+      href: `/blog/${b.slug || b.id}`,
       label: String(b.title),
       icon: PenTool,
     })),
@@ -728,7 +729,13 @@ export function Activities() {
   );
 }
 
-export function Certifications({ variant = "list" }: { variant?: "list" | "marquee" | "grid" }) {
+export function Certifications({
+  variant = "list",
+  initialSelectedSlug,
+}: {
+  variant?: "list" | "marquee" | "grid";
+  initialSelectedSlug?: string;
+}) {
   const { getLocalized, t } = useLanguage();
   const {
     certifications,
@@ -740,24 +747,14 @@ export function Certifications({ variant = "list" }: { variant?: "list" | "marqu
   const [selectedCert, setSelectedCert] = useState<Certification | null>(null);
   const [showAllCerts, setShowAllCerts] = useState(false);
 
-  // URL'den sertifika açma (örn: /certifications?cert=uuid)
-  useEffect(() => {
-    const cert = new URLSearchParams(window.location.search).get("cert");
-    if (!cert || certifications.length === 0) return;
-    const target = certifications.find((c: Certification) => c.id === cert);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (target) setSelectedCert(target);
-  }, [certifications]);
-
-  const openCert = (cert: Certification) => {
-    setSelectedCert(cert);
-    window.history.pushState(null, "", `/certifications?cert=${cert.id}`);
-  };
-
-  const closeCert = () => {
-    setSelectedCert(null);
-    window.history.replaceState(null, "", "/");
-  };
+  const { open: openCert, close: closeCert } = useModalHistory({
+    basePath: "/certifications",
+    items: certifications,
+    initialSlug: initialSelectedSlug,
+    getSlug: (c) => c.slug,
+    getId: (c) => c.id,
+    setSelected: setSelectedCert,
+  });
 
   // ESC ile kapatma
   useEffect(() => {
@@ -1057,7 +1054,7 @@ export function Certifications({ variant = "list" }: { variant?: "list" | "marqu
                             {relatedProjects.map((p: Project) => (
                               <Link
                                 key={p.id}
-                                href={`/works?project=${p.id}`}
+                                href={`/works/${p.slug || p.id}`}
                                 className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                               >
                                 <span className="text-sm font-medium transition-colors group-hover:text-primary">
@@ -1079,7 +1076,7 @@ export function Certifications({ variant = "list" }: { variant?: "list" | "marqu
                             {relatedBlogs.map((b: Blog) => (
                               <Link
                                 key={b.id}
-                                href={`/blog?post=${b.id}`}
+                                href={`/blog/${b.slug || b.id}`}
                                 className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                               >
                                 <span className="text-sm font-medium transition-colors group-hover:text-primary">

@@ -57,21 +57,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogPosts = blogData.blogs
     .filter((blog) => blog.is_published)
     .map((blog) => ({
-      url: `${baseUrl}/blog?post=${blog.id}`,
+      url: `${baseUrl}/blog/${blog.slug}`,
       lastModified: blog.date ? new Date(blog.date) : new Date(),
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
 
   const projects = worksData.projects.map((project) => ({
-    url: `${baseUrl}/works?project=${project.id}`,
+    url: `${baseUrl}/works/${project.slug}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
   const certifications = homeData.certifications.map((cert) => ({
-    url: `${baseUrl}/certifications?cert=${cert.id}`,
+    url: `${baseUrl}/certifications/${cert.slug}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.6,

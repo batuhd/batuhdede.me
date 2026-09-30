@@ -78,7 +78,7 @@ export default async function Home() {
   const websiteSchema = websiteJsonLd({
     name: siteConfig.name,
     url: siteConfig.url,
-    searchUrl: `${siteConfig.url}/blog?post={search_term_string}`,
+    searchUrl: `${siteConfig.url}/blog/{search_term_string}`,
   });
 
   return (

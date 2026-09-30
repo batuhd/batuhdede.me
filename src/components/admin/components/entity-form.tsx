@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { sanitizeUrl, cn } from "@/lib/utils";
+import { sanitizeUrl, slugify, cn } from "@/lib/utils";
 import { useAdminError } from "@/context/admin-error-context";
 import {
   columnKey,
@@ -110,6 +110,12 @@ function normalizeValue(field: Field, value: FormValue): unknown {
 
 function buildPayload(config: SectionConfig, values: Record<string, FormValue>): Row {
   const payload: Row = {};
+  // Slug: boşsa başlık/name alanından otomatik üret (örn. projects.title, certifications.name)
+  if (config.fields.some((f) => f.key === "slug") && isEmptyValue(values.slug)) {
+    const sourceField = config.fields.find((f) => f.key === "title" || f.key === "name");
+    const src = sourceField ? String(values[sourceField.key] ?? "").trim() : "";
+    if (src) values.slug = slugify(src);
+  }
   for (const field of config.fields) {
     if (field.type === "role_list") {
       payload[field.key] = Array.isArray(values[field.key]) ? values[field.key] : [];
@@ -176,6 +182,8 @@ export function EntityForm({
   const [lang, setLang] = useState<Lang>("tr");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  // Kullanıcı slug alanına elle yazarsa canlı otomatik öneriyi durdur.
+  const slugManuallyEdited = useRef(false);
 
   useEffect(() => {
     const junction = config.junction;
@@ -203,7 +211,27 @@ export function EntityForm({
   }, [config, values]);
 
   const setField = (valueKey: string, fieldKey: string, value: FormValue) => {
-    setValues((prev) => ({ ...prev, [valueKey]: value }));
+    setValues((prev) => {
+      const next = { ...prev, [valueKey]: value };
+      // Slug düzenlemesi: kullanıcı slug alanına elle yazarsa otomatik öneri durur.
+      const slugField = config.fields.some((f) => f.key === "slug");
+      const sourceField = config.fields.find(
+        (f) => f.key === "title" || f.key === "name",
+      );
+      if (fieldKey === "slug") slugManuallyEdited.current = true;
+      // Yeni kayıtta slug boşken başlık/name yazılınca canlı öner (mevcut kaydı bozma).
+      if (
+        slugField &&
+        sourceField &&
+        !editing &&
+        fieldKey === sourceField.key &&
+        !slugManuallyEdited.current
+      ) {
+        const src = String(value ?? "").trim();
+        if (src) next.slug = slugify(src);
+      }
+      return next;
+    });
     setErrors((prev) => {
       if (!prev[fieldKey]) return prev;
       const next = { ...prev };

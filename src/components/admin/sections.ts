@@ -186,6 +186,7 @@ fields: [
     },
     fields: [
       { key: "name", label: "Sertifika", type: "text", required: true, translatable: true, placeholder: "AWS Solutions Architect" },
+      { key: "slug", label: "Slug (URL)", type: "text", placeholder: "Boş bırakılırsa başlıktan üretilir" },
       { key: "issuer", label: "Veren Kurum", type: "text", translatable: true, placeholder: "Amazon Web Services" },
       { key: "issue_date", label: "Tarih", type: "date", placeholder: "2024" },
       { key: "icon_url", label: "İkon URL", type: "image_url", validate: "url", placeholder: "https://..." },
@@ -222,6 +223,7 @@ fields: [
     gallery: { table: "project_images", parentColumn: "project_id" },
     fields: [
       { key: "title", label: "Başlık", type: "text", required: true, translatable: true, placeholder: "Portföy Sitesi" },
+      { key: "slug", label: "Slug (URL)", type: "text", placeholder: "Boş bırakılırsa başlıktan üretilir" },
       { key: "description", label: "Açıklama", type: "textarea", translatable: true, textareaRows: 4 },
       { key: "image", label: "Kapak Görseli", type: "image_url", validate: "url", placeholder: "https://..." },
       { key: "category_id", label: "Kategori", type: "select", sourceTable: "project_categories", sourceValueField: "id", sourceLabelField: "name", placeholder: "Web, Mobil..." },
@@ -268,6 +270,7 @@ fields: [
     gallery: { table: "blog_images", parentColumn: "blog_id" },
     fields: [
       { key: "title", label: "Başlık", type: "text", required: true, translatable: true, placeholder: "Yazı başlığı" },
+      { key: "slug", label: "Slug (URL)", type: "text", placeholder: "Boş bırakılırsa başlıktan üretilir" },
       { key: "excerpt", label: "Özet", type: "textarea", translatable: true, textareaRows: 2 },
       { key: "content", label: "İçerik (Markdown)", type: "markdown", translatable: true, textareaRows: 12 },
       { key: "category_id", label: "Kategori", type: "select", sourceTable: "blog_categories", sourceValueField: "id", sourceLabelField: "name", placeholder: "Teknoloji, Linux..." },

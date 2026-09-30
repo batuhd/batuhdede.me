@@ -206,6 +206,7 @@ CREATE TABLE IF NOT EXISTS public.activities (
 CREATE TABLE IF NOT EXISTS public.certifications (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     name text NOT NULL,
+    slug text,
     issuer text NOT NULL,
     issue_date text,
     icon_url text,
@@ -232,6 +233,7 @@ CREATE TABLE IF NOT EXISTS public.certification_skills (
 CREATE TABLE IF NOT EXISTS public.projects (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     title text NOT NULL,
+    slug text,
     description text,
     link text,
     github text,
@@ -270,6 +272,7 @@ CREATE TABLE IF NOT EXISTS public.project_images (
 CREATE TABLE IF NOT EXISTS public.blogs (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     title text NOT NULL,
+    slug text,
     excerpt text,
     content text,
     date text,
@@ -308,6 +311,97 @@ CREATE TABLE IF NOT EXISTS public.blog_images (
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- =============================================
+-- SLUGS (Clean URLs for works / blog / certifications)
+-- =============================================
+
+-- Turkish-aware slugify helper: "Merhaba Dünya!" -> "merhaba-dunya"
+CREATE OR REPLACE FUNCTION public.slugify(value text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT regexp_replace(
+    regexp_replace(
+      regexp_replace(
+        regexp_replace(
+          regexp_replace(
+            regexp_replace(
+              regexp_replace(
+                regexp_replace(lower(value), 'ş', 's', 'g'),
+                'ğ', 'g', 'g'),
+              'ü', 'u', 'g'),
+            'ö', 'o', 'g'),
+          'ı', 'i', 'g'),
+        'ç', 'c', 'g'),
+      '[^a-z0-9]+', '-', 'g'),
+    '^-+|-+$', '', 'g');
+$$;
+
+-- Eski tablolara slug kolonunu ekle (fresh DB'de zaten CREATE TABLE'da var)
+ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS slug text;
+ALTER TABLE public.blogs ADD COLUMN IF NOT EXISTS slug text;
+ALTER TABLE public.certifications ADD COLUMN IF NOT EXISTS slug text;
+
+-- Mevcut satırları başlıktan geri doldur (çakışmalarda -2, -3... eklenir)
+DO $$
+DECLARE
+  rec record;
+  base_slug text;
+  final_slug text;
+  counter integer;
+BEGIN
+  FOR rec IN SELECT id, coalesce(nullif(title, ''), 'untitled') AS src
+             FROM public.projects
+             WHERE slug IS NULL OR slug = '' LOOP
+    base_slug := public.slugify(rec.src);
+    IF base_slug = '' THEN base_slug := 'untitled'; END IF;
+    final_slug := base_slug;
+    counter := 2;
+    WHILE EXISTS (SELECT 1 FROM public.projects WHERE slug = final_slug AND id <> rec.id) LOOP
+      final_slug := base_slug || '-' || counter;
+      counter := counter + 1;
+    END LOOP;
+    UPDATE public.projects SET slug = final_slug WHERE id = rec.id;
+  END LOOP;
+
+  FOR rec IN SELECT id, coalesce(nullif(title, ''), 'untitled') AS src
+             FROM public.blogs
+             WHERE slug IS NULL OR slug = '' LOOP
+    base_slug := public.slugify(rec.src);
+    IF base_slug = '' THEN base_slug := 'untitled'; END IF;
+    final_slug := base_slug;
+    counter := 2;
+    WHILE EXISTS (SELECT 1 FROM public.blogs WHERE slug = final_slug AND id <> rec.id) LOOP
+      final_slug := base_slug || '-' || counter;
+      counter := counter + 1;
+    END LOOP;
+    UPDATE public.blogs SET slug = final_slug WHERE id = rec.id;
+  END LOOP;
+
+  FOR rec IN SELECT id, coalesce(nullif(name, ''), 'untitled') AS src
+             FROM public.certifications
+             WHERE slug IS NULL OR slug = '' LOOP
+    base_slug := public.slugify(rec.src);
+    IF base_slug = '' THEN base_slug := 'untitled'; END IF;
+    final_slug := base_slug;
+    counter := 2;
+    WHILE EXISTS (SELECT 1 FROM public.certifications WHERE slug = final_slug AND id <> rec.id) LOOP
+      final_slug := base_slug || '-' || counter;
+      counter := counter + 1;
+    END LOOP;
+    UPDATE public.certifications SET slug = final_slug WHERE id = rec.id;
+  END LOOP;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS projects_slug_key ON public.projects (slug);
+CREATE UNIQUE INDEX IF NOT EXISTS blogs_slug_key ON public.blogs (slug);
+CREATE UNIQUE INDEX IF NOT EXISTS certifications_slug_key ON public.certifications (slug);
+
+ALTER TABLE public.projects ALTER COLUMN slug SET NOT NULL;
+ALTER TABLE public.blogs ALTER COLUMN slug SET NOT NULL;
+ALTER TABLE public.certifications ALTER COLUMN slug SET NOT NULL;
 
 
 

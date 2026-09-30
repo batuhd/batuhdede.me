@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useModalHistory } from "@/lib/use-modal-history";
 import { FadeIn } from "@/components/motion/fade-in";
 import {
   PenTool,
@@ -32,6 +33,7 @@ interface BlogContentProps {
   initialBlogs: BlogWithImages[];
   entityMap: Record<string, LinkedEntity>;
   blogCategories: BlogCategory[];
+  initialSelectedSlug?: string;
 }
 
 function parseDate(dateStr: string | null): number {
@@ -40,7 +42,12 @@ function parseDate(dateStr: string | null): number {
   return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 }
 
-export function BlogContent({ initialBlogs, entityMap, blogCategories }: BlogContentProps) {
+export function BlogContent({
+  initialBlogs,
+  entityMap,
+  blogCategories,
+  initialSelectedSlug,
+}: BlogContentProps) {
   // Sadece yayınlanmış blogları göster, en yeni üstte
   const [posts] = useState<BlogWithImages[]>(
     initialBlogs
@@ -52,8 +59,7 @@ export function BlogContent({ initialBlogs, entityMap, blogCategories }: BlogCon
   const [selectedPost, setSelectedPost] = useState<BlogWithImages | null>(null);
   const [rssOpen, setRssOpen] = useState(false);
   const { t, getLocalized } = useLanguage();
-  const searchParams = useSearchParams();
-  const postIdFromUrl = searchParams.get("post");
+  const router = useRouter();
 
   const categoryById = new Map(blogCategories.map((c) => [c.id, c]));
   const filteredPosts =
@@ -61,28 +67,14 @@ export function BlogContent({ initialBlogs, entityMap, blogCategories }: BlogCon
       ? posts
       : posts.filter((p) => p.category_id === activeCategory);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  // URL'den post açma/kapatma — client-only deep link senkronizasyonu
-  useEffect(() => {
-    if (!postIdFromUrl) {
-      setSelectedPost(null);
-      return;
-    }
-    if (posts.length === 0) return;
-    const target = posts.find((p) => p.id === postIdFromUrl);
-    if (target) setSelectedPost(target);
-  }, [postIdFromUrl, posts]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  const openPost = (post: BlogWithImages) => {
-    setSelectedPost(post);
-    window.history.pushState(null, "", `/blog?post=${post.id}`);
-  };
-
-  const closePost = () => {
-    setSelectedPost(null);
-    window.history.replaceState(null, "", "/blog");
-  };
+  const { open: openPost, close: closePost } = useModalHistory({
+    basePath: "/blog",
+    items: posts,
+    initialSlug: initialSelectedSlug,
+    getSlug: (p) => p.slug,
+    getId: (p) => p.id,
+    setSelected: setSelectedPost,
+  });
 
   // ESC ile kapatma
   useEffect(() => {
@@ -287,7 +279,7 @@ export function BlogContent({ initialBlogs, entityMap, blogCategories }: BlogCon
                 <div className="flex items-center gap-2">
                   <ShareButtons
                     title={getLocalized(selectedPost, "title", "Untitled")}
-                    url={`${typeof window !== "undefined" ? window.location.origin : ""}/blog?post=${selectedPost.id}`}
+                    url={`${typeof window !== "undefined" ? window.location.origin : ""}/blog/${selectedPost.slug || selectedPost.id}`}
                   />
                   <button
                     onClick={() => closePost()}
@@ -395,12 +387,14 @@ export function BlogContent({ initialBlogs, entityMap, blogCategories }: BlogCon
                             </h3>
                             <div
                               onClick={() => {
+                                const slug =
+                                  entity.originalObj?.slug || entity.id;
                                 if (entity.type === "project") {
-                                  window.location.href = `/works?project=${entity.id}`;
+                                  router.push(`/works/${slug}`);
                                 } else if (entity.type === "certification") {
-                                  window.location.href = `/?cert=${entity.id}#certifications`;
+                                  router.push(`/certifications/${slug}`);
                                 } else {
-                                  window.location.href = section || "#";
+                                  router.push(section || "#");
                                 }
                               }}
                               className="group flex cursor-pointer items-center justify-between rounded-xl border border-border p-4 transition-all hover:bg-muted"
