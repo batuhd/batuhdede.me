@@ -161,6 +161,7 @@ export interface Activity {
   role: string;
   start_date: string | null;
   end_date: string | null;
+  is_current?: boolean;
   logo_url: string | null;
   description: string | null;
   link_url: string | null;

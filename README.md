@@ -98,7 +98,7 @@ Blog posts support optional **featured images** (cover photos):
 ### 🎨 Kinetic UI Design
 
 - **Staggered fade-in animations** on every section via a reusable `<FadeIn />` component
-- **Pill top navigation** with active-state lime underline, avatar, language & theme toggles
+- **Pill top navigation** with active-state brand underline, avatar, language & theme toggles
 - **Spring-animated modals** for blog posts, project details, and certifications
 - **Maintenance & Error Screens** - Enhanced maintenance mode with randomized dynamic media (cat macros!) and local 401 Unauthorized fallbacks
 <br />
@@ -109,9 +109,15 @@ Blog posts support optional **featured images** (cover photos):
 <br />
 - Smooth page transitions powered by Motion
 
-### 🌓 Dark & Light Theme
+### 🌓 Dark & Light Theme (Warm Brand Palette)
 
-Seamless theme switching via `next-themes` with system preference detection. All components are designed for both modes.
+Seamless theme switching via `next-themes` with system preference detection. Both modes are built around the **brand palette** — deep maroon `#632626`, brick `#9d5353`, tan `#bf8b67`, cream `#dacc96`:
+
+- **Light mode**: warm cream-paper surfaces, sand borders, warm taupe text
+- **Dark mode**: maroon-tinted surfaces and borders, cream text
+- **Theme-aware brand accent**: tan `#bf8b67` in light mode, cream `#dacc96` in dark mode
+- All surfaces are defined by CSS tokens in `src/app/globals.css` (`--brand`, `--color-maroon`, `--color-brick`, `--color-cream`) — re-theming is a single-file change
+- The dark maroon footer band and warm radial hero glow give the page a cohesive identity in both modes
 
 ### 📊 Live GitHub Contribution Graph
 
@@ -124,6 +130,17 @@ Auto-generated, **language-separated** RSS feeds for blog syndication, built as 
 - **`/feed.xml`** — Turkish feed (`title_tr`/`excerpt_tr`/`content_tr`, `<language>tr</language>`)
 - **`/feed-en.xml`** — English feed (`title`/`excerpt`/`content`, `<language>en</language>`)
 - The blog page RSS button opens a dialog letting visitors pick TR or EN
+
+### 📄 Auto-Generated PDF CV (`/api/cv`)
+
+A **dynamic, database-driven PDF résumé** generated on the fly — no more hand-editing a static file:
+
+- **Always up to date** — pulls live data from Supabase via `fetchAllData()` (name, contact, education, experience, leadership, skills, languages)
+- **4 languages** — `?lang=tr|en|de|es` renders fully localized content (dates, section titles, language levels) using per-field translations
+- **ATS-friendly** — clean single-column layout rendered with `@react-pdf/renderer` and an embedded **Inter** font (full Turkish glyph support), so extractors read "EDUCATION", "Information", "MIS" correctly
+- **Clean filename** — downloads as `Muhammed_Batuhan_DEDE_CV.pdf`; `?download=1` forces attachment, otherwise it opens inline
+- **Homepage button** — "Özgeçmişi İndir" downloads the CV in the visitor's active language
+- **No static file** — the old `public/*.pdf` was removed; the CV always reflects the current CMS content
 
 ### 🔒 Enterprise-Grade Security Architecture
 
@@ -216,6 +233,7 @@ Additional security measures beyond the enterprise-grade foundation:
 | **Notifications**   | [Sonner](https://sonner.emilkowal.ski/)                              | 2.x     |
 | **Icons**           | [Lucide React](https://lucide.dev/)                                  | 0.575.0 |
 | **Markdown**        | [react-markdown](https://github.com/remarkjs/react-markdown) + [rehype-sanitize](https://github.com/rehypejs/rehype-sanitize) | 10.x / 6.x |
+| **PDF Generation**  | [@react-pdf/renderer](https://react-pdf.org/) (auto-generated CV) | 4.x |
 | **Analytics**       | [Vercel Analytics](https://vercel.com/analytics) & Speed Insights    | 2.x / 2.x |
 | **Hosting**         | [Vercel](https://vercel.com/)                                        | -       |
 
@@ -239,6 +257,8 @@ Additional security measures beyond the enterprise-grade foundation:
     │   ├── certifications/      # 🏆 Dedicated certification detail page
     │   ├── credits/             # 🏆 Tech credits & security details
     │   ├── api/github/          # 🔌 GitHub GraphQL API route handler
+    │   ├── api/cv/              # 📄 Auto-generated PDF CV (React-PDF route handler)
+    │   ├── api/og/...           # 🖼️ Dynamic OG image generators
     │   └── feed.xml/            # 📡 RSS feed generator
     │
     ├── components/
@@ -290,7 +310,9 @@ Additional security measures beyond the enterprise-grade foundation:
     │
     └── lib/
         ├── supabase.ts          # Supabase client singleton
-        └── utils.ts             # cn() + 🆕 sanitizeUrl(), isValidEmail(), stripHtml()
+        ├── data.ts              # Server data fetching helpers (cache'li, fetchAllData)
+        ├── utils.ts             # cn() + 🆕 sanitizeUrl(), isValidEmail(), stripHtml()
+        └── cv/                  # 📄 CV veri eşleme (index.ts) + React-PDF dokümanı + gömülü Inter font (fonts.json)
 ```
 
 ---
@@ -594,7 +616,7 @@ npm run dev
 | What                 | Where                        | How                                       |
 | -------------------- | ---------------------------- | ----------------------------------------- |
 | **All content**      | `/admin` dashboard           | Log in and edit everything from the UI    |
-| **Colors & theme**   | `src/app/globals.css`        | Modify CSS custom properties              |
+| **Colors & theme**   | `src/app/globals.css`        | Edit CSS tokens: `--brand`, `--background`, `--card`, `--color-maroon/brick/cream` |
 | **Static text**      | `src/config/translations.ts` | Edit/add translation keys                 |
 | **Navigation links** | Admin → Social Links         | Add/remove/reorder from the dashboard     |
 | **Section order**    | Admin → Page Layout          | Drag sections up/down or hide them        |

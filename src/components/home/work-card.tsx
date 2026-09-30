@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { userConfig } from "@/config/user";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
 import { sanitizeUrl } from "@/lib/utils";
@@ -89,7 +88,7 @@ function careerDuration(experiences: Experience[]): string | null {
 }
 
 export function WorkCard() {
-  const { t, getLocalized } = useLanguage();
+  const { t, getLocalized, locale } = useLanguage();
   const { experiences } = useSiteData();
   const [selected, setSelected] = useState<Experience | null>(null);
 
@@ -111,7 +110,7 @@ export function WorkCard() {
   if (experiences.length === 0) return null;
 
   const total = careerDuration(experiences);
-  const resumeHref = sanitizeUrl(userConfig.links.resume);
+  const resumeHref = `/api/cv?lang=${locale}&download=1`;
 
   return (
     <SectionBox
@@ -187,8 +186,7 @@ export function WorkCard() {
       {resumeHref && (
         <a
           href={resumeHref}
-          target="_blank"
-          rel="noopener noreferrer"
+          download="Muhammed_Batuhan_DEDE_CV.pdf"
           className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-black transition-all hover:opacity-90 active:scale-[0.98]"
         >
           {t("home.downloadResume")}

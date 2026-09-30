@@ -192,4 +192,14 @@ export const en: Record<string, string> = {
 
   // Accessibility
   "a11y.skipToContent": "Skip to main content",
+
+  // CV / Resume (PDF)
+  "cv.education": "EDUCATION",
+  "cv.experience": "EXPERIENCE",
+  "cv.leadership": "LEADERSHIP / ACTIVITIES",
+  "cv.skills": "TECHNICAL SKILLS",
+  "cv.languages": "LANGUAGES",
+  "cv.references": "REFERENCES",
+  "cv.referencesNote": "References available upon request.",
+  "cv.present": "Present",
 };

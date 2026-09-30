@@ -195,4 +195,14 @@ export const tr: Record<string, string> = {
 
   // Accessibility
   "a11y.skipToContent": "Ana içeriğe atla",
+
+  // CV / Resume (PDF)
+  "cv.education": "EĞİTİM",
+  "cv.experience": "DENEYİM",
+  "cv.leadership": "LİDERLİK / AKTİVİTELER",
+  "cv.skills": "TEKNİK BECERİLER",
+  "cv.languages": "DİLLER",
+  "cv.references": "REFERANSLAR",
+  "cv.referencesNote": "Referanslar talep üzerine sağlanacaktır.",
+  "cv.present": "Devam ediyor",
 };

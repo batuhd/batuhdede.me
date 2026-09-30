@@ -68,9 +68,10 @@ The AI agent should help with:
 │   │   ├── admin/login/page.tsx
 │   │   ├── api/auth/login|logout/route.ts
 │   │   ├── api/github/          # GitHub GraphQL contribution API
+│   │   ├── api/cv/              # Otomatik PDF CV (React-PDF, 4 dil, ?download=1)
 │   │   ├── api/og/...           # OG image routes
 │   │   ├── feed.xml/, llms.txt/, sitemap.ts, robots.ts, manifest.ts
-│   │   └── globals.css          # Tailwind v4 + theme tokens (--color-brand lime)
+│   │   └── globals.css          # Tailwind v4 + sıcak palet token'ları (--brand tema duyarlı)
 │   ├── components/
 │   │   ├── admin/               # ★ Admin paneli (config-driven, TR-öncelikli)
 │   │   │   ├── sections.ts      # Bölüm config'leri (tek kaynak)
@@ -104,7 +105,8 @@ The AI agent should help with:
 │   ├── lib/
 │   │   ├── supabase.ts          # Supabase client singleton
 │   │   ├── data.ts              # Server data fetching helpers (cache'li)
-│   │   └── utils.ts             # cn(), sanitizeUrl(), validators
+│   │   ├── utils.ts             # cn(), sanitizeUrl(), validators
+│   │   └── cv/                  # CV: veri eşleme (index.ts), React-PDF doküman (cv-document.tsx), gömülü Inter font (fonts.json)
 │   └── types/
 │       └── index.ts             # Centralized TypeScript interfaces
 ```
@@ -188,8 +190,8 @@ Admin paneli **config-driven**'dır: her içerik bölümü `src/components/admin
 
 - **PostgREST schema cache**: DB'ye yeni sütun ekledikten sonra istek "Could not find the 'X' column of 'Y' in the schema cache" veriyorsa sütun canlı DB'de yok demektir → migration uygula (şema dosyasıyla senkron).
 - **Dev'de middleware çalışmaz** (Next 16.3 Turbopack bug, GH #93328): root `middleware.ts` üretimde korur (`/admin` → 307 `/admin/login`); dev'de client-side `getSession` koruması devrededir. `middleware.ts`'i `proxy.ts`'e **taşıma** — bu sürümde root proxy tanınmıyor.
-- **`next.config.ts`**: `/_next/static` `immutable` cache header'ı dev'de de uygulanır; tarayıcı eski chunk gösterebilir → test sırasında cache temizle/cache bypass ile reload yap.
-- Admin her zaman koyu tema kullanır (`.dark` sarmalayıcı + `zinc`/violet); public site lime/brand temasındadır — admin'de public renkleri kullanma.
+- **`next.config.ts`**: `/_next/static` `immutable` cache header'ı **yalnızca production**'da uygulanır (dev'de `no-cache` — aksi halde tarayıcı eski chunk tutar). Test sırasında yine de cache temizle/cache bypass ile reload yap.
+- Admin her zaman koyu tema kullanır (`.dark` sarmalayıcı + `zinc`/violet); public site **sıcak palet** (maroon `#632626` / brick `#9d5353` / tan `#bf8b67` / cream `#dacc96`) kullanır, `--brand` tema duyarlıdır (açık: tan, koyu: cream) — admin'de public renklerini kullanma.
 
 ---
 
