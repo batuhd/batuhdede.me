@@ -221,15 +221,16 @@ function RelatedLinks({
   projects: Project[];
   blogs: Blog[];
 }) {
+  const { getLocalized } = useLanguage();
   const items: { href: string; label: string; icon: typeof PenTool }[] = [
     ...projects.map((p: Project) => ({
       href: `/works/${p.slug || p.id}`,
-      label: String(p.title),
+      label: getLocalized(p, "title") || String(p.title),
       icon: FolderKanban,
     })),
     ...blogs.map((b: Blog) => ({
       href: `/blog/${b.slug || b.id}`,
-      label: String(b.title),
+      label: getLocalized(b, "title") || String(b.title),
       icon: PenTool,
     })),
   ];
@@ -637,14 +638,17 @@ export function Activities() {
                     <h3 className="text-[15px] font-bold text-foreground">
                       {getLocalized(act, "organization")}
                     </h3>
-                    {getLocalized(act, "role") && (
+                    {!hasRoles && getLocalized(act, "role") && (
                       <p className="text-sm text-muted-foreground">
                         {getLocalized(act, "role")}
                       </p>
                     )}
-                    {actDuration && (
+                    {!hasRoles && (act.start_date || act.end_date || act.is_current) && (
                       <p className="mt-0.5 text-xs text-muted-foreground">
-                        {actDuration}
+                        {formatDate(act.start_date, locale)}
+                        {(act.end_date || act.is_current) &&
+                          ` - ${formatDate(act.is_current ? "Present" : act.end_date, locale)}`}
+                        {actDuration ? ` · ${actDuration}` : ""}
                       </p>
                     )}
                   </div>
