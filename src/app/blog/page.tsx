@@ -40,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BlogPage() {
-  const { blogs, entityMap, blogCategories } = await fetchBlogData();
+  const { blogs, blogCategories } = await fetchBlogData();
 
   const breadcrumbSchema = breadcrumbJsonLd([
     { name: "Ana Sayfa", url: siteConfig.url },
@@ -53,7 +53,6 @@ export default async function BlogPage() {
       <Suspense fallback={<div className="min-h-screen" />}>
         <BlogContent
           initialBlogs={blogs}
-          entityMap={entityMap}
           blogCategories={blogCategories}
         />
       </Suspense>

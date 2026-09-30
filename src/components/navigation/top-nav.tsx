@@ -66,7 +66,7 @@ export function TopNav() {
   return (
     <>
       {/* Top glow line */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px] bg-gradient-to-r from-transparent via-fuchsia-500/70 to-transparent" />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[3px] bg-gradient-to-r from-transparent via-brand/70 to-transparent" />
 
       <header className="sticky top-0 z-50">
         <div className="mx-auto w-full max-w-7xl px-4 pt-3 sm:px-6 sm:pt-4">

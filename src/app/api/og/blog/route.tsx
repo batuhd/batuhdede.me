@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
           flexDirection: "column",
           alignItems: "flex-start",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)",
+          background: "linear-gradient(135deg, #160b0b 0%, #632626 50%, #9d5353 100%)",
           color: "#ffffff",
           fontFamily: "Inter, system-ui, sans-serif",
           padding: 80,
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
             height={80}
             style={{ borderRadius: 16 }}
           />
-          <div style={{ fontSize: 28, color: "#a1a1aa" }}>Batuhan Dede — Blog</div>
+          <div style={{ fontSize: 28, color: "#dacc96" }}>Batuhan Dede — Blog</div>
         </div>
         <div
           style={{
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         <div
           style={{
             fontSize: 28,
-            color: "#a1a1aa",
+            color: "#dacc96",
             maxWidth: 1000,
             lineHeight: 1.4,
           }}

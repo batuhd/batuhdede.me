@@ -167,6 +167,9 @@ export const es: Record<string, string> = {
 
   // Works page
   "works.relatedBlogs": "Publicaciones de Blog Relacionadas",
+  "works.back": "Volver a trabajos",
+  "works.previous": "Proyecto anterior",
+  "works.next": "Proyecto siguiente",
 
   // Blog page
   "blog.related": "Relacionado",
@@ -183,6 +186,9 @@ export const es: Record<string, string> = {
   "blog.copyLink": "Copiar enlace",
   "blog.linkCopied": "¡Enlace copiado!",
   "blog.shareOn": "Compartir en:",
+  "blog.back": "Volver al blog",
+  "blog.previous": "Artículo anterior",
+  "blog.next": "Artículo siguiente",
 
   // GitHub
   "github.contributionsOn": "{count} contribuciones el {date}",

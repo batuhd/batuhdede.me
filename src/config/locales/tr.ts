@@ -167,6 +167,9 @@ export const tr: Record<string, string> = {
 
   // Works page
   "works.relatedBlogs": "İlgili Blog Yazıları",
+  "works.back": "Çalışmalara dön",
+  "works.previous": "Önceki proje",
+  "works.next": "Sonraki proje",
 
   // Blog page
   "blog.related": "İlgili",
@@ -183,6 +186,9 @@ export const tr: Record<string, string> = {
   "blog.copyLink": "Link kopyala",
   "blog.linkCopied": "Link kopyalandı!",
   "blog.shareOn": "Şurada paylaş:",
+  "blog.back": "Bloga dön",
+  "blog.previous": "Önceki yazı",
+  "blog.next": "Sonraki yazı",
 
   // GitHub
   "github.contributionsOn": "{date} tarihinde {count} katkı",

@@ -25,7 +25,7 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)",
+          background: "linear-gradient(135deg, #160b0b 0%, #632626 50%, #9d5353 100%)",
           color: "#ffffff",
           fontFamily: "Inter, system-ui, sans-serif",
           padding: 60,
@@ -57,7 +57,7 @@ export default function OpenGraphImage() {
         <div
           style={{
             fontSize: 32,
-            color: "#a1a1aa",
+            color: "#dacc96",
             textAlign: "center",
             maxWidth: 900,
           }}

@@ -1,8 +1,7 @@
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { fetchWorksData, getLocalized } from "@/lib/data";
 import { Metadata } from "next";
-import { WorksContent } from "../works-content";
+import { ProjectDetail } from "@/components/works/project-detail";
 import { siteConfig } from "@/config/site";
 import { JsonLd, softwareApplicationJsonLd, breadcrumbJsonLd } from "@/components/json-ld";
 
@@ -72,6 +71,10 @@ export default async function ProjectDetailPage({
   const selectedProject = projects.find((p) => p.slug === slug);
   if (!selectedProject) notFound();
 
+  const category = selectedProject.category_id
+    ? projectCategories.find((c) => c.id === selectedProject.category_id)
+    : null;
+
   const softwareSchema = softwareApplicationJsonLd({
     name: getLocalized(selectedProject, "title", "en"),
     description: getLocalized(selectedProject, "description", "en"),
@@ -101,15 +104,13 @@ export default async function ProjectDetailPage({
     <>
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={softwareSchema} />
-      <Suspense fallback={<div className="min-h-screen" />}>
-        <WorksContent
-          initialProjects={projects}
-          entityMap={entityMap}
-          relatedBlogs={relatedBlogs}
-          projectCategories={projectCategories}
-          initialSelectedSlug={selectedProject.slug}
-        />
-      </Suspense>
+      <ProjectDetail
+        project={selectedProject}
+        entityMap={entityMap}
+        relatedBlogs={relatedBlogs}
+        categoryName={category ? getLocalized(category, "name", "en") : ""}
+        projects={projects}
+      />
     </>
   );
 }

@@ -1,10 +1,15 @@
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { fetchBlogData, getLocalized } from "@/lib/data";
 import { Metadata } from "next";
-import { BlogContent } from "../blog-content";
+import { PostDetail } from "@/components/blog/post-detail";
 import { siteConfig } from "@/config/site";
 import { JsonLd, articleJsonLd, breadcrumbJsonLd } from "@/components/json-ld";
+
+function parseDate(dateStr: string | null): number {
+  if (!dateStr) return 0;
+  const parsed = new Date(dateStr);
+  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
 
 export const revalidate = 60;
 
@@ -72,6 +77,14 @@ export default async function BlogPostPage({
   const blog = blogs.find((b) => b.slug === slug && b.is_published);
   if (!blog) notFound();
 
+  const publishedPosts = blogs
+    .filter((b) => b.is_published)
+    .sort((a, b) => parseDate(b.date) - parseDate(a.date));
+
+  const category = blog.category_id
+    ? blogCategories.find((c) => c.id === blog.category_id)
+    : null;
+
   const articleSchema = articleJsonLd({
     title: getLocalized(blog, "title", "en"),
     description: getLocalized(blog, "excerpt", "en"),
@@ -98,14 +111,12 @@ export default async function BlogPostPage({
     <>
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={articleSchema} />
-      <Suspense fallback={<div className="min-h-screen" />}>
-        <BlogContent
-          initialBlogs={blogs}
-          entityMap={entityMap}
-          blogCategories={blogCategories}
-          initialSelectedSlug={blog.slug}
-        />
-      </Suspense>
+      <PostDetail
+        post={blog}
+        entityMap={entityMap}
+        categoryName={category ? getLocalized(category, "name", "en") : ""}
+        posts={publishedPosts}
+      />
     </>
   );
 }

@@ -40,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function WorksPage() {
-  const { projects, entityMap, relatedBlogs, projectCategories } = await fetchWorksData();
+  const { projects, projectCategories } = await fetchWorksData();
 
   const breadcrumbSchema = breadcrumbJsonLd([
     { name: "Ana Sayfa", url: siteConfig.url },
@@ -53,8 +53,6 @@ export default async function WorksPage() {
       <Suspense fallback={<div className="min-h-screen" />}>
         <WorksContent
           initialProjects={projects}
-          entityMap={entityMap}
-          relatedBlogs={relatedBlogs}
           projectCategories={projectCategories}
         />
       </Suspense>
