@@ -88,6 +88,7 @@ export const en: Record<string, string> = {
   "works.subtitle": "A selection of projects I've designed and built, from research through to what shipped.",
   "works.empty": "No projects yet",
   "works.emptyDesc": "Projects added via Admin Panel will appear here.",
+  "works.emptyFilter": "No projects in this category yet",
   "works.loading": "Loading projects...",
   "works.liveDemo": "Live Demo",
   "works.source": "Source",
@@ -108,6 +109,9 @@ export const en: Record<string, string> = {
   "blog.subtitle": "Thoughts, learnings, and web development articles.",
   "blog.empty": "No posts yet",
   "blog.emptyDesc": "Blog posts added via Admin Panel will appear here.",
+  "blog.emptyFilter": "No posts in this category yet",
+  "blog.new": "New",
+  "blog.latest": "Latest post",
   "blog.loading": "Loading posts...",
   "blog.rss.title": "RSS Feed",
   "blog.rss.desc": "Which language RSS feed would you like?",
@@ -192,6 +196,16 @@ export const en: Record<string, string> = {
 
   // Accessibility
   "a11y.skipToContent": "Skip to main content",
+
+  // Error / 404
+  "error.notFound.title": "Page Not Found",
+  "error.notFound.description":
+    "The page you're looking for might have moved or never existed.",
+  "error.server.title": "Something Went Wrong",
+  "error.server.description":
+    "An unexpected error occurred. Please try again.",
+  "error.tryAgain": "Try Again",
+  "error.backHome": "Back to Home",
 
   // CV / Resume (PDF)
   "cv.education": "EDUCATION",

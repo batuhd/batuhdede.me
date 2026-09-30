@@ -90,6 +90,7 @@ export const tr: Record<string, string> = {
   "works.subtitle": "Tasarlayıp geliştirdiğim, araştırmadan yayına kadar olan projelerden bir seçki.",
   "works.empty": "Henüz proje yok",
   "works.emptyDesc": "Admin panelinden eklenen projeler burada görünecek.",
+  "works.emptyFilter": "Bu kategoride henüz proje yok",
   "works.loading": "Projeler yükleniyor...",
   "works.liveDemo": "Canlı Demo",
   "works.source": "Kaynak",
@@ -110,6 +111,9 @@ export const tr: Record<string, string> = {
   "blog.subtitle": "Düşünceler, öğrenmeler ve web geliştirme yazıları.",
   "blog.empty": "Henüz yazı yok",
   "blog.emptyDesc": "Admin panelinden eklenen yazılar burada görünecek.",
+  "blog.emptyFilter": "Bu kategoride henüz yazı yok",
+  "blog.new": "Yeni",
+  "blog.latest": "En son paylaşılan",
   "blog.loading": "Yazılar yükleniyor...",
   "blog.rss.title": "RSS Feed",
   "blog.rss.desc": "Hangi dildeki RSS akışını görmek istersiniz?",
@@ -195,6 +199,16 @@ export const tr: Record<string, string> = {
 
   // Accessibility
   "a11y.skipToContent": "Ana içeriğe atla",
+
+  // Error / 404
+  "error.notFound.title": "Sayfa Bulunamadı",
+  "error.notFound.description":
+    "Aradığınız sayfa taşınmış olabilir ya da hiç var olmamış olabilir.",
+  "error.server.title": "Bir Şeyler Ters Gitti",
+  "error.server.description":
+    "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+  "error.tryAgain": "Tekrar Dene",
+  "error.backHome": "Ana Sayfaya Dön",
 
   // CV / Resume (PDF)
   "cv.education": "EĞİTİM",

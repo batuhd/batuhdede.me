@@ -81,7 +81,7 @@ export function PostDetail({ post, entityMap, categoryName, posts }: PostDetailP
     post.linked_certification_id;
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pt-10 sm:px-6 sm:pt-14">
+    <div className="mx-auto w-full max-w-4xl px-4 pt-10 sm:px-6 sm:pt-14">
       <FadeIn>
         <div className="flex items-center justify-between gap-4">
           <BackButton href="/blog" label={t("blog.back")} />

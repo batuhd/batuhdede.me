@@ -89,6 +89,7 @@ export const de: Record<string, string> = {
   "works.empty": "Noch keine Projekte",
   "works.emptyDesc":
     "Über das Admin-Panel hinzugefügte Projekte werden hier angezeigt.",
+  "works.emptyFilter": "Noch keine Projekte in dieser Kategorie",
   "works.loading": "Projekte werden geladen...",
   "works.liveDemo": "Live-Demo",
   "works.source": "Quellcode",
@@ -110,6 +111,9 @@ export const de: Record<string, string> = {
   "blog.empty": "Noch keine Beiträge",
   "blog.emptyDesc":
     "Über das Admin-Panel hinzugefügte Beiträge werden hier angezeigt.",
+  "blog.emptyFilter": "Noch keine Beiträge in dieser Kategorie",
+  "blog.new": "Neu",
+  "blog.latest": "Neuester Beitrag",
   "blog.loading": "Beiträge werden geladen...",
   "blog.rss.title": "RSS-Feed",
   "blog.rss.desc": "Welchen RSS-Feed möchtest du?",
@@ -195,6 +199,16 @@ export const de: Record<string, string> = {
 
   // Accessibility
   "a11y.skipToContent": "Zum Hauptinhalt springen",
+
+  // Error / 404
+  "error.notFound.title": "Seite nicht gefunden",
+  "error.notFound.description":
+    "Die gesuchte Seite wurde möglicherweise verschoben oder hat nie existiert.",
+  "error.server.title": "Etwas ist schiefgelaufen",
+  "error.server.description":
+    "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+  "error.tryAgain": "Erneut versuchen",
+  "error.backHome": "Zur Startseite",
 
   // CV / Resume (PDF)
   "cv.education": "AUSBILDUNG",

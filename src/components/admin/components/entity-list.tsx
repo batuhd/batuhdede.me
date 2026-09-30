@@ -123,7 +123,7 @@ export function EntityList({
 
       {items.length === 0 ? (
         <EmptyState
-          icon={config.icon}
+          catStatus={204}
           title="Henüz kayıt yok"
           description="İlk kaydı ekleyerek başlayın."
           action={

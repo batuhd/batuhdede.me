@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/context/language-context";
 import { useSiteData } from "@/context/site-data-context";
 import { SectionBox } from "@/components/ui/section-box";
@@ -44,13 +45,21 @@ export function RecentPosts() {
         }
       >
         <div className="divide-y divide-border">
-          {posts.map((post: Blog) => (
+          {posts.map((post: Blog) => {
+            const image =
+              post.image_url &&
+              (post.image_url.startsWith("http") || post.image_url.startsWith("/"))
+                ? post.image_url
+                : post.image_url
+                  ? `/${post.image_url}`
+                  : null;
+            return (
             <Link
               key={post.id}
               href={`/blog/${post.slug || post.id}`}
-              className="group flex items-start justify-between gap-4 py-3.5"
+              className="group flex items-center gap-4 py-3.5"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-foreground transition-colors group-hover:text-brand">
                   {getLocalized(post, "title", "Untitled")}
                 </h3>
@@ -61,9 +70,22 @@ export function RecentPosts() {
                 )}
                 <p className="mt-1 text-xs text-muted-foreground">{post.date}</p>
               </div>
-              <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-brand" />
+              <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-border bg-muted sm:h-20 sm:w-32">
+                {image ? (
+                  <Image
+                    src={image}
+                    alt=""
+                    fill
+                    sizes="128px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#9d5353] via-[#bf8b67] to-[#dacc96]" />
+                )}
+              </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </SectionBox>
     </section>

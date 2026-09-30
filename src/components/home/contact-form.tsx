@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Send, Loader2, CheckCircle2 } from "lucide-react";
 import { userConfig } from "@/config/user";
 import { useLanguage } from "@/context/language-context";
+import { HttpCat } from "@/components/http-cat";
 
 type FormStatus = "idle" | "sending" | "success" | "error";
 
@@ -201,9 +202,12 @@ export function ContactForm() {
           )}
         </button>
         {status === "error" && (
-          <p className="text-sm text-destructive">
-            {t("home.contact.error")}
-          </p>
+          <div className="flex items-center gap-3">
+            <HttpCat status={422} className="max-w-[72px]" />
+            <p className="text-sm text-destructive">
+              {t("home.contact.error")}
+            </p>
+          </div>
         )}
       </form>
     </section>

@@ -137,7 +137,7 @@ export function BlogImageGallery({
                 key={idx}
                 onClick={() => handleThumbnailClick(idx)}
                 className={cn(
-                  "relative flex-shrink-0 h-16 w-24 overflow-hidden rounded-lg border-2 transition-all",
+                  "relative flex-shrink-0 h-20 w-32 overflow-hidden rounded-lg border-2 transition-all",
                   idx === currentIndex
                     ? "border-primary ring-2 ring-primary/20"
                     : "border-transparent hover:border-muted-foreground/30",
@@ -147,7 +147,7 @@ export function BlogImageGallery({
                   src={img.image_url}
                   alt={`Thumbnail ${idx + 1}`}
                   fill
-                  sizes="96px"
+                  sizes="128px"
                   className="object-cover"
                 />
               </button>
@@ -244,7 +244,7 @@ export function BlogImageGallery({
                           key={idx}
                           onClick={() => setCurrentIndex(idx)}
                           className={cn(
-                            "relative flex-shrink-0 h-12 w-16 overflow-hidden rounded border-2 transition-all cursor-pointer",
+                            "relative flex-shrink-0 h-16 w-24 overflow-hidden rounded border-2 transition-all cursor-pointer",
                             idx === currentIndex
                               ? "border-white ring-2 ring-white/20"
                               : "border-transparent hover:border-white/50",
@@ -254,7 +254,7 @@ export function BlogImageGallery({
                             src={img.image_url}
                             alt={`Thumbnail ${idx + 1}`}
                             fill
-                            sizes="64px"
+                            sizes="96px"
                             className="object-cover"
                           />
                         </button>

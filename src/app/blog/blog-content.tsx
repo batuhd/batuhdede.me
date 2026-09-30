@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { FadeIn } from "@/components/motion/fade-in";
-import { PenTool, Loader2, Calendar, Rss, X } from "lucide-react";
+import { Loader2, Calendar, Rss, X, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/context/language-context";
 import { SectionBox } from "@/components/ui/section-box";
+import { HttpCat } from "@/components/http-cat";
 import { cn } from "@/lib/utils";
 import type { BlogWithImages, BlogCategory } from "@/lib/data";
 
@@ -20,6 +22,13 @@ function parseDate(dateStr: string | null): number {
   const parsed = new Date(dateStr);
   return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 }
+
+const GRADIENTS = [
+  "from-[#9d5353] via-[#bf8b67] to-[#dacc96]",
+  "from-[#632626] via-[#9d5353] to-[#bf8b67]",
+  "from-[#bf8b67] via-[#dacc96] to-[#9d5353]",
+  "from-[#632626] via-[#bf8b67] to-[#dacc96]",
+];
 
 export function BlogContent({ initialBlogs, blogCategories }: BlogContentProps) {
   // Sadece yayınlanmış blogları göster, en yeni üstte
@@ -74,7 +83,7 @@ export function BlogContent({ initialBlogs, blogCategories }: BlogContentProps) 
           </div>
         ) : posts.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-4 px-4 text-center">
-            <PenTool className="h-10 w-10 text-muted-foreground" />
+            <HttpCat status={204} className="max-w-[280px]" />
             <div className="space-y-1">
               <p className="font-medium text-foreground">{t("blog.empty")}</p>
               <p className="text-sm text-muted-foreground">{t("blog.emptyDesc")}</p>
@@ -119,49 +128,103 @@ export function BlogContent({ initialBlogs, blogCategories }: BlogContentProps) 
                 </span>
               }
             >
-              <div className="grid gap-6">
-                {filteredPosts.map((post, index) => {
+              {filteredPosts.length === 0 ? (
+                <div className="flex h-64 flex-col items-center justify-center gap-4 px-4 text-center">
+                  <HttpCat status={204} className="max-w-[280px]" />
+                  <p className="font-medium text-foreground">{t("blog.emptyFilter")}</p>
+                </div>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {filteredPosts.map((post, index) => {
                   const catName = post.category_id
                     ? categoryById.get(post.category_id)
                       ? getLocalized(categoryById.get(post.category_id)!, "name")
                       : ""
                     : "";
+                  const title = getLocalized(post, "title", "Untitled");
+                  const image =
+                    post.image_url &&
+                    (post.image_url.startsWith("http") ||
+                      post.image_url.startsWith("/"))
+                      ? post.image_url
+                      : post.image_url
+                        ? `/${post.image_url}`
+                        : null;
+                  const gradient = GRADIENTS[index % GRADIENTS.length];
+                  const isNewest = index === 0;
                   return (
                   <FadeIn key={post.id} delay={0.05 + index * 0.03}>
                     <Link
                       href={`/blog/${post.slug || post.id}`}
-                      className="group flex h-full flex-col rounded-2xl border border-border bg-card p-6 transition-colors hover:border-brand/40 sm:p-7"
+                      style={isNewest ? { borderColor: "var(--brand)" } : undefined}
+                      className={cn(
+                        "group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-colors",
+                        isNewest
+                          ? "border-2 bg-brand/5 shadow-xl shadow-brand/25 ring-2 ring-brand/60"
+                          : "border-border hover:border-brand/40",
+                      )}
                     >
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {String(post.date || "Unknown date")}
-                        </span>
-                        {post.read_time && (
-                          <span className="text-xs text-muted-foreground/70">
-                            {String(post.read_time).replace(
-                              "min read",
-                              t("common.minRead"),
-                            )}
+                      {isNewest && (
+                        <div className="absolute inset-x-0 top-0 z-10 h-1.5 bg-gradient-to-r from-brand via-brand/70 to-transparent" />
+                      )}
+                      <div className="relative aspect-[16/9] overflow-hidden border-b border-border bg-muted">
+                        {image ? (
+                          <Image
+                            src={image}
+                            alt={title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, 50vw"
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className={cn("absolute inset-0 bg-gradient-to-br", gradient)} />
+                        )}
+                        {isNewest && (
+                          <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-black shadow-lg shadow-brand/40">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            {t("blog.new")}
+                          </span>
+                        )}
+                        {catName && (
+                          <span className="absolute left-3 top-3 rounded-md bg-black/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                            {catName}
                           </span>
                         )}
                       </div>
-                      {catName && (
-                        <span className="mt-3 w-fit rounded-full border border-brand/40 bg-brand/10 px-2.5 py-0.5 text-[11px] font-semibold text-brand">
-                          {catName}
-                        </span>
-                      )}
-                      <h2 className="mt-3 text-xl font-bold leading-snug text-foreground transition-colors group-hover:text-brand">
-                        {getLocalized(post, "title", "Untitled")}
-                      </h2>
-                      <p className="mt-3 line-clamp-3 text-base leading-relaxed text-muted-foreground">
-                        {getLocalized(post, "excerpt")}
-                      </p>
+                      <div className="flex flex-1 flex-col p-6 sm:p-7">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {String(post.date || "Unknown date")}
+                            {isNewest && (
+                              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-brand/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-brand">
+                                <Sparkles className="h-3 w-3" />
+                                {t("blog.latest")}
+                              </span>
+                            )}
+                          </span>
+                          {post.read_time && (
+                            <span className="text-xs text-muted-foreground/70">
+                              {String(post.read_time).replace(
+                                "min read",
+                                t("common.minRead"),
+                              )}
+                            </span>
+                          )}
+                        </div>
+                        <h2 className="mt-3 text-xl font-bold leading-snug text-foreground transition-colors group-hover:text-brand">
+                          {title}
+                        </h2>
+                        <p className="mt-3 line-clamp-3 text-base leading-relaxed text-muted-foreground">
+                          {getLocalized(post, "excerpt")}
+                        </p>
+                      </div>
                     </Link>
                   </FadeIn>
                   );
                 })}
-              </div>
+                </div>
+              )}
             </SectionBox>
           </div>
         )}

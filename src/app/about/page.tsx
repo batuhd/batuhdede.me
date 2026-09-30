@@ -3,6 +3,7 @@ import { fetchHomeData } from "@/lib/data";
 import { SiteDataProvider } from "@/context/site-data-context";
 import { LanguageProvider } from "@/context/language-context";
 import { AboutContent } from "@/components/home/about-content";
+import { siteConfig } from "@/config/site";
 import type { Project, Blog } from "@/types";
 
 export const revalidate = 60;
@@ -10,6 +11,31 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "About",
   description: "About Batuhan Dede",
+  alternates: {
+    canonical: `${siteConfig.url}/about`,
+  },
+  openGraph: {
+    title: "About — Batuhan Dede",
+    description: "About Batuhan Dede",
+    url: "/about",
+    siteName: siteConfig.name,
+    locale: "tr_TR",
+    type: "website",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "About — Batuhan Dede",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About",
+    description: "About Batuhan Dede",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default async function AboutPage() {

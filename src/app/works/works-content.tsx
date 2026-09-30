@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FadeIn } from "@/components/motion/fade-in";
-import { FolderKanban, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+import { HttpCat } from "@/components/http-cat";
 import { cn } from "@/lib/utils";
 import type { ProjectWithImages, ProjectCategory } from "@/lib/data";
 
@@ -70,7 +71,7 @@ export function WorksContent({
           </div>
         ) : projects.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-4 px-4 text-center">
-            <FolderKanban className="h-10 w-10 text-muted-foreground" />
+            <HttpCat status={204} className="max-w-[280px]" />
             <div className="space-y-1">
               <p className="font-medium text-foreground">{t("works.empty")}</p>
               <p className="text-sm text-muted-foreground">{t("works.emptyDesc")}</p>
@@ -108,8 +109,14 @@ export function WorksContent({
               </div>
             )}
 
-            <div className="mt-10 grid gap-6 sm:grid-cols-2">
-              {filteredProjects.map((project, index) => {
+            {filteredProjects.length === 0 ? (
+              <div className="mt-10 flex h-64 flex-col items-center justify-center gap-4 px-4 text-center">
+                <HttpCat status={204} className="max-w-[280px]" />
+                <p className="font-medium text-foreground">{t("works.emptyFilter")}</p>
+              </div>
+            ) : (
+              <div className="mt-10 grid gap-6 sm:grid-cols-2">
+                {filteredProjects.map((project, index) => {
                 const title = getLocalized(project, "title", "Untitled Project");
                 const description = getLocalized(project, "description");
                 const label = categoryName(project.category_id);
@@ -167,7 +174,8 @@ export function WorksContent({
                 </FadeIn>
               );
             })}
-            </div>
+              </div>
+            )}
           </>
         )}
       </div>
