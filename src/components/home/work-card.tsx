@@ -189,7 +189,7 @@ export function WorkCard() {
           href={resumeHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-black transition-colors hover:bg-brand"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-bold text-black transition-all hover:opacity-90 active:scale-[0.98]"
         >
           {t("home.downloadResume")}
           <ArrowDown className="h-4 w-4" />

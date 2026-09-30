@@ -50,7 +50,7 @@ export const userConfig = {
   },
 
   links: {
-    resume: "https://github.com/batuhd/cv-olustur",
+    resume: "/Muhammed_Batuhan_DEDE_CV.pdf",
     github: "https://github.com/batuhd",
     instagram: "https://www.instagram.com/batuhdede/",
     linkedin: "https://www.linkedin.com/in/batuhdede/",

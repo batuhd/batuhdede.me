@@ -14,7 +14,8 @@ export function SectionBox({
   return (
     <div className="relative rounded-2xl border border-border px-4 py-6 sm:px-6 sm:py-8">
       <div className="absolute left-4 top-0 flex -translate-y-1/2 items-center gap-2 bg-background pr-2 sm:left-6">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+        <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
           {title}
         </span>
         {badge}

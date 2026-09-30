@@ -140,14 +140,17 @@ export function Hero() {
         {/* Left: avatar + greeting + bio + socials */}
         <div className="min-w-0 flex-1">
           {avatarUrl && (
-            <Image
-              src={avatarUrl}
-              alt={`${name} - Profile Photo`}
-              width={128}
-              height={128}
-              priority
-              className="h-28 w-28 rounded-2xl border border-border object-cover sm:h-32 sm:w-32"
-            />
+            <div className="relative w-fit">
+              <div className="pointer-events-none absolute -inset-5 rounded-full bg-[radial-gradient(closest-side,rgba(157,83,83,0.35),transparent)]" />
+              <Image
+                src={avatarUrl}
+                alt={`${name} - Profile Photo`}
+                width={128}
+                height={128}
+                priority
+                className="relative h-28 w-28 rounded-2xl border border-brand/40 object-cover shadow-xl shadow-maroon/20 sm:h-32 sm:w-32"
+              />
+            </div>
           )}
           <p className="mt-6 text-xl font-bold text-brand">{t("home.hi")}</p>
           <h1 className="mt-2 text-4xl font-black tracking-tight text-foreground sm:text-5xl">
