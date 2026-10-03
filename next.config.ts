@@ -11,6 +11,8 @@ const scriptSrc =
     : "'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://challenges.cloudflare.com";
 
 const nextConfig: NextConfig = {
+  // Framework surumunu disariya sizdirmasin
+  poweredByHeader: false,
   // ISR optimization
   images: {
     unoptimized: true,

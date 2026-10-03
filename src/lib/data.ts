@@ -402,6 +402,7 @@ export const fetchAllData = cache(async (): Promise<SiteData> => {
     supabase
       .from("blogs")
       .select("*")
+      .eq("is_published", true)
       .order("order_index", { ascending: true }),
     supabase
       .from("social_links")
@@ -565,6 +566,7 @@ export const fetchBlogData = cache(async () => {
     supabase
       .from("blogs")
       .select("*")
+      .eq("is_published", true)
       .order("order_index", { ascending: true }),
     supabase
       .from("blog_images")
@@ -703,6 +705,7 @@ export const fetchWorksData = cache(async () => {
     supabase
       .from("blogs")
       .select("id, slug, title, excerpt, date, read_time, linked_project_id")
+      .eq("is_published", true)
       .not("linked_project_id", "is", null),
     supabase
       .from("experiences")

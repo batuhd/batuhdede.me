@@ -13,11 +13,27 @@ import Image from "next/image";
 import { cn, sanitizeUrl } from "@/lib/utils";
 
 // Custom schema - className attribute izni ver
+//
+// `className` tum elementlere acikken markdown icine Tailwind utility
+// sinifi enjekte edilebiliyordu (orn. `fixed inset-0 z-50`) -> CSS tabanli
+// UI redress / sayfa bozma. Script calistirmaz (`style` hala `attributes`
+// icinde degil), yine de izin listesi daraltilir.
+//
+// DIKKAT: hast-util-sanitize `className` degerini *tüm attribute string'i*
+// olarak test eder ve yalnizca RegExp veya tam eslesme kabul eder — glob
+// ("language-*") calismaz. Sadece bu pipeline'in urettigi siniflar
+// (fenced code block `language-xxx`) izin listesinde.
+const ALLOWED_CLASS_NAME =
+  /^(?:language-[\w-]+|hljs|inline-code|prose|table|task-list-item|contains-task-list)$/;
+
 const customSchema = {
   ...defaultSchema,
   attributes: {
     ...(defaultSchema.attributes || {}),
-    "*": [...(defaultSchema.attributes?.["*"] || []), "className"],
+    "*": [
+      ...(defaultSchema.attributes?.["*"] || []),
+      ["className", ALLOWED_CLASS_NAME],
+    ],
   },
   tagNames: [
     ...(defaultSchema.tagNames || []),

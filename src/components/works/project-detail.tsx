@@ -18,7 +18,7 @@ import { BlogImageGallery } from "@/components/blog/blog-image-gallery";
 import { BackButton } from "@/components/ui/back-button";
 import { FadeIn } from "@/components/motion/fade-in";
 import { useLanguage } from "@/context/language-context";
-import { cn } from "@/lib/utils";
+import { cn, sanitizeUrl } from "@/lib/utils";
 import type { ProjectWithImages } from "@/lib/data";
 import type { LinkedEntity } from "@/types";
 
@@ -57,6 +57,10 @@ export function ProjectDetail({
   projects,
 }: ProjectDetailProps) {
   const { t, getLocalized } = useLanguage();
+
+  // DB'den gelen URL'ler her zaman sanitize edilir (defense in depth).
+  const safeProjectLink = sanitizeUrl(project.link);
+  const safeProjectGithub = sanitizeUrl(project.github);
 
   const index = projects.findIndex((p) => p.id === project.id);
   const prevProject = index > 0 ? projects[index - 1] : null;
@@ -219,9 +223,9 @@ export function ProjectDetail({
           )}
 
           <div className="flex flex-wrap items-center gap-4 border-t border-border pt-8">
-            {project.link && (
+            {safeProjectLink && (
               <a
-                href={project.link}
+                href={safeProjectLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-black transition-all hover:opacity-90 active:scale-[0.98]"
@@ -230,9 +234,9 @@ export function ProjectDetail({
                 {t("works.liveDemo")}
               </a>
             )}
-            {project.github && (
+            {safeProjectGithub && (
               <a
-                href={project.github}
+                href={safeProjectGithub}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted"

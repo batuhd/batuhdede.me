@@ -48,11 +48,18 @@ export async function GET() {
     }
 
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        // `next: { revalidate }` yalnizca upstream fetch'i onbellekler;
+        // yanit itself her istekte yeniden serilirdi.
+        "Cache-Control":
+          "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
+      },
+    });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch GitHub data" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store" } }
     );
   }
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "@/context/language-context";
 import { useModalHistory } from "@/lib/use-modal-history";
+import { sanitizeUrl } from "@/lib/utils";
 import { useSiteData } from "@/context/site-data-context";
 import { ExternalLink, FolderKanban, PenTool, X, ArrowUpRight, Tag } from "lucide-react";
 import Image from "next/image";
@@ -602,6 +603,8 @@ export function Activities() {
       <SectionBox title={t("home.activities")}>
         <div className="space-y-6">
           {activities.map((act: Activity) => {
+          // DB'den gelen URL her zaman sanitize edilir (defense in depth).
+          const safeActivityLink = sanitizeUrl(act.link_url);
           const relatedProjects = projects.filter(
             (p: Project) => p.linked_activity_id === act.id,
           );
@@ -653,9 +656,9 @@ export function Activities() {
                     )}
                   </div>
                 </div>
-                {act.link_url && (
+                {safeActivityLink && (
                   <a
-                    href={act.link_url}
+                    href={safeActivityLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={getLocalized(act, "organization")}
@@ -750,6 +753,7 @@ export function Certifications({
   } = useSiteData();
   const [selectedCert, setSelectedCert] = useState<Certification | null>(null);
   const [showAllCerts, setShowAllCerts] = useState(false);
+  const safeCertLink = sanitizeUrl(selectedCert?.link_url);
 
   const { open: openCert, close: closeCert } = useModalHistory({
     basePath: "/certifications",
@@ -982,9 +986,9 @@ export function Certifications({
                       {selectedCert.issue_date &&
                         `· ${selectedCert.issue_date}`}
                     </p>
-                    {selectedCert.link_url && (
+                    {safeCertLink && (
                       <a
-                        href={selectedCert.link_url}
+                        href={safeCertLink}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="mt-2 inline-flex items-center gap-1 text-sm text-primary hover:underline"

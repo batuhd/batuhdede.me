@@ -10,7 +10,7 @@ import { Button } from "../ui/button";
 import { EmptyState } from "../ui/empty-state";
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn, sanitizeUrl } from "@/lib/utils";
 import type { Row } from "../../types";
 
 interface GalleryFieldProps {
@@ -59,14 +59,22 @@ export function GalleryField({ table, parentColumn, parentId, label = "Görselle
   }, [load]);
 
   const add = async () => {
-    if (!url.trim()) {
+    const rawUrl = url.trim();
+    if (!rawUrl) {
       notify.error("Görsel eklenemedi: Görsel URL boş");
+      return;
+    }
+    // Galeri, `validate: "url"` olan diger alanlardan farkli olarak dogrulama
+    // zincirinden gecmezdi; javascript:/data: gibi semalar kaydedilebiliyordu.
+    const safeUrl = sanitizeUrl(rawUrl);
+    if (!safeUrl) {
+      notify.error("Görsel eklenemedi: Geçersiz URL");
       return;
     }
     setBusy(true);
     const { error } = await createRow(table, {
       [parentColumn]: parentId,
-      image_url: url.trim(),
+      image_url: safeUrl,
       caption: caption.trim() || null,
       order_index: items.length,
     });

@@ -700,7 +700,15 @@ CREATE POLICY "Public read" ON public.projects FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.project_images;
 CREATE POLICY "Public read" ON public.project_images FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.blogs;
-CREATE POLICY "Public read" ON public.blogs FOR SELECT USING (true);
+-- blogs icin iki ayri politika: anon (public) yalnizca YAYINLANMIS yazilari
+-- gorur. Onceki `USING (true)` politikasi taslaklarin tam icerigini (content,
+-- content_tr/_de/_es) herkese acik hale getiriyordu; filtre yalnizca
+-- istemci tarafinda `blog-content.tsx` icinde yapiliyordu, DB katmaninda degil.
+CREATE POLICY "Public read published blogs" ON public.blogs
+  FOR SELECT TO anon USING (is_published = true);
+-- Admin paneli tum yazilari (taslak dahil) okumali.
+CREATE POLICY "Authenticated read blogs" ON public.blogs
+  FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.blog_images;
 CREATE POLICY "Public read" ON public.blog_images FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.social_links;

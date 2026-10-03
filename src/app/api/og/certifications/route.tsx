@@ -1,5 +1,13 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+
+// OG uretimi pahali (fetch + 1200x630 rasterizasyon). CPNun her istekte tam
+// render yapmasini onlemek icin hem ISR hem CDN cache etkin.
+export const revalidate = 3600;
+
+const OG_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
+};
 import { fetchHomeData } from "@/lib/data";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -89,6 +97,7 @@ export async function GET(request: NextRequest) {
     {
       width: 1200,
       height: 630,
+      headers: OG_CACHE_HEADERS,
     },
   );
 }

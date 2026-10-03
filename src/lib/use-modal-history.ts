@@ -61,7 +61,15 @@ export function useModalHistory<T>({
     const onPopState = () => {
       const path = window.location.pathname;
       if (path.startsWith(`${basePath}/`)) {
-        const slug = decodeURIComponent(path.slice(basePath.length + 1));
+        // Bozuk yuzde kodlamasi (orn. `/certifications/%`) decodeURIComponent
+        // icinde URIError firlatip tum popstate dinleyicisini olduruyordu.
+        let slug = "";
+        try {
+          slug = decodeURIComponent(path.slice(basePath.length + 1));
+        } catch {
+          setSelected(null);
+          return;
+        }
         const target =
           items.find((i) => getSlug(i) === slug) ||
           items.find((i) => getId(i) === slug);

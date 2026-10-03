@@ -26,12 +26,21 @@ const MAX_ATTEMPTS = 5;
 const EMAIL_MAX_ATTEMPTS = 10;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const LOCKOUT_MS = 30 * 60 * 1000; // 30 minute lockout after max failures
+// Asiri istek sayisiyla bellek sisletmesini onlemek icin Map boyut tavani.
+const MAX_TRACKED_KEYS = 10_000;
+// Zod dogrulamasi calistiktAN SONRA body'nin tamami bellege aliniyor;
+// buyuk gövdeleri daha okumadan reddet.
+const MAX_BODY_BYTES = 4 * 1024;
 
 function getClientIP(headersList: Headers): string {
+  // Yalnizca platformun guvendigi kaynaklar. `x-forwarded-for` istemci
+  // tarafindan serbestce gonderilebilir; Vercel edge onu eziyor ama
+  // baska bir host'ta (self-hosted, reverse proxy arkasinda) guvenilmez.
+  // x-forwarded-for sayilmadigi icin saldirgan her denemede yeni kova
+  // acarak IP limitini atlatabiliyordu.
   return (
     headersList.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
-    headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headersList.get("x-real-ip") ||
+    headersList.get("x-real-ip")?.split(",")[0]?.trim() ||
     "unknown"
   );
 }
@@ -48,6 +57,19 @@ function cleanupOldEntries() {
       emailAttempts.delete(email);
     }
   }
+
+  // Boyut tavanini asan durumda en eski girisleri at (Map sirali).
+  const evict = (map: Map<string, { count: number; firstAttempt: number; lockedUntil: number }>) => {
+    if (map.size <= MAX_TRACKED_KEYS) return;
+    const excess = map.size - MAX_TRACKED_KEYS;
+    let removed = 0;
+    for (const key of map.keys()) {
+      map.delete(key);
+      if (++removed >= excess) break;
+    }
+  };
+  evict(attempts);
+  evict(emailAttempts);
 }
 
 export async function POST(request: Request) {
@@ -84,8 +106,24 @@ export async function POST(request: Request) {
   let validatedData: LoginInput;
 
   try {
-    const body = await request.json();
-    const result = loginSchema.safeParse(body);
+    // Body limitini okumadan Once kontrol et.
+    const contentLength = Number(request.headers.get("content-length") ?? "0");
+    if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+      return NextResponse.json(
+        { error: "Payload too large." },
+        { status: 413 }
+      );
+    }
+
+    const body = await request.text();
+    if (body.length > MAX_BODY_BYTES) {
+      return NextResponse.json(
+        { error: "Payload too large." },
+        { status: 413 }
+      );
+    }
+
+    const result = loginSchema.safeParse(JSON.parse(body));
 
     if (!result.success) {
       const errors = result.error.errors.map(e => e.message).join(", ");
@@ -219,11 +257,10 @@ export async function POST(request: Request) {
       );
     }
 
+    // Kalan hakket bilgisi verilmiyor: brute-force calibrasyonunu
+    // kolaylastirir ve kullaniciya kazanc saglamaz.
     return NextResponse.json(
-      {
-        error: "Invalid credentials.",
-        attemptsLeft: remaining,
-      },
+      { error: "Invalid credentials." },
       { status: 401 }
     );
   }
