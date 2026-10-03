@@ -584,7 +584,7 @@ export const fetchBlogData = cache(async () => {
     supabase
       .from("skill_categories")
       .select("id, title, title_tr, title_de, title_es"),
-    supabase.from("languages").select("id, name, slug, name_tr, name_de, name_es"),
+    supabase.from("languages").select("id, name, level, name_tr, name_de, name_es"),
     supabase
       .from("activities")
       .select(
@@ -716,7 +716,7 @@ export const fetchWorksData = cache(async () => {
     supabase
       .from("skill_categories")
       .select("id, title, title_tr, title_de, title_es"),
-    supabase.from("languages").select("id, name, slug, name_tr, name_de, name_es"),
+    supabase.from("languages").select("id, name, level, name_tr, name_de, name_es"),
     supabase
       .from("activities")
       .select(
@@ -824,3 +824,34 @@ export function getLocalized(
   if (value === undefined || value === null) return fallback || "";
   return String(value) || fallback || "";
 }
+
+/**
+ * Bakım modu — sunucu tarafı.
+ *
+ * Admin tasarımı: bakım modu ON = `section_order` içinde
+ * `maintenance_mode` satırı VAR, OFF = satır silinmiş
+ * (bkz. `src/components/admin/components/settings.tsx`).
+ *
+ * Bu deger once yalnizca client tarafinda hesaplaniyordu; guard bir client
+ * component oldugu icin SSG/pre-render HTML'inde `loaded` false kaliyor ve
+ * `children` (tum site icerigi) render ediliyordu. Bakim modunda bile
+ * `curl` ile tum icerik alinabiliyor, arama motorlari indeksleyebiliyor ve
+ * kullanici ekranda icerik->bakim ekrani degisimi yasardi.
+ * Karar artik sunucuda verilir.
+ */
+export const fetchMaintenanceMode = cache(async (): Promise<boolean> => {
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from("section_order")
+    .select("section_id")
+    .eq("section_id", "maintenance_mode")
+    .maybeSingle();
+
+  if (error) {
+    // Hata olursa siteyi kapatma — icerik gosterilmeye devam eder.
+    return false;
+  }
+
+  return !!data;
+});

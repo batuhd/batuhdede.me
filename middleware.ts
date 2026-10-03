@@ -50,6 +50,11 @@ export async function middleware(request: NextRequest) {
     cookieOptions: {
       path: "/",
       sameSite: "lax",
+      // Oturum çerezi JS tarafından okunamaz olmalı: sayfadaki bir
+      // script çalışsa bile refresh token'ı document.cookie ile alamaz.
+      // @supabase/ssr varsayılanı httpOnly:false idi ve bu projede
+      // override edilmediği için çerez düz metin okunabiliyordu.
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
     },
   });
@@ -63,6 +68,22 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
+  }
+
+  // Mevcut oturumların çerezini httpOnly'ya zorla taşı.
+  //
+  // @supabase/ssr maxAge'i 400 gün olarak sabitler; kullanıcı yeniden
+  // giriş yapana kadar çerez `httpOnly: false` bayrağıyla kalmaya devam
+  // eder. Bu yüzden doğrulanmış oturumda çerez değerini aynen koruyup
+  // bayrakları düzelterek response'a yeniden yazıyoruz.
+  for (const cookie of request.cookies.getAll()) {
+    if (!cookie.name.startsWith("sb-")) continue;
+    response.cookies.set(cookie.name, cookie.value, {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
   }
 
   return response;

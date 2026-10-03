@@ -13,6 +13,7 @@ import { Intro } from "@/components/home/intro";
 import { HtmlLangUpdater } from "@/components/html-lang-updater";
 import { SkipLink } from "@/components/skip-link";
 import { siteConfig } from "@/config/site";
+import { fetchMaintenanceMode } from "@/lib/data";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -88,11 +89,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Bakım modu kararı sunucuda verilir; guard'a prop olarak geçer.
+  const isMaintenance = await fetchMaintenanceMode();
+
   return (
     <html
       lang="tr"
@@ -115,7 +119,7 @@ export default function RootLayout({
               <SkipLink />
               <HtmlLangUpdater />
               <SiteDataProvider>
-                <MaintenanceGuard>
+                <MaintenanceGuard isMaintenance={isMaintenance}>
                   <TopNav />
                   <main id="main-content" className="relative mx-auto w-full px-4 pb-16 sm:px-6">
                     {children}

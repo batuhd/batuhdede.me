@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { fetchRecentImages } from "../lib/crud";
 
 const IMAGE_COLUMNS: ReadonlyArray<readonly [string, string]> = [
   ["about_me", "profile_photo_url"],
@@ -18,18 +18,14 @@ const IMAGE_COLUMNS: ReadonlyArray<readonly [string, string]> = [
 let recentCache: string[] | null = null;
 
 async function loadRecentImages(): Promise<string[]> {
-  if (!supabase) return [];
   if (recentCache) return recentCache;
 
   const sets: string[] = [];
   for (const [table, col] of IMAGE_COLUMNS) {
-    const result = (await supabase.from(table).select(col).limit(50)) as unknown as {
-      data: Array<Record<string, unknown>> | null;
-      error: unknown;
-    };
-    (result.data ?? []).forEach((row) => {
-      const value = String(row[col] ?? "").trim();
-      if (value) sets.push(value);
+    const urls = await fetchRecentImages(table, col, 50);
+    urls.forEach((value) => {
+      const trimmed = String(value).trim();
+      if (trimmed) sets.push(trimmed);
     });
   }
   recentCache = Array.from(new Set(sets));

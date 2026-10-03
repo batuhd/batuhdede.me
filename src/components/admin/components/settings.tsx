@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useAdminError } from "@/context/admin-error-context";
 import { classifyError, isPermissionError } from "../lib/errors";
+import { fetchMaintenance, setMaintenance as persistMaintenance } from "../lib/crud";
 import { notify } from "../lib/notifications";
 import { Switch } from "./ui/switch";
 import { Skeleton } from "./ui/skeleton";
@@ -27,45 +27,22 @@ export function Settings() {
   );
 
   useEffect(() => {
-    if (!supabase) return;
-    const sb = supabase;
     void (async () => {
-      const result = (await sb
-        .from("section_order")
-        .select("*")
-        .eq("section_id", "maintenance_mode")
-        .maybeSingle()) as unknown as { data: unknown; error: unknown };
-      if (result.error) report(result.error, "Ayarlar yüklenemedi");
-      setMaintenance(!!result.data);
+      const { data, error } = await fetchMaintenance();
+      if (error) report(error, "Ayarlar yüklenemedi");
+      else setMaintenance(!!data);
       setLoading(false);
     })();
   }, [report]);
 
   const toggleMaintenance = async () => {
-    if (!supabase) return;
     const next = !maintenance;
     setLoading(true);
-    if (next) {
-      const result = (await supabase
-        .from("section_order")
-        .insert({ section_id: "maintenance_mode", order_index: -1 })) as unknown as {
-        error: unknown;
-      };
-      if (result.error) {
-        report(result.error, "Bakım modu açılamadı");
-        setLoading(false);
-        return;
-      }
-    } else {
-      const result = (await supabase
-        .from("section_order")
-        .delete()
-        .eq("section_id", "maintenance_mode")) as unknown as { error: unknown };
-      if (result.error) {
-        report(result.error, "Bakım modu kapatılamadı");
-        setLoading(false);
-        return;
-      }
+    const { error } = await persistMaintenance(next);
+    if (error) {
+      report(error, next ? "Bakım modu açılamadı" : "Bakım modu kapatılamadı");
+      setLoading(false);
+      return;
     }
     setMaintenance(next);
     setLoading(false);

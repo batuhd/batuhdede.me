@@ -700,6 +700,7 @@ CREATE POLICY "Public read" ON public.projects FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.project_images;
 CREATE POLICY "Public read" ON public.project_images FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.blogs;
+DROP POLICY IF EXISTS "Public read published blogs" ON public.blogs;
 -- blogs icin iki ayri politika: anon (public) yalnizca YAYINLANMIS yazilari
 -- gorur. Onceki `USING (true)` politikasi taslaklarin tam icerigini (content,
 -- content_tr/_de/_es) herkese acik hale getiriyordu; filtre yalnizca
@@ -707,6 +708,7 @@ DROP POLICY IF EXISTS "Public read" ON public.blogs;
 CREATE POLICY "Public read published blogs" ON public.blogs
   FOR SELECT TO anon USING (is_published = true);
 -- Admin paneli tum yazilari (taslak dahil) okumali.
+DROP POLICY IF EXISTS "Authenticated read blogs" ON public.blogs;
 CREATE POLICY "Authenticated read blogs" ON public.blogs
   FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "Public read" ON public.blog_images;
@@ -722,6 +724,9 @@ CREATE POLICY "Public read" ON public.blog_categories FOR SELECT USING (true);
 
 -- ADMIN-ONLY WRITE (locked to site owner)
 -- ⚠️ SETUP REQUIRED: Replace YOUR-USER-UUID-HERE with your Supabase Auth user ID.
+-- Bu değer repoda TUTULMAZ. Canlı DB'de gerçek UUID yazılıdır; kendi kurulumunda
+--   SELECT id, email FROM auth.users;
+-- ile bulup buraya yaz. (Gerçek UUID'yi public repoya koymak kimliğini ifşa eder.)
 
 DROP POLICY IF EXISTS "Admin insert" ON public.section_order;
 CREATE POLICY "Admin insert" ON public.section_order FOR INSERT WITH CHECK ((SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid);

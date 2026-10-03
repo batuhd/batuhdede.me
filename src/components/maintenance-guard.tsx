@@ -1,13 +1,18 @@
 "use client";
 
-import { useSiteData } from "@/context/site-data-context";
 import { usePathname } from "next/navigation";
 import { Wrench } from "lucide-react";
 import { ReactNode } from "react";
 import { HttpCat } from "@/components/http-cat";
 
-export function MaintenanceGuard({ children }: { children: ReactNode }) {
-  const { isMaintenance, loaded } = useSiteData();
+export function MaintenanceGuard({
+  children,
+  isMaintenance,
+}: {
+  children: ReactNode;
+  /** Sunucuda hesaplanir (bkz. `fetchMaintenanceMode`). */
+  isMaintenance: boolean;
+}) {
   const pathname = usePathname();
 
   // Admin panel is always accessible
@@ -15,8 +20,9 @@ export function MaintenanceGuard({ children }: { children: ReactNode }) {
     return <>{children}</>;
   }
 
-  // Evaluate maintenance mode only after loaded
-  if (loaded && isMaintenance) {
+  // Karar sunucuda verildigi icin `loaded` beklemiyoruz: SSG/pre-render
+  // HTML'inde de bakim ekrani render edilir, icerik sizmaz.
+  if (isMaintenance) {
     return (
       <div className="flex flex-col min-h-[80vh] items-center justify-center space-y-8 text-center px-4 animate-in fade-in zoom-in-95 duration-500">
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">

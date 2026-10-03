@@ -24,6 +24,8 @@ export async function POST() {
       cookieOptions: {
         path: "/",
         sameSite: "lax",
+        // middleware ve login ile ayni bayraklar
+        httpOnly: true,
         secure: process.env.NODE_ENV === "production",
       },
     });

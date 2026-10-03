@@ -194,6 +194,11 @@ export async function POST(request: Request) {
     cookieOptions: {
       path: "/",
       sameSite: "lax",
+      // Oturum çerezi JS tarafından okunamaz olmalı: sayfadaki bir
+      // script çalışsa bile refresh token'ı document.cookie ile alamaz.
+      // @supabase/ssr varsayılanı httpOnly:false idi ve bu projede
+      // override edilmediği için çerez düz metin okunabiliyordu.
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
     },
   });

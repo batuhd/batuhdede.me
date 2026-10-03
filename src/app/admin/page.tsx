@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { AdminErrorProvider } from "@/context/admin-error-context";
 import type { User } from "@supabase/supabase-js";
 import { AdminToaster } from "@/components/admin/lib/notifications";
@@ -32,27 +31,42 @@ export default function AdminPage() {
   const [view, setView] = useState<AdminView>(() => readHashView());
 
   useEffect(() => {
-    if (!supabase) {
-      router.push("/admin/login");
-      return;
-    }
-    const sb = supabase;
-    const check = async () => {
-      const { data } = await sb.auth.getSession();
-      if (!data.session) {
-        router.push("/admin/login");
-        return;
-      }
-      setUser(data.session.user);
-      setLoading(false);
-    };
-    void check();
+    // Oturum cookie'si httpOnly; durum sunucudan sorgulanır.
+    // (Bu kontrol yalnızca UX amaçlı — gerçek yetki kontrolü middleware
+    //  getUser() ve RLS policy'lerindedir.)
+    let cancelled = false;
 
-    const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.push("/admin/login");
-      else setUser(session.user);
-    });
-    return () => sub.subscription.unsubscribe();
+    const check = async () => {
+      try {
+        const res = await fetch("/api/admin");
+        if (res.status === 401) {
+          if (!cancelled) router.push("/admin/login");
+          return;
+        }
+        if (!res.ok) {
+          if (!cancelled) router.push("/admin/login");
+          return;
+        }
+        const body = (await res.json()) as {
+          user?: { id: string; email: string | null };
+        };
+        if (cancelled) return;
+        if (!body.user) {
+          router.push("/admin/login");
+          return;
+        }
+        setUser(body.user as unknown as User);
+      } catch {
+        if (!cancelled) router.push("/admin/login");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void check();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   // Hash tabanlı görünüm routing'i (geri/ileri tuşları çalışır).
@@ -73,7 +87,6 @@ export default function AdminPage() {
   const handleSignOut = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      await supabase?.auth.signOut();
     } catch {
       // çıkış her koşulda tamamlanır
     }
@@ -90,6 +103,9 @@ export default function AdminPage() {
       </div>
     );
   }
+
+  // Oturum doğrulanmadan panel iskeletini render etme.
+  if (!user) return null;
 
   const section =
     view === "dashboard" || view === "settings" ? null : SECTION_MAP[view as keyof typeof SECTION_MAP];

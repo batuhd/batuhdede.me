@@ -46,6 +46,21 @@ const nextConfig: NextConfig = {
             value: "max-age=31536000; includeSubDomains",
           },
           // Content Security Policy
+          //
+          // NOT: `script-src` icinde 'unsafe-inline' ZORUNLU. Next.js'in
+          // App Router'i sayfa basina uretilen inline script'ler (RSC flight
+          // payload) yaziyor; bunlara nonce verilmeden 'unsafe-inline'
+          // kaldirilamaz. Nonce'lu CSP denendi ve CALISMIYOR: bu proje
+          // 78 sayfayi ISR ile prerender ediyor (x-nextjs-prerender: 1).
+          // Test sonucu:
+          //   1) CSP next.config.ts'te iken middleware nonce CSP'sini EZIYOR
+          //   2) CSP sadece middleware'de iken prerender sayfalara ULAŞMIYOR
+          //      (header response'a hic konmadan Next response'u yeniden uretiyor)
+          // Nonce kullanmak icin tum route'larin dynamic'e cevrilmesi gerekir
+          // (statik prerender + istek-basina nonce matematiksel olarak
+          // birlikte calismaz). Bu, ISR'i ve SEO/performansi yavaslatir.
+          // Gercek XSS sink'i bulunmadigi icin denge: mevcut CSP + guclu
+          // uygulama katmani sanitizasyonu (bkz. sanitizeUrl, rehype-sanitize).
           {
             key: "Content-Security-Policy",
             value: [
@@ -60,6 +75,8 @@ const nextConfig: NextConfig = {
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self' https://formspree.io",
+              // Tum alt kaynaklar HTTPS'e zorlanir
+              "upgrade-insecure-requests",
             ].join("; "),
           },
         ],

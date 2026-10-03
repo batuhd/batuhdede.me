@@ -68,7 +68,7 @@ export async function GET() {
     "",
     "## Security",
     "",
-    "The project uses Row Level Security (RLS) on Supabase, Cloudflare Turnstile bot protection, Next.js middleware with HTTP-only secure cookies, and a strict Content-Security-Policy.",
+    "The project uses Row Level Security (RLS) on Supabase, Cloudflare Turnstile bot protection, Next.js middleware auth guards, a Content-Security-Policy, and Strict-Transport-Security.",
     "",
   );
 

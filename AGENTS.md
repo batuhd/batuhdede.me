@@ -1,285 +1,306 @@
-# AI Agent Instructions
+# AI Agent Talimatları
 
-This file defines how AI agents should behave in this repository.
-
----
-
-## 🎯 Project Goal
-
-This project is a full-stack, multilingual portfolio website and headless CMS built with Next.js 16.3, React 19.2, TypeScript, Tailwind CSS v4, Supabase, and Motion (formerly Framer Motion).
-
-The AI agent should help with:
-
-- Writing clean, maintainable, and type-safe code
-- Fixing bugs with minimal changes
-- Improving performance
-- Explaining code when asked
-- Following the existing project structure and conventions
+Bu dosya, bu depoda çalışan AI agent'ların **nasıl davranacağını** tanımlar. Bir kod yazmadan önce ilgili bölümü oku.
 
 ---
 
-## 📁 Repository Rules
+## 🎯 Proje hedefi
 
-- **Never delete files unless explicitly asked.**
-- **Never refactor large parts of the project without confirmation.**
-- **Always check existing code before writing new code.**
-- **Prefer modifying existing code over creating new files.**
-- Keep commits small and meaningful when using Git.
-- Do not push directly without explicit confirmation.
+Çok dilli (TR/EN/DE/ES) portfolyo sitesi + headless CMS. Tüm içerik `/admin` panelinden yönetilir; içerik değişikliği için kod değişikliği veya deploy gerekmez.
+
+**Stack:** Next.js 16.3.8 (App Router, RSC) · React 19.2 · TypeScript (strict) · Tailwind v4 · Supabase · Motion
+
+Agent'ın yardımcı olması beklenen alanlar: temiz ve tip-güvenli kod yazmak, minimal değişiklikle bug düzeltmek, performansı iyileştirmek, açıklandığında kodu anlatmak, mevcut proje yapısına ve kurallarına uymak.
 
 ---
 
-## 💻 Tech Stack
+## 📁 Depo kuralları
 
-| Layer | Technology | Version |
-| ----- | ---------- | ------- |
-| Framework | [Next.js](https://nextjs.org/) (App Router) | 16.3.0 |
-| UI Library | [React](https://react.dev/) | 19.2.7 |
-| Language | [TypeScript](https://www.typescriptlang.org/) | 5.x |
-| Styling | [Tailwind CSS](https://tailwindcss.com/) | 4.x |
-| Animations | [Motion](https://motion.dev/) | 12.x |
-| Database & Auth | [Supabase](https://supabase.com/) (`@supabase/supabase-js` + `@supabase/ssr`) | 2.x / 0.12 |
-| Validation | [Zod](https://zod.dev/) | 3.x |
-| Notifications | [Sonner](https://sonner.emilkowal.ski/) | 2.x |
-| Icons | [Lucide React](https://lucide.dev/) | 0.575.0 |
+- **Dosya silme** — açıkça istenmedikçe hiçbir dosyayı silme
+- **Büyük refactor** — projenin geniş bölümlerini onay almadan yeniden yazma
+- **Önce oku** — yeni kod yazmadan önce mevcut kodu oku
+- **Değiştir > oluştur** — mevcut dosyayı düzenlemeyi yeni dosya oluşturmaya tercih et
+- **Küçük commit'ler** — anlamlı, birlikte çalışan değişiklikler
+- **Push** — açık onay olmadan doğrudan push yapma
+- **Config dosyaları** — `next.config.ts`, `middleware.ts`, `tsconfig.json` vb. sormadan ezme
+
+---
+
+## 💻 Teknoloji yığını
+
+| Katman | Teknoloji | Sürüm |
+| --- | --- | --- |
+| Framework | Next.js (App Router) | 16.3.8 |
+| UI | React | 19.2.7 |
+| Dil | TypeScript | 5.x (`strict: true`) |
+| Stil | Tailwind CSS | 4.x (CSS-first) |
+| Animasyon | Motion | 12.x |
+| Veritabanı & Auth | Supabase (`supabase-js` + `@supabase/ssr`) | 2.x / 0.12 |
+| Doğrulama | Zod | 3.x |
+| Bildirim | Sonner | 2.x |
+| İkon | Lucide React | 0.575 |
 | Markdown | `react-markdown` + `rehype-sanitize` | 10.x / 6.x |
+| PDF | React-PDF | 4.9 |
+
+> `package.json` tek kaynaktır; sürümü oradan oku.
 
 ---
 
-## 🏗️ Project Architecture
+## 🏗️ Proje mimarisi
 
-> 📄 **Veri modeli:** `supabase_schema.sql` (tek kaynak). **Admin yapısı:** `src/components/admin/sections.ts` (bölüm config'leri, tek kaynak) + `src/components/admin/components/` (yeniden kullanılabilir CRUD parçaları). Büyük görevlerde önce bu dosyaları oku.
+> 📄 **Veri modeli:** `supabase_schema.sql` (tek kaynak, RLS dahil)
+> 🔐 **Admin yapısı:** `src/components/admin/sections.ts` (bölüm config'leri, tek kaynak)
+> 📡 **Admin API:** `src/app/api/admin/route.ts` (sunucu tarafı CRUD)
+> Büyük görevlerde önce bu dosyaları oku.
 
 ```text
 .
-├── supabase_schema.sql          # Full database schema with RLS policies (single source)
-├── .env.example                 # Environment variable template
-├── next.config.ts               # Next.js config + CSP/security headers
-├── middleware.ts                # Auth middleware for /admin routes
-├── src/
-│   ├── app/                     # Next.js App Router
-│   │   ├── page.tsx             # Homepage (Hero, WorkCard, certs marquee, recent posts)
-│   │   ├── about/page.tsx       # About page
-│   │   ├── works/page.tsx       # Portfolio works (+ project detail modal)
-│   │   ├── blog/page.tsx        # Blog (+ post modal)
-│   │   ├── certifications/      # Certification page
-│   │   ├── credits/             # Tech credits page
-│   │   ├── admin/page.tsx       # Admin panel (config-driven CRUD, auth protected)
-│   │   ├── admin/login/page.tsx
-│   │   ├── api/auth/login|logout/route.ts
-│   │   ├── api/github/          # GitHub GraphQL contribution API
-│   │   ├── api/cv/              # Otomatik PDF CV (React-PDF, 4 dil, ?download=1)
-│   │   ├── api/og/...           # OG image routes
-│   │   ├── feed.xml/, llms.txt/, sitemap.ts, robots.ts, manifest.ts
-│   │   └── globals.css          # Tailwind v4 + sıcak palet token'ları (--brand tema duyarlı)
-│   ├── components/
-│   │   ├── admin/               # ★ Admin paneli (config-driven, TR-öncelikli)
-│   │   │   ├── sections.ts      # Bölüm config'leri (tek kaynak)
-│   │   │   ├── types.ts         # Field / SectionConfig / Junction / Gallery tipleri
-│   │   │   ├── lib/             # languages (TR-first), errors, notifications, crud helpers
-│   │   │   ├── components/
-│   │   │   │   ├── ui/          # Yeniden kullanılabilir primitifler (input, modal, switch...)
-│   │   │   │   ├── fields/      # Alan tipi başına input (markdown, image, role-list, gallery...)
-│   │   │   │   ├── entity-form.tsx  # Genel form: alan→input, TR/EN/DE/ES sekmeleri, validasyon, tüm dilleri kaydet
-│   │   │   │   ├── entity-list.tsx  # Arama, rozetler, sıralama, yayınla/gizle
-│   │   │   │   ├── entity-manager.tsx # Bölüm için liste+form+onay modalını birleştirir
-│   │   │   │   ├── language-tabs.tsx # TR→EN→DE→ES sekmeleri + eksik-çeviri rozetleri
-│   │   │   │   ├── recent-images.tsx # "Son kullanılan görseller" seçici
-│   │   │   │   ├── shell.tsx    # Sol sidebar + topbar (her zaman koyu, violet accent)
-│   │   │   │   ├── dashboard.tsx # Bölüm sayıları + hızlı erişim
-│   │   │   │   └── settings.tsx # Bakım modu
-│   │   │   └── markdown-editor.tsx # Markdown textarea + canlı önizleme
-│   │   ├── home/                # Hero, WorkCard, Skills, profile-sections, RecentPosts, ...
-│   │   ├── navigation/top-nav.tsx # Pill navbar (Home/About/Works/Blog + lang/theme)
-│   │   ├── ui/section-box.tsx   # Section box (title on top border)
-│   │   ├── blog/, markdown/, motion/, json-ld.tsx, ...
-│   ├── config/
-│   │   ├── locales/             # Static UI translations (EN/TR/DE/ES)
-│   │   ├── translations.ts      # Typed i18n dictionary
-│   │   ├── site.ts              # siteConfig
-│   │   └── user.ts              # Hardcoded user fallbacks
-│   ├── context/
-│   │   ├── language-context.tsx    # Global language provider
-│   │   ├── site-data-context.tsx   # Supabase data cache
-│   │   └── admin-error-context.tsx # RLS/auth error handling + 401 logout
-│   ├── lib/
-│   │   ├── supabase.ts          # Supabase client singleton
-│   │   ├── data.ts              # Server data fetching helpers (cache'li)
-│   │   ├── utils.ts             # cn(), sanitizeUrl(), validators
-│   │   └── cv/                  # CV: veri eşleme (index.ts), React-PDF doküman (cv-document.tsx), gömülü Inter font (fonts.json)
-│   └── types/
-│       └── index.ts             # Centralized TypeScript interfaces
+├── supabase_schema.sql          # 17 tablo + 69 RLS politikası + trigger'lar
+├── .env.example                 # Ortam değişkeni şablonu
+├── next.config.ts               # CSP + güvenlik header'ları
+├── middleware.ts                # /admin koruması + httpOnly çerez zorlama
+├── opencode.json                # MCP sunucuları
+│
+└── src/
+    ├── app/
+    │   ├── page.tsx             # Ana sayfa
+    │   ├── about/page.tsx
+    │   ├── works/page.tsx · works/[slug]/page.tsx
+    │   ├── blog/page.tsx · blog/[slug]/page.tsx
+    │   ├── certifications/      # Liste + [slug] detay
+    │   ├── credits/page.tsx
+    │   ├── admin/page.tsx · admin/login/page.tsx
+    │   ├── api/
+    │   │   ├── admin/route.ts            # 🔐 Tüm admin CRUD
+    │   │   ├── auth/login/route.ts       # Turnstile + rate limit
+    │   │   ├── auth/logout/route.ts
+    │   │   ├── cv/route.ts               # React-PDF
+    │   │   ├── github/route.ts           # GraphQL proxy
+    │   │   └── og/{blog,works,certifications}/route.tsx
+    │   ├── feed.xml/ · feed-en.xml/ · llms.txt/
+    │   ├── sitemap.ts · robots.ts · manifest.ts
+    │   └── globals.css          # Tailwind v4 + sıcak palet token'ları
+    │
+    ├── components/
+    │   ├── admin/               # ★ Config-driven admin (TR-öncelikli)
+    │   │   ├── sections.ts      #   Bölüm config'leri (TEK KAYNAK)
+    │   │   ├── types.ts         #   Field / SectionConfig / Junction / Gallery
+    │   │   ├── lib/crud.ts      #   /api/admin istemcisi (ince)
+    │   │   ├── lib/languages.ts #   TR-first sıra, columnKey()
+    │   │   ├── lib/errors.ts    #   classifyError(), isPermissionError()
+    │   │   ├── lib/notifications.tsx
+    │   │   └── components/      #   entity-form · entity-list · entity-manager
+    │   │                         #   language-tabs · fields/ · ui/ · shell
+    │   ├── home/ · works/ · blog/ · navigation/
+    │   ├── ui/section-box.tsx   # Başlık üst border'da
+    │   └── markdown/markdown-renderer.tsx
+    │
+    ├── lib/
+    │   ├── data.ts              # Sunucu veri katmanı (cache'li, RLS'li)
+    │   ├── utils.ts             # cn() · sanitizeUrl() · slugify()
+    │   └── cv/                  # PDF veri eşleme + React-PDF dokümanı
+    │
+    ├── config/
+    │   ├── locales/{en,tr,de,es}.ts
+    │   ├── translations.ts      # Tip'li UI çevirileri
+    │   ├── site.ts · user.ts
+    │
+    ├── context/
+    │   ├── language-context.tsx
+    │   ├── site-data-context.tsx
+    │   └── admin-error-context.tsx
+    │
+    └── types/index.ts           # Merkezi arayüzler
 ```
 
 ### Public site bölümleri
-- **Ana sayfa**: Hero (foto + "Hi!/I'm" + bio + sosyal + iletişim) → Deneyim (WorkCard) → Sertifika marquee → Son 3 Blog → Footer
-- **Hakkımda**: Hero → Deneyim|Liderlik → Eğitim|Diller → Yetenekler|Sertifikalar
-- **Çalışmalar**: 2 sütun kartlar + detay modalı
-- **Blog**: tek sütun kartlar + post modalı
-- Tüm bölümler `SectionBox` (başlık üst border'da) kullanır.
+
+- **Ana sayfa:** Hero → Deneyim (WorkCard) → Sertifika marquee → Son 3 blog → Footer
+- **Hakkımda:** Hero → Deneyim | Liderlik → Eğitim | Diller → Yetenekler | Sertifikalar
+- **Çalışmalar:** 2 sütun kart + detay modalı
+- **Blog:** tek sütun kart + post modalı
+
+Tüm bölümler `SectionBox` ile çerçevelenir.
 
 ---
 
-## 🧩 Admin Panel — Nasıl Çalışır & Nasıl Genişletilir
+## 🧩 Admin paneli — nasıl çalışır, nasıl genişletilir
 
-Admin paneli **config-driven**'dır: her içerik bölümü `src/components/admin/sections.ts` içindeki tek bir `SectionConfig` ile tanımlanır ve **hiçbir bölüme özel bileşen yazmadan** genel `entity-manager`/`entity-form`/`entity-list` tarafından render edilir. Yeni bölüm eklemek = bir config eklemek; CRUD, sıralama, yayınla/gizle, çeviri sekmeleri, validasyon ve bildirimler otomatik gelir.
+Admin paneli **config-driven**'dır. Her bölüm `src/components/admin/sections.ts` içindeki tek bir `SectionConfig` ile tanımlanır ve **hiçbir bölüme özel bileşen yazılmadan** genel `entity-manager` / `entity-form` / `entity-list` tarafından render edilir.
 
 ### 🔑 Temel kavramlar
 
 | Kavram | Dosya | Açıklama |
-| ------ | ----- | -------- |
+| --- | --- | --- |
 | `SectionConfig` | `sections.ts` | Bölüm tanımı (tablo, alanlar, özel davranışlar) |
-| `Field` | `types.ts` | Alan tanımı (tip, zorunlu, çevrilebilir, kaynak tablo...) |
+| `Field` | `types.ts` | Alan tanımı (tip, zorunlu, çevrilebilir, kaynak tablo) |
 | `FieldType` | `types.ts` | `text · textarea · markdown · number · checkbox · select · multi_select · json_array · month_year · date · image_url · role_list` |
-| `entity-manager.tsx` | `components/` | Liste + form + silme onayını bir bölüm için birleştirir (veri yükleme, CRUD, sıralama, yayınla) |
-| `entity-form.tsx` | `components/` | Alan→input eşlemesi, TR/EN/DE/ES sekmeleri, validasyon, **tüm dilleri tek save'de yazar** |
-| `entity-list.tsx` | `components/` | Arama, filtre, çeviri/yayın rozetleri, sıralama okları, düzenle/sil |
-| `lib/crud.ts` | `lib/` | Tip güvenli Supabase işlemleri (`listRows`, `createRow`, `updateRow`, `deleteRow`, `reorderRows`, `setPublished`, `syncJunction`, `fetchGallery`, `fetchSourceOptions`) |
-| `lib/languages.ts` | `lib/` | TR-first sıra (`LANG_ORDER`), `columnKey()`, `missingTranslations()` |
-| `lib/errors.ts` | `lib/` | `classifyError()`, `isPermissionError()` — kullanıcıya açık Türkçe hata |
-| `lib/notifications.tsx` | `lib/` | `AdminToaster` + `notify.{success,error,warning,loading,resolve}` |
+| `entity-manager.tsx` | `components/` | Liste + form + silme onayını tek bileşende birleştirir |
+| `entity-form.tsx` | `components/` | Alan→input eşlemesi, TR/EN/DE/ES sekmeleri, validasyon |
+| `entity-list.tsx` | `components/` | Arama, rozetler, sıralama, yayınla/gizle |
+| `lib/crud.ts` | `lib/` | `/api/admin` Route Handler'ını çağıran ince istemci |
+| `lib/languages.ts` | `lib/` | TR-first sıra (`LANG_ORDER`), `columnKey()` |
+| `lib/errors.ts` | `lib/` | `classifyError()`, `isPermissionError()` |
+| `lib/notifications.tsx` | `lib/` | `AdminToaster` + `notify.{success,error,loading,resolve}` |
+
+### 🔐 Admin veri erişimi
+
+Admin, veritabanına **tarayıcıdan doğrudan bağlanmaz.** Tüm işlemler `POST /api/admin` üzerinden sunucuda yapılır.
+
+```
+Tarayıcı → /api/admin → getUser() (JWT doğrulama)
+                      → tablo/kolon allowlist
+                      → kullanıcının oturumuyla PostgREST → RLS
+```
+
+**Neden:** Oturum çerezi `httpOnly: true`; JS token'ı okuyamaz. Service-role key hiçbir yerde kullanılmaz, böylece RLS her zaman geçerli kalır.
+
+**Yeni admin özelliği eklerken:** `crud.ts`'e bir fonksiyon ekle → `/api/admin/route.ts`'e `opSchema` ve `execute()` dallarını ekle. İzin listelerini (`ALLOWED_TABLES`, `ALLOWED_ORDER_COLUMNS`, `REORDER_RPC_TABLES`, `JUNCTION_SPECS`, `GALLERY_SPECS`, `PUBLISH_FIELDS`) güncelle.
 
 ### ➕ Yeni bölüm ekleme (adım adım)
 
-1. **Veritabanı** (`supabase_schema.sql`): Tabloyu + `order_index` + `*_tr/_de/_es` çeviri sütunlarını + RLS politikalarını ekle. Dosyayı repo şemasıyla **%100 senkron tut**; canlı DB'de eksik sütun varsa (ör. `projects.category`) migration uygula — PostgREST yeni sütunu ancak DB'de gerçekten varsa görür.
-2. **Config** (`sections.ts`): `SECTION_CONFIGS` dizisine ~15 satırlık bir `SectionConfig` ekle. `icon` **lucide-react bileşeninin kendisi**dir (string değil). `displayField` (listede başlık), `subtitleField?` (alt satır), `imageField?` (küçük resim) belirt.
-3. **Tip** (`src/types/index.ts`): Varlık arayüzünü (örn. `MyEntity`) ekle — admin tipleri bundan türer.
-4. **Doğrula**: `npm run lint` + `npm run build`; sonra dev'de o bölümün ekle/düzenle/sil/sırala akışını dene.
+1. **Veritabanı** — `supabase_schema.sql` içine tablo + `order_index` + `*_tr/_de/_es` sütunları + RLS politikalarını ekle. Dosyayı canlı DB ile **%100 senkron** tut. Canlı DB'de kolon yoksa migration uygula (PostgREST yeni sütunu ancak DB'de gerçekten varsa görür).
+2. **Config** — `sections.ts` içindeki `SECTION_CONFIGS` dizisine ~15 satırlık `SectionConfig` ekle.
+   - `icon` **lucide-react bileşeninin kendisi**dir (string değil)
+   - `displayField` (liste başlığı), `subtitleField?`, `imageField?` belirt
+3. **Tip** — `src/types/index.ts` içine varlık arayüzünü ekle
+4. **Kategori** — kaynak tablo gerekiyorsa `project_categories` / `blog_categories` gibi bir kategori tablosuna bağla
+5. **Doğrula** — `npm run lint` + `npm run build`, sonra dev'de ekle/düzenle/sil/sırala akışını dene
 
 ### 🧱 Field config referansı
 
 | Özellik | Değerler | Açıklama |
-| ------- | -------- | -------- |
+| --- | --- | --- |
 | `type` | zorunlu | `FieldType` — hangi input render edileceğini belirler |
 | `required` | `boolean` | Translatable ise **TR** değeri, değilse temel sütun kontrol edilir |
-| `translatable` | `boolean` | `key` + `key_tr/_de/_es` sütunlarına yazılır. ⚠️ Sütun DB'de yoksa **işaretleme** (örn. `about_me.name` çevrilebilir değildir) |
-| `options` | `{label,value}[]` | `select` için sabit seçenekler (değer DB'ye `value` olarak yazılır) |
-| `sourceTable` + `sourceValueField` + `sourceLabelField` | `select`/`multi_select` | Seçenekler başka tablodan çekilir (örn. `linked_experience_id` → `experiences.company`) |
+| `translatable` | `boolean` | `key` + `key_tr/_de/_es` sütunlarına yazılır. ⚠️ Sütun DB'de yoksa **işaretleme** |
+| `options` | `{label,value}[]` | `select` için sabit seçenekler (DB'ye `value` yazılır) |
+| `sourceTable` + `sourceValueField` + `sourceLabelField` | `select`/`multi_select` | Seçenekler başka tablodan çekilir |
 | `validate` | `"url"` \| `"email"` | `sanitizeUrl()` / `isValidEmail()`; boş değer geçerlidir |
-| `isCurrentField` | `string` | `month_year` bitiş alanını bu checkbox açıkken devre dışı bırakır (örn. `end_date` ↔ `is_current`) |
+| `isCurrentField` | `string` | `month_year` bitiş alanını bu checkbox açıkken devre dışı bırakır |
 | `textareaRows` | `number` | textarea/markdown yüksekliği |
 | `fullWidth` | `boolean` | Form grid'inde tam satır |
 
 ### 🔌 SectionConfig özel davranışları
 
 | Özellik | Ne yapar |
-| ------- | -------- |
+| --- | --- |
 | `singleRow` | Liste yerine tek form (`about_me`) |
 | `publishedField` | Yayınla/gizle toggle + rozet (`blogs.is_published`) |
-| `filterField` | Liste filtre dropdown'ı (örn. `projects.category`) |
-| `junction` | Çoktan-çoğa bağlantı (`certifications` ↔ `certification_skills`); `{ table, parentColumn, childColumn, sourceTable, sourceLabelField }` — kayıtta diff alıp junction'ı senkronlar |
-| `gallery` | `project_images`/`blog_images` galerisi; `{ table, parentColumn }` — satırlar anında kaydedilir |
+| `filterField` | Liste filtre dropdown'ı (örn. `projects.category_id`) |
+| `junction` | Çoktan-çoğa bağlantı (`certifications` ↔ `certification_skills`) |
+| `gallery` | `project_images` / `blog_images` galerisi |
 
-### 🌍 Çeviri & veri kuralları (entity-form)
+### 🌍 Çeviri ve veri kuralları (`entity-form`)
 
-- Sekme sırası **TR → EN → DE → ES**; form TR ile açılır.
-- `translatable` alan → **tüm dil sütunları** (`key`, `key_tr`, `key_de`, `key_es`) tek save'de yazılır.
-- `translatable` olmayan alan → **yalnızca temel sütun** (asla `key_tr` yazma — `end_date_de` hatası böyle doğmuştu).
-- **EN fallback**: Temel (EN) sütunlar bazı tablolarda `NOT NULL`. EN boşsa, TR değeri temel sütuna yazılır (kullanıcı EN'i doldurana kadar görsel geri düşüş). Bu davranışı kaldırma.
-- Zorunlu kontrol: `required + translatable` → TR boş olamaz; diğer diller isteğe bağlı ama boşsa sekme üzerinde "eksik çeviri" rozeti (kaydetmeyi engellemez).
-- `role_list` (jsonb) tek dizi olarak `key` altında tutulur; başlık/açıklama `title_tr` vb. içinde, tarihler ortaktır.
+- Sekme sırası **TR → EN → DE → ES**; form TR ile açılır
+- `translatable` alan → **tüm dil sütunları** tek save'de yazılır
+- `translatable` olmayan alan → **yalnızca temel sütun** (asla `key_tr` yazma — `end_date_de` hatası böyle doğmuştu)
+- **EN fallback:** Temel (EN) sütunlar bazı tablolarda `NOT NULL`. EN boşsa TR değeri temel sütuna yazılır (görsel geri düşüş). **Bu davranışı kaldırma.**
+- Zorunlu kontrol: `required + translatable` → TR boş olamaz; diğer diller isteğe bağlı, boşsa "eksik çeviri" rozeti
+- `role_list` (jsonb) tek dizi olarak `key` altında tutulur; başlık/açıklama `title_tr` vb. içinde, tarihler ortaktır
 
-### 🔔 Bildirim & hata kuralları
+### 🔔 Bildirim ve hata kuralları
 
-- Her CRUD işleminde `notify` kullan: `notify.loading("Kaydediliyor...")` → işlem sonrası `notify.resolve(id, msg, success)`.
-- Hata mesajlarını **asla jenerik yazma**: `classifyError(error).message` → sebep açık (yetki, FK çakışması, duplicate, limit, network).
-- RLS/401 hatasında `isPermissionError(error)` → `useAdminError().handleOperationError(error, operation)` (toast + otomatik çıkış).
-- Yeni bir alan/bölüm eklerken hata ve yükleme state'lerini (skeleton/empty/toast) atlama.
-
-### ⚠️ Dikkat edilecek tuzaklar
-
-- **PostgREST schema cache**: DB'ye yeni sütun ekledikten sonra istek "Could not find the 'X' column of 'Y' in the schema cache" veriyorsa sütun canlı DB'de yok demektir → migration uygula (şema dosyasıyla senkron).
-- **Dev'de middleware çalışmaz** (Next 16.3 Turbopack bug, GH #93328): root `middleware.ts` üretimde korur (`/admin` → 307 `/admin/login`); dev'de client-side `getSession` koruması devrededir. `middleware.ts`'i `proxy.ts`'e **taşıma** — bu sürümde root proxy tanınmıyor.
-- **`next.config.ts`**: `/_next/static` `immutable` cache header'ı **yalnızca production**'da uygulanır (dev'de `no-cache` — aksi halde tarayıcı eski chunk tutar). Test sırasında yine de cache temizle/cache bypass ile reload yap.
-- Admin her zaman koyu tema kullanır (`.dark` sarmalayıcı + `zinc`/violet); public site **sıcak palet** (maroon `#632626` / brick `#9d5353` / tan `#bf8b67` / cream `#dacc96`) kullanır, `--brand` tema duyarlıdır (açık: tan, koyu: cream) — admin'de public renklerini kullanma.
+- Her CRUD işleminde `notify` kullan: `notify.loading("Kaydediliyor...")` → sonra `notify.resolve(id, msg, success)`
+- Hata mesajını **asla jenerik yazma**: `classifyError(error).message` → sebep açık (yetki, FK çakışması, duplicate, limit, network)
+- `isPermissionError(error)` → `useAdminError().handleOperationError(error, operation)` (toast + otomatik çıkış)
+- Yeni alan/bölüm eklerken yüklenme durumlarını (skeleton/empty/toast) atlama
 
 ---
 
-## 💡 Coding Style
+## 💡 Kod stili
 
-- Use **clean and readable TypeScript**; avoid `any`.
-- Prefer **functional components** and React Hooks.
-- Keep functions **small, focused, and reusable**.
-- Use the existing utility helpers:
-  - `cn(...)` from `@/lib/utils` for class merging.
-  - `sanitizeUrl()` for any user-provided URLs (XSS prevention).
-  - `isValidEmail()` and `isValidImageUrl()` where appropriate.
-- Use `@/` path aliases for imports from `src/`.
-- Follow the existing naming convention:
-  - Components: PascalCase (`info.tsx` exports `Info`)
-  - Utilities/Hooks: camelCase
-  - Types/Interfaces: PascalCase in `src/types/index.ts`
-- All user-generated URLs **must** be sanitized before rendering.
-- Prefer `useSyncExternalStore` over `useState`/`useEffect` pairs for client-only mount guards; it avoids hydration mismatches and extra renders.
-- Avoid unnecessary complexity; prefer minimal, safe changes.
+- Temiz, okunabilir TypeScript; **`any` kullanma**
+- Fonksiyonel bileşenler ve React Hooks
+- Fonksiyonlar küçük, odaklı, yeniden kullanılabilir olsun
+- Mevcut yardımcıları kullan:
+  - `cn(...)` → `@/lib/utils` (sınıf birleştirme)
+  - `sanitizeUrl()` → kullanıcı girdisi URL'ler için (XSS koruması)
+  - `isValidEmail()` / `isValidImageUrl()` → uygun yerlerde
+- `@/` yol alias'ını kullan (`src/`)
+- İsimlendirme: bileşenler PascalCase (`info.tsx` → `Info`), fonksiyonlar camelCase, tipler PascalCode (`src/types/index.ts`)
+- Kullanıcı girdisi olan tüm URL'ler render'dan önce sanitize edilmeli
+- `useState`/`useEffect` çifti yerine `useSyncExternalStore` tercih et (hydration mismatch ve gereksiz render önler)
+- Gereksiz karmaşıklıktan kaçın; minimal ve güvenli değişiklikler yap
 
 ---
 
-## 🌍 Multilingual System (i18n)
+## 🌍 Çok dillilik (i18n)
 
-- The site supports **EN, TR, DE, ES**.
-- Static UI strings live in `src/config/translations.ts`.
-- Content translations are stored per-row in Supabase (e.g. `title_tr`, `bio_de`).
-- Use `getLocalized(value, lang)` from `@/lib/data` for content fields.
-- Default language is `"en"` — **ancak admin panelinde içerik girişi TR-önceliklidir**: formlar TR sekmesiyle açılır, zorunlu alan TR kontrol edilir, EN/DE/ES boşsa "eksik çeviri" rozeti görünür. DB temel sütunu EN'dir (`key`), çeviriler `key_tr/_de/_es`'te saklanır.
-
----
-
-## ⚙️ Workflow Rules
-
-When given a task:
-
-1. **Read relevant files first** using the filesystem tools.
-2. **Understand the existing architecture** before making changes.
-3. **Plan changes before writing code.**
-4. **Apply minimal, safe changes.**
-5. **Explain what was changed** when done.
-6. **Validate mentally** before marking complete. Run `npm run lint` and `npm run build` for verification before concluding.
+- **Diller:** EN, TR, DE, ES
+- **Statik UI metinleri:** `src/config/locales/{en,tr,de,es}.ts`
+- **İçerik çevirileri:** satır bazında Supabase'de (`title_tr`, `bio_de` …)
+- **Okuma:** `getLocalized(value, lang)` → `@/lib/data`
+- **Varsayılan dil `"en"`** — ancak **admin panelinde içerik girişi TR-önceliklidir**: formlar TR sekmesiyle açılır, zorunlu alan TR kontrol edilir, EN/DE/ES boşsa "eksik çeviri" rozeti görünür
+- **DB temel sütunu EN'dir** (`key`); çeviriler `key_tr/_de/_es`'te saklanır
 
 ---
 
-## 🔒 Security & Database Integrity Rules
+## 🔒 Güvenlik ve veritabanı bütünlüğü
 
-This project has a multi-layered security model. Do not weaken it.
+Projede katmanlı bir güvenlik modeli var. **Zayıflatma.**
 
-- **Never** expose Supabase service-role keys or secrets in code.
-- **Always** sanitize user-provided URLs with `sanitizeUrl()` before rendering.
-- **Always** sanitize markdown content via `rehype-sanitize`.
-- Admin routes (`/admin/*` except `/admin/login`) are protected by `middleware.ts` using HTTP-only secure cookies.
-- CSP headers are generated dynamically in `next.config.ts` from `NEXT_PUBLIC_SUPABASE_URL`.
-- Do not remove or disable RLS-related logic in `supabase_schema.sql`.
-- Do not introduce new external scripts without updating CSP headers.
-- 🗄️ **Database Schema Synchronization:** Any change, addition, or modification affecting the database structure, tables, functions, triggers, or Row Level Security (RLS) policies **must be documented in detail and explicitly updated within `supabase_schema.sql`**. Never apply database patches or direct production hotfixes without keeping the repository's schema file 100% in sync.
-
----
-
-## 🧪 Testing & Local Verification Rules
-
-- Test changes mentally before finalizing.
-- Prefer automated checks when possible:
-  - `npm run lint` for linting
-  - `npm run build` for build verification
-  - `npm run dev` for local manual testing
-- Do not mark tasks as complete without validation.
-- 🎭 **Local Playwright Execution:** When developing, testing, or debugging UI workflows locally, always run Playwright against the local dev server to execute End-to-End (E2E) verification. Ensure the local dev server is active and the feature is verified in headless or UI mode before concluding it works.
+- **Service-role key veya secret'ları asla koda gömme.** Projede hiç kullanılmıyor; admin erişimi kullanıcının kendi oturumuyla yapılır
+- Kullanıcı girdisi URL'lerini `sanitizeUrl()` ile sanitize et
+- Markdown içeriğini `rehype-sanitize` ile sanitize et
+- Admin rotaları (`/admin/*`, `/admin/login` hariç) `middleware.ts` ile korunur; çerezler `httpOnly` + `secure`
+- `/api/admin` Route Handler'ı `getUser()` ile doğrular ve tablo/kolon allowlist'i uygular
+- CSP `next.config.ts` içinde `NEXT_PUBLIC_SUPABASE_URL`'den dinamik üretilir
+- `supabase_schema.sql` içindeki RLS mantığını kaldırma veya zayıflatma
+- Yeni dış script eklerken CSP header'larını güncelle
+- 🗄️ **Şema senkronizasyonu:** Veritabanı yapısını, tabloları, fonksiyonları, trigger'ları veya RLS politikalarını etkileyen **her** değişiklik `supabase_schema.sql` içinde ayrıntılı belgelenmelidir. Canlıya patch/hotfix uygulamadan önce repodaki şema dosyasıyla %100 senkron olduğundan emin ol
 
 ---
 
-## 🚫 Forbidden Actions
+## 🧪 Test ve doğrulama kuralları
 
-- Do not overwrite configuration files (`next.config.ts`, `middleware.ts`, `tsconfig.json`, etc.) unless asked.
-- Do not remove dependencies without explanation.
-- Do not introduce new libraries without justification.
-- Do not delete files unless explicitly asked.
-- Do not refactor large parts of the codebase without confirmation.
+- Değişiklikleri tamamlamadan önce zihninde test et
+- Otomatik kontrolleri tercih et: `npm run lint`, `npm run build`
+- Test sırasında production'a yazma yapma; geçici kayıtla test edip temizle
+- 🎭 **Yerel Playwright doğrulaması:** UI akışları geliştirirken, test ederken veya hata ayıklarken Playwright'ı **yerel dev sunucusuna karşı** çalıştır. Özellikle admin CRUD akışı (giriş → bölüm aç → kaydet → sil → sırala) mutlaka uçtan uca doğrulanmalı
+- Bir düzeltmenin gerçekten çalıştığını **çalıştırarak** kanıtla; sadece build'e bakmakla yetinme
 
 ---
 
-## 🧩 Notes
+## ⚠️ Dikkat edilecek tuzaklar
 
-- This project is AI-assisted and behaves like a senior software engineer.
-- All content is admin-editable from `/admin`; public pages read from Supabase.
-- Admin paneli config-driven'dır; **yeni bölüm/alın eklemeden önce "Admin Panel — Nasıl Çalışır & Nasıl Genişletilir" bölümünü oku** ve config'i bozma.
-- Use Context7 MCP for up-to-date documentation on Next.js, React, Supabase, Tailwind, Motion, Zod, or other libraries when needed.
-- For every database schema change, prefer updating `supabase_schema.sql` and documenting the migration steps.
-- The repository has been renamed to `batuhdede.me`; the canonical GitHub URL is `https://github.com/batuhd/batuhdede.me`.
+- **PostgREST şema cache'i:** DB'ye yeni kolon ekledikten sonra "Could not find the 'X' column" hatası geliyorsa kolon canlı DB'de yok demektir → migration uygula. Varsa `NOTIFY pgrst, 'reload schema';`
+- **Dev'de middleware çalışmaz** (Next 16.3 Turbopack bug, [GH #93328](https://github.com/vercel/next.js/issues/93328)): root `middleware.ts` üretimde korur (307 `/admin` → `/admin/login`); dev'de client-side koruma devrededir. **`middleware.ts`'i `proxy.ts`'e taşıma** — bu sürümde root proxy tanınmıyor
+- **`next.config.ts`:** `/_next/static` `immutable` cache header'ı **yalnızca production**'da uygulanır (dev'de `no-cache`). Test sırasında yine de cache temizle / hard reload yap
+- **`npm run dev` ile admin korumasını test etme.** Production build + `npm run start` kullan
+- **Client-side filtreler güvenlik sınırı değildir.** `is_published` gibi kontroller hem sunucu tarafında `.eq(...)` ile hem de RLS ile uygulanmalı
+- **Markdown `className`:** `hast-util-sanitize` glob (`"language-*"`) desteklemez, `className`'ı tüm attribute string'i olarak test eder ve yalnızca RegExp/tam eşleşme kabul eder. RegExp kullan
+- **Admin her zaman koyu tema kullanır** (`.dark` sarmalayıcı + `zinc`/`violet`); public site **sıcak palet** (maroon `#632626` / brick `#9d5353` / tan `#bf8b67` / cream `#dacc96`). `--brand` tema duyarlıdır (açık: tan, koyu: cream). Admin'de public renklerini kullanma
+
+---
+
+## 🚫 Yasak işlemler
+
+- `next.config.ts`, `middleware.ts`, `tsconfig.json` gibi config dosyalarını **sorulmadan** ezme
+- Gerekçesiz bağımlılık kaldırma
+- Gerekçesiz yeni kütüphane ekleme
+- Açıkça istenmedikçe dosya silme
+- Onay almadan projenin geniş bölümlerini refactor etme
+
+---
+
+## ⚙️ İş akışı
+
+1. **İlgili dosyaları oku** (filesystem araçlarıyla)
+2. **Mevcut mimariyi anla** — değişiklik yapmadan önce
+3. **Değişiklikleri planla** — kod yazmadan önce
+4. **Minimal ve güvenli değişiklikler uygula**
+5. **Bittiğinde neyi neden değiştirdiğini açıkla**
+6. **Tamamlamadan önce doğrula:** `npm run lint` **ve** `npm run build` çalıştır
+
+---
+
+## 🧩 Notlar
+
+- Bu proje AI destekli geliştirilir ve kıdemli bir yazılım mühendisi gibi davranmayı hedefler
+- Tüm içerik `/admin` üzerinden düzenlenebilir; public sayfalar Supabase'den okur
+- Admin paneli config-driven'dır — **yeni bölüm/alan eklemeden önce bu dosyanın admin bölümünü oku** ve config'i bozma
+- Upstream kütüphanelerin güncel dokümantasyonu için **Context7 MCP**'yi kullan (Next.js, React, Supabase, Tailwind, Motion, Zod…)
+- Supabase MCP ile canlı DB'yi inceleyebilirsin (`opencode mcp list` → bağlı olmalı)
+- Kanonik GitHub URL: `https://github.com/batuhd/batuhdede.me`

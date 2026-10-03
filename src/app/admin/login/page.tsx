@@ -10,7 +10,6 @@ import {
   Lock,
   Mail,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
@@ -84,18 +83,24 @@ export default function AdminLoginPage() {
   }, [renderTurnstile, removeTurnstile]);
 
   useEffect(() => {
-    if (!supabase) return;
-    const sb = supabase;
+    // Çerez httpOnly olduğu için oturum durumu tarayıcıdan okunamaz;
+    // sunucudan sorgulanır.
+    let cancelled = false;
     const checkSession = async () => {
-      const {
-        data: { session },
-      } = await sb.auth.getSession();
-      if (session) {
-        setIsLoggedIn(true);
-        router.push("/admin");
+      try {
+        const res = await fetch("/api/admin");
+        if (!cancelled && res.ok) {
+          setIsLoggedIn(true);
+          router.push("/admin");
+        }
+      } catch {
+        // Ağ hatası: login formunu göstermeye devam et
       }
     };
-    checkSession();
+    void checkSession();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -109,7 +114,7 @@ export default function AdminLoginPage() {
       return;
     }
 
-    if (!supabase) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
       setError("Supabase is not configured.");
       setLoading(false);
       return;
@@ -153,10 +158,9 @@ export default function AdminLoginPage() {
       <div className="relative flex min-h-screen flex-col items-center justify-center space-y-4 bg-background px-4">
         <button
           onClick={async () => {
-            if (supabase) {
-              await supabase.auth.signOut();
-              await fetch("/api/auth/logout", { method: "POST" });
-            }
+            // Çerez httpOnly olduğu için oturum yalnızca sunucudan
+            // kapatılabilir.
+            await fetch("/api/auth/logout", { method: "POST" });
             setIsLoggedIn(false);
             router.push("/admin/login");
           }}

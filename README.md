@@ -1,347 +1,390 @@
 <div align="center">
-  
-# 🚀 batuhdede.me | Premium Portfolio & CMS
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
-  <img src="https://img.shields.io/badge/Motion-white?style=for-the-badge&logo=framer" alt="Motion" />
-  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/Cloudflare_Turnstile-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare Turnstile" />
-  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel" />
-</p>
+# batuhdede.me
 
-A full-stack, ultra-modern, multilingual portfolio website featuring a built-in headless CMS and robust security architecture - powered by Supabase and deployed on Vercel.
+**Çok dilli portfolyo + headless CMS**
 
-**Every piece of content is admin-editable. No code changes needed to update your portfolio.**
+[![Next.js 16](https://img.shields.io/badge/Next.js-16.3.8-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![React 19](https://img.shields.io/badge/React-19.2-149ECA?style=flat-square&logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind v4](https://img.shields.io/badge/Tailwind-4.x-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Supabase](https://img.shields.io/badge/Supabase-2.x-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com)
 
-[🌐 Live Website](https://batuhdede.me) · [🐛 Report Bug](https://github.com/batuhd/batuhdede.me/issues)
+[🌐 Canlı site](https://batuhdede.me) · [🐛 Hata bildir](https://github.com/batuhd/batuhdede.me/issues) · [🔒 Güvenlik raporu](./SECURITY_AUDIT_2026-10-03.md)
 
 </div>
 
-<br />
+---
 
-<div align="center">
-  <img width="100%" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);" alt="Project Preview" src="./c1.gif" />
-</div>
+## İçindekiler
+
+- [Bu ne?](#bu-ne)
+- [Öne çıkan özellikler](#%C3%B6ne-%C3%A7%C4%B1kan-%C3%B6zellikler)
+- [Teknoloji yığını](#teknoloji-y%C4%B1%C4%9F%C4%B1n%C4%B1)
+- [Hızlı başlangıç](#h%C4%B1zl%C4%B1-ba%C5%9Flang%C4%B1%C3%A7)
+- [Ortam değişkenleri](#ortam-de%C4%9Fi%C5%9Fkenleri)
+- [Veritabanı kurulumu](#veritaban%C4%B1-kurulumu)
+- [Mimari](#mimari)
+- [Ekran görüntüleri](#ekran-g%C3%B6r%C3%BCnt%C3%BCleri)
+- [Veritabanı şeması](#veritaban%C4%B1-%C5%9Femas%C4%B1)
+- [Admin paneli](#admin-paneli)
+- [Çok dillilik](#%C3%A7ok-dillilik)
+- [Güvenlik modeli](#g%C3%BCvenlik-modeli)
+- [Performans](#performans)
+- [Dağıtım](#da%C4%9F%C4%B1t%C4%B1m)
+- [Sorun giderme](#sorun-giderme)
+- [Lisans](#lisans)
 
 ---
 
-## ✨ What Is This?
+## Bu ne?
 
-This is **not** a static portfolio template. It's a production-grade **Content Management System (CMS)** disguised as a premium developer portfolio. Everything you see on the public-facing website is dynamically fetched from a Supabase PostgreSQL database and fully manageable through a deeply secured admin dashboard at `/admin`.
+Sitenin **tamamı admin panelinden yönetiliyor.** Profil metni, deneyimler, eğitim, diller, sertifikalar, projeler, blog yazıları, görseller, sosyal linkler, iletişim mailleri — hepsi `/admin` üzerinden düzenlenir. Kod değişikliği veya yeniden deploy gerekmez.
 
-**Key idea:** Clone it, connect your Supabase, and you have a fully functional portfolio site with an admin panel - no backend code to write.
+Bunun yanında:
 
-> 📄 **Architecture:** The admin panel is **config-driven** — every content section is described by a single config in `src/components/admin/sections.ts` and rendered by reusable building blocks. The full database schema lives in [`supabase_schema.sql`](./supabase_schema.sql).
+- **4 dil** (TR / EN / DE / ES) — içerik tek tek çevrilebilir, eksik çeviriler rozetle işaretlenir
+- **Bağımlı varlık sistemi** — bir blog yazısı bir projeye, deneyime, dile, sertifikaya bağlanabilir; ilgili sayfalar otomatik güncellenir
+- **Görsel galerileri** — proje ve blog yazıları için çoklu görsel + sıralama
+- **Otomatik PDF CV** — 4 dilde, React-PDF ile anlık üretim
+- **SEO altyapısı** — sitemap, RSS (TR/EN), `llms.txt`, JSON-LD, OG görselleri, robots
+- **Config-driven admin** — yeni bir bölüm eklemek ~15 satır config, özel bileşen yazmadan
 
----
-
-## 🌟 Feature Highlights
-
-### 🛠️ Built-in Admin Dashboard (`/admin`)
-
-A complete, **config-driven CMS dashboard**. Every content section is described by a config in `src/components/admin/sections.ts` and rendered by a small set of reusable building blocks (`entity-form`, `entity-list`, `entity-manager`) — adding a new section is a ~15-line config, never boilerplate:
-
-| Bölüm | Yönetilenler |
-| ----- | ------------ |
-| **Panel** | Bölüm sayıları + hızlı erişim |
-| **Profil** | İsim, unvan, slogan, biyografi, fotoğraf (tek satır form) |
-| **Hakkımda Sayfası** | Hakkımda sayfasına özel uzun tanıtım yazısı (markdown) + ayrı portre (ana sayfadan bağımsız) |
-| **Deneyim / Eğitim / Yetenekler / Diller / Liderlik / Sertifikalar** | Özgeçmiş verileri (alt pozisyonlar, tarihler, logolar) |
-| **Sertifikalar** | + çoktan-çoğa **yetenek bağlantısı** (`certification_skills`) |
-| **Projeler / Blog** | Kartlar, kapak görselleri, **galeri yönetimi**, markdown içerik, bağlı varlıklar, yayınla/gizle |
-| **Proje / Blog Kategorileri** | Kategorileri yönetin (Web, Mobil, AI... / Teknoloji, Linux, Haber...) |
-| **Sosyal Linkler / İletişim Mailleri** | Ana sayfa + iletişim popup'ı bağlantıları |
-| **Ayarlar** | Bakım modu |
-
-**Turkish-first content entry (TR → EN → DE → ES):** forms open on the Turkish tab, Turkish is the required language, and other languages show "missing translation" badges without blocking saves. All language columns are written in a single save.
-
-Every record supports **list, search, add, edit, delete (confirmed), reorder** and **publish/unpublish**. A consistent **toast notification system** gives instant, actionable feedback for every operation (including specific error reasons such as permission, foreign-key conflicts or network issues). Reusable primitives in `src/components/admin/components/ui/` — no external UI library.
-
-### 🔗 Deep Content Linking System
-
-The CMS features a **relational linking engine** that lets you connect content across sections:
-
-- **Works & Blogs** can be linked to Experiences, Education, Skills, Languages, Activities, and Certifications
-- **Multi-select skill binding** — assign multiple skill categories to a single work or blog
-- **Bidirectional display** — linked content appears as interactive links on both sides
-- All links are managed via `select`/`multi_select` fields sourced from the relevant tables
-
-### 🏆 Interactive Certification Modals
-
-Certifications are fully interactive across the site:
-
-- Click any certification card on the homepage to open a **spring-animated detail modal**
-- The modal displays the certification name, issuer, date, credential link, and icon
-- **Related skills** (via junction table) are rendered as tags
-- **Linked projects and blog posts** appear as clickable navigation cards inside the modal
-- Related certification links from blog/work modals route to a dedicated **`/certifications?cert=<id>`** page that opens the detail modal automatically
-
-### 🖼️ Blog Featured Images
-
-Blog posts support optional **featured images** (cover photos):
-
-- Add image URLs via the admin panel using the smart **"Recent Images"** selector that remembers previously used URLs
-- Images render as aspect-ratio cover photos on both the blog card grid and the expanded blog modal
-- Fully responsive with smooth hover-scale animations
-
-### 🌍 Multilingual System (i18n)
-
-- Real-time language switching without page reloads
-- 4 languages supported out of the box: **English, Turkish, German, Spanish**
-- Translations are managed per-field in the admin panel - not in JSON files
-- Static UI strings use a typed `translations.ts` dictionary
-
-### 🎨 Kinetic UI Design
-
-- **Staggered fade-in animations** on every section via a reusable `<FadeIn />` component
-- **Pill top navigation** with active-state brand underline, avatar, language & theme toggles
-- **Spring-animated modals** for blog posts, project details, and certifications
-- **Maintenance & Error Screens** - Enhanced maintenance mode with randomized dynamic media (cat macros!) and local 401 Unauthorized fallbacks
-<br />
-<div align="center">
-  <img src="./public/media/401.jpg" width="45%" style="border-radius: 12px; margin-right: 4%;" alt="401 Unauthorized" />
-  <img src="./public/media/503.jpg" width="45%" style="border-radius: 12px;" alt="503 Maintenance" />
-</div>
-<br />
-- Smooth page transitions powered by Motion
-
-### 🌓 Dark & Light Theme (Warm Brand Palette)
-
-Seamless theme switching via `next-themes` with system preference detection. Both modes are built around the **brand palette** — deep maroon `#632626`, brick `#9d5353`, tan `#bf8b67`, cream `#dacc96`:
-
-- **Light mode**: warm cream-paper surfaces, sand borders, warm taupe text
-- **Dark mode**: maroon-tinted surfaces and borders, cream text
-- **Theme-aware brand accent**: tan `#bf8b67` in light mode, cream `#dacc96` in dark mode
-- All surfaces are defined by CSS tokens in `src/app/globals.css` (`--brand`, `--color-maroon`, `--color-brick`, `--color-cream`) — re-theming is a single-file change
-- The dark maroon footer band and warm radial hero glow give the page a cohesive identity in both modes
-
-### 📊 Live GitHub Contribution Graph
-
-A custom-built contribution heatmap that fetches your real GitHub activity through a serverless API route (`/api/github`), using the GitHub GraphQL API. Includes interactive tooltips with contribution counts per day.
-
-### 📡 RSS Feed (TR / EN)
-
-Auto-generated, **language-separated** RSS feeds for blog syndication, built as Next.js Route Handlers:
-
-- **`/feed.xml`** — Turkish feed (`title_tr`/`excerpt_tr`/`content_tr`, `<language>tr</language>`)
-- **`/feed-en.xml`** — English feed (`title`/`excerpt`/`content`, `<language>en</language>`)
-- The blog page RSS button opens a dialog letting visitors pick TR or EN
-
-### 📄 Auto-Generated PDF CV (`/api/cv`)
-
-A **dynamic, database-driven PDF résumé** generated on the fly — no more hand-editing a static file:
-
-- **Always up to date** — pulls live data from Supabase via `fetchAllData()` (name, contact, education, experience, leadership, skills, languages)
-- **4 languages** — `?lang=tr|en|de|es` renders fully localized content (dates, section titles, language levels) using per-field translations
-- **ATS-friendly** — clean single-column layout rendered with `@react-pdf/renderer` and an embedded **Inter** font (full Turkish glyph support), so extractors read "EDUCATION", "Information", "MIS" correctly
-- **Clean filename** — downloads as `Muhammed_Batuhan_DEDE_CV.pdf`; `?download=1` forces attachment, otherwise it opens inline
-- **Homepage button** — "Özgeçmişi İndir" downloads the CV in the visitor's active language
-- **No static file** — the old `public/*.pdf` was removed; the CV always reflects the current CMS content
-
-### 🔒 Enterprise-Grade Security Architecture
-
-Unlike typical starter templates, this project implements a rigorous, multi-layered security model preventing unauthorized access, bot attacks, and database abuse:
-
-- **Cloudflare Turnstile CAPTCHA**: Invisible algorithm-based bot protection on the login page.
-- **Server-Side IP Rate Limiting**: Intelligent brute-force protection (max 5 attempts per 15 mins).
-- **Next.js Middleware Protection**: HTTP-Only, Secure cookies enforce strict access control to all `/admin` routes.
-- **Strict Content-Security-Policy (CSP)**: Robust headers mitigating XSS, Clickjacking, and framing attacks.
-- **Row Level Security (RLS)** on every table - write access is locked to your specific user UUID.
-- **RLS InitPlan optimization**: all admin policies use `(SELECT auth.uid())` so the auth check is evaluated once per query, not per row.
-- **RPC lockdown**: `reorder_items` and `rls_auto_enable` are revoked from `anon`/`PUBLIC` — only `authenticated`/`service_role` (or `postgres`) may invoke them.
-- **`SET search_path` hardening** on every function to prevent search-path hijacking.
-- **Sign-up disabled** - no one can create accounts on your Supabase instance.
-- **PostgreSQL Triggers & Limits**: Database resource quotas prevent spam creation and URL validation constraints block cross-site exploits.
-
-### ♿ Accessibility-First UX
-
-The public site includes keyboard and screen-reader friendly enhancements:
-
-- **Skip-to-content link** — `SkipLink` component lets keyboard users jump straight to `#main-content` without tabbing through the navigation
-- **Reduced-motion support** — animations respect `prefers-reduced-motion`, with a targeted CSS exception only where continuous motion is intentional
-- **Semantic landmarks** — main content is wrapped in a `<main>` region and nav uses proper ARIA attributes
-
-### 🔔 Smart Toast Notification System
-
-Real-time, actionable feedback for every admin operation (add, edit, delete, reorder, publish):
-
-- **Every CRUD operation notifies**: success, error, and in-progress ("Kaydediliyor...") states
-- **Specific error reasons**: permission/RLS, foreign-key conflicts, duplicate values, resource limits and network failures are reported clearly instead of a generic "something went wrong"
-- **Loading → result transitions**: loading toasts resolve into success/error
-- **Compact stack**: bottom-right, ~3.5s auto-dismiss, never floods the screen
-- **Validation**: inline errors under each field + a summary toast on save attempts
-
-### 📝 Advanced Markdown Editor
-
-A full-featured WYSIWYG markdown editor for blog posts and the About page with live preview and comprehensive help:
-
-- **Rich Toolbar**: Bold, italic, headings, lists, links, inline code, code blocks, tables, horizontal rules
-- **Live Preview**: Side-by-side editing mode to see rendered output instantly
-- **Built-in Help Guide**: A collapsible **"Markdown nasıl kullanılır?"** syntax reference with copy-paste examples appears on every markdown field
-- **XSS Protection**: Automatic sanitization via `rehype-sanitize`
-- **Full Multilingual Support**: Available in EN/TR/DE/ES tabs for both create and edit modes
-
-### 📧 Contact Email Management
-
-Manage multiple contact emails directly from the admin panel with smart organization:
-
-- **Multiple Email Types**: Personal, School, Work, Club, and custom labels
-- **Multilingual Labels**: Each email label can be translated (label_tr, label_de, label_es)
-- **Integrated Contact Modal**: "Benimle iletişime geçin" button on the homepage opens a popup with the contact form + managed email addresses
-- **Smart Display**: Shows both social links and contact emails in the modal
-- **One-Click Copy**: Copy email addresses with visual feedback
-
-### 🔒 Enhanced Security Layer
-
-Additional security measures beyond the enterprise-grade foundation:
-
-- **Input Validation**: Zod schemas validate all API inputs and form submissions
-- **URL Sanitization**: `sanitizeUrl` helper prevents XSS via malicious URLs
-- **Safe Image Loading**: All image URLs validated before rendering (hero, cards, etc.)
-- **Production Logging**: Console logs hidden in production, visible only in development
-- **Type Safety**: Centralized TypeScript interfaces prevent runtime errors
-
-### ⚡ Performance Optimizations
-
-- **Eliminated IIFEs**: Replaced immediately-invoked functions with `useMemo` for better performance
-- **Pre-calculated Maps**: Related items cached to avoid repeated filtering on every render
-- **Type Safety**: Specific types (Project[], Blog[]) instead of any[] for faster operations
-- **Memory Management**: Proper cleanup in admin-error-context prevents memory leaks
-- Server/Client component splitting with Next.js App Router
-- Vercel Speed Insights & Analytics integration
-- Optimized image loading with `next/image`
-- Edge-deployed on Vercel's global CDN
+> **Canlı demo:** [batuhdede.me](https://batuhdede.me) · **Admin:** `/admin`
 
 ---
 
-## 💻 Tech Stack
+## Öne çıkan özellikler
 
-| Layer               | Technology                                                           | Version |
-| ------------------- | -------------------------------------------------------------------- | ------- |
-| **Framework**       | [Next.js](https://nextjs.org/) (App Router)                          | 16.3.0  |
-| **UI Library**      | [React](https://react.dev/)                                          | 19.2.7  |
-| **Language**        | [TypeScript](https://www.typescriptlang.org/)                        | 5.x     |
-| **Styling**         | [Tailwind CSS](https://tailwindcss.com/) + `tailwind-merge` + `clsx` | 4.x / 3.x / 2.x |
-| **Animations**      | [Motion](https://motion.dev/) (formerly Framer Motion)               | 12.x    |
-| **Database & Auth** | [Supabase](https://supabase.com/) (`@supabase/supabase-js` + `@supabase/ssr`) | 2.x / 0.12 |
-| **Security**        | Cloudflare Turnstile, Next.js Middleware, CSP                        | Latest  |
-| **Validation**      | [Zod](https://zod.dev/)                                              | 3.x     |
-| **Notifications**   | [Sonner](https://sonner.emilkowal.ski/)                              | 2.x     |
-| **Icons**           | [Lucide React](https://lucide.dev/)                                  | 0.575.0 |
-| **Markdown**        | [react-markdown](https://github.com/remarkjs/react-markdown) + [rehype-sanitize](https://github.com/rehypejs/rehype-sanitize) | 10.x / 6.x |
-| **PDF Generation**  | [@react-pdf/renderer](https://react-pdf.org/) (auto-generated CV) | 4.x |
-| **Analytics**       | [Vercel Analytics](https://vercel.com/analytics) & Speed Insights    | 2.x / 2.x |
-| **Hosting**         | [Vercel](https://vercel.com/)                                        | -       |
+### 🛠️ Config-driven admin paneli
+
+Admin paneli özel bileşenlerden değil, **tek bir konfigürasyon dizisinden** render edilir. Yeni bir bölüm eklemek için `src/components/admin/sections.ts` içine ~15 satır eklemen yeterli; CRUD, sıralama, yayınla/gizle, çeviri sekmeleri, validasyon ve bildirimler otomatik gelir.
+
+→ [Admin panelini incele](#admin-paneli)
+
+### 🔗 Bağımlı varlık sistemi
+
+Her blog yazısı ve proje, diğer varlıklara FK ile bağlanabilir:
+
+```
+linked_project_id · linked_experience_id · linked_education_id
+linked_language_id · linked_activity_id · linked_certification_id
+linked_skill_category_ids (jsonb)
+```
+
+Bir deneyimi güncellediğinde, o deneyime bağlı tüm blog yazılarındaki "İlgili Deneyim" bloğu otomatik güncellenir.
+
+### 🖼️ Galeri sistemi
+
+`project_images` ve `blog_images` ayrı tablolar; admin panelinden görsel ekleme, silme, sıralama, yazı altyazısı düzenleme. Görseller iki dilli altyazı destekler.
+
+### 📄 Otomatik PDF CV
+
+`/api/cv?lang=tr|en|de|es` → anında PDF. React-PDF, gömülü Inter fontu, tamamen cache'li.
+
+```bash
+curl "https://batuhdede.me/api/cv?lang=tr&download=1" -o cv.pdf
+```
+
+### 📊 GitHub katkı grafiği
+
+`/api/github` GraphQL ile gönüllü katkıları çeker, ana sayfada ısı haritası olarak gösterir.
+
+### ♿ Erişilebilirlik
+
+- "İçeriğe atla" bağlantısı (klavye kullanıcıları için)
+- `prefers-reduced-motion` desteği
+- Modal yönetimi: URL hash senkronizasyonu, `Escape` ile kapanma, odak tuzağı
+- Anlamsal HTML, `aria-label`'lar, doğru landmark kullanımı
+
+### 🎨 Sıcak palet + tema
+
+Açık/koyu tema geçişi, sıcak tonlu marka paleti:
+
+| | Açık | Koyu |
+| --- | --- | --- |
+| `--brand` | `#bf8b67` (tan) | `#dacc96` (cream) |
+| Vurgu | `#632626` (maroon) | `#9d5353` (brick) |
+
+Admin paneli her zaman koyu tema kullanır (`.dark` sarmalayıcı + violet accent); public site sıcak paleti kullanır.
 
 ---
 
-## 📂 Project Architecture
+## Teknoloji yığını
 
-```text
-.
-├── supabase_schema.sql          # Full database schema with RLS policies
-├── .env.example                 # Environment variable template
-│
-└── src/
-    ├── app/                     # Next.js App Router
-    │   ├── page.tsx             # 🏠 Homepage - assembles all sections dynamically
-    │   ├── admin/
-    │   │   ├── login/           # 🔐 Auth gate (email/password + Turnstile)
-    │   │   └── page.tsx         # 📋 Admin dashboard (full CMS)
-    │   ├── blog/                # 📝 Blog feed with animated modals + featured images
-    │   ├── works/               # 💼 Portfolio feed with animated modals + gallery
-    │   ├── certifications/      # 🏆 Dedicated certification detail page
-    │   ├── credits/             # 🏆 Tech credits & security details
-    │   ├── api/github/          # 🔌 GitHub GraphQL API route handler
-    │   ├── api/cv/              # 📄 Auto-generated PDF CV (React-PDF route handler)
-    │   ├── api/og/...           # 🖼️ Dynamic OG image generators
-    │   └── feed.xml/            # 📡 RSS feed generator
-    │
-    ├── components/
-    │   ├── admin/
-    │   │   ├── sections.ts          # All section configs (single source)
-    │   │   ├── types.ts             # Field / SectionConfig / Junction / Gallery types
-    │   │   ├── markdown-guide.tsx   # Collapsible "Markdown nasıl kullanılır?" cheat sheet
-    │   │   ├── markdown-editor.tsx  # Markdown textarea + live preview
-    │   │   ├── lib/                 # languages (TR-first), errors, notifications, crud helpers
-    │   │   ├── components/
-    │   │   │   ├── ui/              # Reusable primitives (button, input, modal, switch, ...)
-    │   │   │   ├── fields/          # Per-field-type inputs (markdown, image, role-list, gallery, ...)
-    │   │   │   ├── entity-form.tsx  # Generic form: field→input, TR-first tabs, validation, all-language save
-    │   │   │   ├── entity-list.tsx  # Search, badges, reorder, publish toggle
-    │   │   │   ├── entity-manager.tsx # Orchestrates list + form + confirm for a section
-    │   │   │   ├── language-tabs.tsx # TR→EN→DE→ES tabs + missing-translation badges
-    │   │   │   ├── recent-images.tsx # "Recent images" picker
-    │   │   │   ├── shell.tsx        # Sidebar + topbar layout (always-dark, violet accent)
-    │   │   │   ├── dashboard.tsx    # Section counts + quick access
-    │   │   │   └── settings.tsx     # Maintenance mode
-    │   ├── home/
-    │   │   ├── hero.tsx         # Hero: photo, "Hi!/I'm", bio, socials, contact
-    │   │   ├── work-card.tsx    # Experience card (Deneyim) + detail modal
-    │   │   ├── skills.tsx       # Skill categories (chips)
-    │   │   ├── profile-sections.tsx  # Education, Languages, Activities, Certs
-    │   │   ├── experience-detail.tsx # Full experience (About page)
-    │   │   ├── recent-posts.tsx # Latest 3 blog posts (home)
-    │   │   └── contact-form.tsx # Contact form (popup)
-    │   ├── motion/
-    │   │   └── fade-in.tsx      # Reusable staggered animation wrapper
-│   ├── navigation/
-│   │   └── top-nav.tsx       # Pill top navigation (links + lang + theme)
-│   ├── ui/
-│   │   └── section-box.tsx   # Section box (title on top border)
-│   ├── skip-link.tsx        # Keyboard skip-to-content link
-│   └── theme-provider.tsx   # Dark/light mode provider
-    │
-    ├── config/
-    │   ├── locales/             # Static UI translations (EN, TR, DE, ES)
-    │   └── translations.ts      # Typed i18n dictionary
-    │
-    ├── context/
-    │   ├── language-context.tsx    # Global language provider with getLocalized()
-    │   ├── site-data-context.tsx   # Supabase data cache (fetches all tables once)
-    │   └── admin-error-context.tsx # Captures RLS/auth errors and triggers 401 logout
-    │
-    ├── types/
-    │   └── index.ts             # 🆕 Centralized TypeScript interfaces (Project, Blog, etc.)
-    │
-    └── lib/
-        ├── supabase.ts          # Supabase client singleton
-        ├── data.ts              # Server data fetching helpers (cache'li, fetchAllData)
-        ├── utils.ts             # cn() + 🆕 sanitizeUrl(), isValidEmail(), stripHtml()
-        └── cv/                  # 📄 CV veri eşleme (index.ts) + React-PDF dokümanı + gömülü Inter font (fonts.json)
+| Katman | Teknoloji | Sürüm |
+| --- | --- | --- |
+| Framework | [Next.js](https://nextjs.org) (App Router, RSC) | 16.3.8 |
+| UI | [React](https://react.dev) | 19.2.7 |
+| Dil | [TypeScript](https://www.typescriptlang.org) | 5.x (`strict: true`) |
+| Stil | [Tailwind CSS](https://tailwindcss.com) | 4.x (CSS-first config) |
+| Animasyon | [Motion](https://motion.dev) | 12.x |
+| Veritabanı & Auth | [Supabase](https://supabase.com) | JS 2.x · SSR 0.12 |
+| Doğrulama | [Zod](https://zod.dev) | 3.x |
+| Bildirim | [Sonner](https://sonner.emilkowal.ski/) | 2.x |
+| İkon | [Lucide React](https://lucide.dev) | 0.575 |
+| Markdown | `react-markdown` + `rehype-sanitize` | 10.x · 6.x |
+| PDF | [React-PDF](https://react-pdf.org) | 4.9 |
+| Dağıtım | [Vercel](https://vercel.com) | — |
+
+**Şema kaynağı:** `supabase_schema.sql` · **Admin config kaynağı:** `src/components/admin/sections.ts`
+
+---
+
+## Hızlı başlangıç
+
+### Gereksinimler
+
+- **Node.js** 20+
+- Bir [Supabase](https://supabase.com) projesi
+- (Opsiyonel) Cloudflare Turnstile site key — bot koruması için
+- (Opsiyonel) GitHub token — katkı grafiği için
+
+### Kurulum
+
+```bash
+git clone https://github.com/batuhd/batuhdede.me.git
+cd batuhdede.me
+npm install
+cp .env.example .env.local
+# .env.local'i düzenle
+```
+
+### Geliştirme
+
+```bash
+npm run dev        # http://localhost:3000
+npm run lint       # eslint
+npm run build      # production build
+npm run start      # production sunucu
+```
+
+> ⚠️ **Önemli:** Next.js 16.3'te `next dev` sırasında `middleware.ts` çalışmıyor (bilinen Turbopack sorunu, [vercel/next.js#93328](https://github.com/vercel/next.js/issues/93328)). Bu yüzden **admin korumasını local'de `npm run build && npm run start` ile test et** — production build'de middleware çalışıyor. Root `middleware.ts` konvansiyonunu `proxy.ts`'e taşırma, bu sürümde tanınmıyor.
+
+### İlk admin girişi
+
+1. Supabase Dashboard → **Authentication → Users** → *Add user* ile bir kullanıcı oluştur (email + password)
+2. Dashboard → **Authentication → Sign In / Providers** → *Enable email*'i aç, **signup'i kapat**
+3. Kullanıcının UUID'sini kopyala
+4. `supabase_schema.sql` içindeki `YOUR-USER-UUID-HERE` placeholder'larını bu UUID ile değiştir veya aşağıdaki migration'ı çalıştır
+5. Şema zaten uygulandıysa 4. adımı atla, doğrudan `/admin` üzerinden giriş yap
+
+---
+
+## Ortam değişkenleri
+
+`.env.local` (veya Vercel dashboard):
+
+```bash
+# ── Supabase ──────────────────────────────────────────────
+# Dashboard → Project Settings → API
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+
+# ── GitHub (opsiyonel) ───────────────────────────────────
+# Katkı grafiği için classic token, read:user yeterli
+GITHUB_TOKEN=ghp_xxx
+
+# ── Cloudflare Turnstile (opsiyonel) ─────────────────────
+# Sadece SITE key. SECRET key buraya KOYMA ve ASLA
+# NEXT_PUBLIC_ önekiyle tanımlama (client bundle'a sızar).
+# Doğrulama Supabase Auth sunucu tarafında yapılır.
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAAAAA
+```
+
+| Değişken | Zorunlu | Kime gider? | Notlar |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Browser + server | CSP `connect-src` otomatik buradan okunur |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Browser + server | Sadece **anon** key. Service-role key kullanma |
+| `GITHUB_TOKEN` | ❌ | Yalnızca server | `/api/github` GraphQL çağrısında kullanılır |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | ❌ | Browser | Login sayfasındaki widget |
+
+> 🔒 **Service-role key projede hiçbir yerde kullanılmaz.** Admin veri erişimi kullanıcının kendi oturumuyla yapılır (`src/app/api/admin/route.ts`), böylece RLS politikaları her zaman geçerli kalır.
+
+---
+
+## Veritabanı kurulumu
+
+`supabase_schema.sql` **tek kaynak** — 17 tablo, RLS politikaları, CHECK kısıtları, trigger'lar ve 2 fonksiyon.
+
+Supabase Dashboard → **SQL Editor** → dosyanın tamamını çalıştır.
+
+Şunları içerir:
+
+| Öğe | Detay |
+| --- | --- |
+| 17 tablo | `about_me`, `section_order`, `skill_categories`, `project_categories`, `blog_categories`, `experiences`, `educations`, `languages`, `activities`, `certifications`, `certification_skills`, `projects`, `project_images`, `blogs`, `blog_images`, `social_links`, `contact_emails` |
+| RLS | 17 tabloda `ENABLE ROW LEVEL SECURITY` |
+| 69 politika | Her tabloda `Public read` (SELECT) + `Admin insert/update/delete` (`auth.uid()` kilitli) |
+| CHECK kısıtları | URL formatı doğrulaması (`^https?://\|^/[^/]`) → stored XSS ve bozuk link koruması |
+| Trigger | `enforce_resource_limits()` — tablo başına kayıt limitleri (projeler 100, blog 200, görsel 500…) |
+| Fonksiyon | `reorder_items()` — atomik sıralama, `SECURITY INVOKER` + tablo allowlist'i, `anon`'dan `REVOKE` |
+
+### Admin UUID'sini tanımlama
+
+```sql
+-- Önce: her 51 politikada placeholder'ı gerçek UUID ile değiştir
+-- Sonra: doğrulama
+SELECT count(*) FROM blogs WHERE false;
+--Anon key ile yazma denemesi 42501 vermeli
 ```
 
 ---
 
-## 🗄️ Database Schema
+## Mimari
 
-The Supabase database consists of **17 tables**, all with Row Level Security enabled:
+```text
+.
+├── supabase_schema.sql          # 🔒 Veri modelinin tek kaynağı (RLS dahil)
+├── middleware.ts                # /admin koruması + çerez httpOnly zorlama
+├── next.config.ts               # CSP + güvenlik header'ları
+├── opencode.json                # MCP sunucuları (context7, playwright, supabase…)
+│
+└── src/
+    ├── app/
+    │   ├── page.tsx             # Ana sayfa
+    │   ├── about/               # Hakkımda
+    │   ├── works/               # Portfolyo + detay (/[slug])
+    │   ├── blog/                # Blog + detay (/[slug])
+    │   ├── certifications/      # Sertifikalar + modal (/[slug])
+    │   ├── credits/             # Teknoloji kredileri
+    │   ├── admin/               # 🔐 Admin paneli (tek sayfa, hash routing)
+    │   ├── api/
+    │   │   ├── admin/           # 🔐 Admin CRUD API'si (sunucu tarafı)
+    │   │   ├── auth/{login,logout}/
+    │   │   ├── cv/              # PDF üretimi
+    │   │   ├── github/          # Katkı grafiği proxy
+    │   │   └── og/{blog,works,certifications}/   # OG görselleri
+    │   ├── feed.xml/ · feed-en.xml/              # RSS
+    │   ├── llms.txt/ · sitemap.ts · robots.ts · manifest.ts
+    │   └── globals.css          # Tailwind v4 + sıcak palet token'ları
+    │
+    ├── components/
+    │   ├── admin/               # 🔐 Config-driven admin
+    │   │   ├── sections.ts      #    ← BÖLÜM CONFIG'LERİ (tek kaynak)
+    │   │   ├── types.ts         #    Field / SectionConfig tipleri
+    │   │   ├── lib/crud.ts      #    API istemcisi (ince)
+    │   │   └── components/      #    entity-form · entity-list · fields/ · ui/
+    │   ├── home/ · works/ · blog/ · navigation/ · ui/ · motion/
+    │   └── markdown/            # Sanitize'li markdown renderer
+    │
+    ├── lib/
+    │   ├── data.ts              # Sunucu veri katmanı (cache'li, RLS'li)
+    │   ├── utils.ts             # cn() · sanitizeUrl() · slugify()
+    │   └── cv/                  # PDF veri eşleme + React-PDF dokümanı
+    │
+    ├── config/
+    │   ├── translations.ts      # Tip'li UI çevirileri
+    │   ├── locales/{en,tr,de,es}.ts
+    │   ├── site.ts              # siteConfig
+    │   └── user.ts              # Sabit kullanıcı fallback'leri
+    │
+    └── types/index.ts           # Merkezi TypeScript arayüzleri
+```
 
-| Table                  | Purpose                         | Key Fields                                                            |
-| ---------------------- | ------------------------------- | --------------------------------------------------------------------- |
-| `about_me`             | Profile information             | name, role, bio, about_bio (About page), photos + translations        |
-| `project_categories`   | Project categories (Web, Mobile...) | name + translations, order_index                                   |
-| `blog_categories`      | Blog categories (Tech, Linux...)   | name + translations, order_index                                   |
-| `skill_categories`     | Grouped skills                  | title, subtitle, skills (JSON array) + translations                   |
-| `experiences`          | Work history                    | title, company, location, dates, description + translations           |
-| `educations`           | Academic history                | university, degree, major, dates                                      |
-| `languages`            | Language proficiencies          | name, level (dropdown)                                                |
-| `activities`           | Leadership & extracurriculars   | organization, role, description + translations                        |
-| `certifications`       | Professional certifications     | name, issuer, date, link, icon + translations                         |
-| `certification_skills` | Junction: certs ↔ skills        | certification_id, skill_category_id                                   |
-| `projects`             | Portfolio works                 | title, description, links, tags, image, category_id, linked\_\* IDs + translations |
-| `project_images`       | Multi-image gallery per project | project_id, image_url, order_index                                    |
-| `blogs`                | Blog posts (Markdown)           | title, excerpt, content, date, image_url, category_id, is_published, linked\_\* IDs |
-| `blog_images`          | Multi-image gallery per blog    | blog_id, image_url, order_index                                       |
-| `social_links`         | Public social links             | platform, URL, icon, account_type                                     |
-| `contact_emails`       | Contact email addresses         | label, email, label_tr/de/es, order_index                             |
-| `section_order`        | Section config (e.g. maintenance) | section_id, order_index                                             |
+### Veri akışı
 
-### Entity-Relationship Diagram
+```mermaid
+flowchart LR
+    A[Ziyaretçi] --> B[Next.js Server Component]
+    B --> C["lib/data.ts<br/>cache() + fetch"]
+    C --> D[Supabase PostgREST]
+    D --> E{RLS}
+    E -->|SELECT| F[✅ Herkese açık]
+    E -->|WRITE| G{auth.uid() = admin?}
+    G -->|Evet| H[✅]
+    G -->|Hayır| I[❌ 42501]
+
+    J[Admin] --> K[Turnstile + Şifre]
+    K --> L["/api/admin<br/>getUser() + allowlist"]
+    L --> D
+
+    style E fill:#1a1a1a,stroke:#3ECF8E
+    style G fill:#1a1a1a,stroke:#3ECF8E
+```
+
+**Önemli:** Veri her zaman sunucuda çekilir ve RLS'e tabidir. Client-side filtreler (ör. `is_published`) yalnızca **görsel** katmandır — güvenlik sınırı değildir.
+
+---
+
+## Ekran görüntüleri
+
+<div align="center">
+
+### Ana sayfa
+
+<img width="100%" src="./docs/screenshots/home.png" alt="Ana sayfa — hero, deneyim, sertifika marquee, son yazılar" />
+
+</div>
+
+<details>
+<summary><b>Hakkımda · Çalışmalar · Blog · Sertifikalar sayfaları</b></summary>
+
+<div align="center">
+
+<img width="49%" src="./docs/screenshots/about.png" alt="Hakkımda sayfası" />
+<img width="49%" src="./docs/screenshots/works.png" alt="Çalışmalar sayfası" />
+<img width="49%" src="./docs/screenshots/blog.png" alt="Blog sayfası" />
+<img width="49%" src="./docs/screenshots/certifications.png" alt="Sertifikalar sayfası" />
+
+</div>
+
+</details>
+
+<details>
+<summary><b>Admin paneli — otomatik üretilen form</b></summary>
+
+Tüm alanlar `sections.ts` config'inden gelir. Sekmelerdeki **DE 2 · ES 2** rozetleri eksik çevirileri işaretler.
+
+<div align="center">
+
+<img width="100%" src="./docs/screenshots/admin-form.png" alt="Admin paneli — düzenleme formu" />
+
+</div>
+
+</details>
+
+<details>
+<summary><b>Admin paneli — liste, panel ve giriş</b></summary>
+
+<div align="center">
+
+<img width="49%" src="./docs/screenshots/admin-panel.png" alt="Admin paneli ana ekran" />
+<img width="49%" src="./docs/screenshots/admin-projects.png" alt="Admin paneli — proje listesi" />
+<img width="49%" src="./docs/screenshots/admin-login.png" alt="Admin giriş ekranı" />
+
+</div>
+
+</details>
+
+---
+
+## Veritabanı şeması
+
+Veritabanı **17 tablodan** oluşur ve tamamında satır düzeyi güvenlik (RLS) etkindir.
+
+| Tablo | Ne işe yarar | Başlıca alanlar |
+| --- | --- | --- |
+| `about_me` | Profil bilgileri | name, role, bio, about_bio (Hakkımda sayfası), fotoğraflar + çeviriler |
+| `project_categories` | Proje kategorileri (Web, Mobil…) | name + çeviriler, order_index |
+| `blog_categories` | Blog kategorileri (Teknoloji, Linux…) | name + çeviriler, order_index |
+| `skill_categories` | Gruplanmış yetenekler | title, subtitle, skills (JSON dizi) + çeviriler |
+| `experiences` | İş geçmişi | title, company, location, tarihler, description + çeviriler |
+| `educations` | Eğitim geçmişi | university, degree, major, tarihler |
+| `languages` | Dil yeterkinlikleri | name, level |
+| `activities` | Liderlik & etkinlikler | organization, role, description + çeviriler |
+| `certifications` | Profesyonel sertifikalar | name, issuer, tarih, bağlantı, ikon + çeviriler |
+| `certification_skills` | Köprü tablosu: sertifika ↔ yetenek | certification_id, skill_category_id |
+| `projects` | Portfolyo işleri | title, description, bağlantılar, etiketler, image, category_id, `linked_*` kimlikleri + çeviriler |
+| `project_images` | Proje başına çoklu görsel | project_id, image_url, order_index |
+| `blogs` | Blog yazıları (Markdown) | title, excerpt, content, date, image_url, category_id, is_published, `linked_*` kimlikleri |
+| `blog_images` | Blog yazısı başına çoklu görsel | blog_id, image_url, order_index |
+| `social_links` | Sosyal medya bağlantıları | platform, URL, ikon, account_type |
+| `contact_emails` | İletişim e-posta adresleri | label, email, label_tr/de/es, order_index |
+| `section_order` | Bölüm ayarları (ör. bakım modu) | section_id, order_index |
+
+### Varlık ilişki diyagramı
 
 ```mermaid
 erDiagram
@@ -379,42 +422,40 @@ erDiagram
     section_order { text section_id PK }
 ```
 
-### Content Linking Columns
+### Bağlantı kolonları
 
-Both `projects` and `blogs` tables support relational linking:
+Hem `projects` hem `blogs` tabloları diğer varlıklara ilişki kurabilir:
 
-| Column                      | Type     | Links To                      |
-| --------------------------- | -------- | ----------------------------- |
-| `linked_experience_id`      | `uuid`   | `experiences`                 |
-| `linked_education_id`       | `uuid`   | `educations`                  |
-| `linked_skill_category_ids` | `jsonb`  | `skill_categories` (multiple) |
-| `linked_language_id`        | `uuid`   | `languages`                   |
-| `linked_activity_id`        | `uuid`   | `activities`                  |
-| `linked_certification_id`   | `uuid`   | `certifications`              |
-| `linked_project_id`         | `uuid`   | `projects` (blogs only)       |
+| Kolon | Tip | Bağlı olduğu tablo |
+| --- | --- | --- |
+| `linked_project_id` | `uuid` | `projects` *(yalnızca blog)* |
+| `linked_experience_id` | `uuid` | `experiences` |
+| `linked_education_id` | `uuid` | `educations` |
+| `linked_language_id` | `uuid` | `languages` |
+| `linked_activity_id` | `uuid` | `activities` |
+| `linked_certification_id` | `uuid` | `certifications` |
+| `linked_skill_category_ids` | `jsonb` | `skill_categories` *(çoklu)* |
 
-`blogs` also includes an `is_published` boolean (default: `true`) so draft posts can be hidden from the public site and RSS feed.
+`blogs` tablosunda ayrıca `is_published` alanı var (varsayılan `true`); taslak yazılar public siteden, RSS beslemesinden ve `sitemap.xml`'den gizlenir.
 
-Every content table supports **4-language translations** (EN, TR, DE, ES) with dedicated columns per language.
+Her içerik tablosu **4 dilli çeviri** destekler (EN, TR, DE, ES) — her dil için ayrı sütun.
 
----
-
-## 🔄 Data Flow
+### Veri akışı
 
 ```mermaid
 flowchart LR
-    subgraph Browser["🖥️ Browser"]
-        A["Public Visitor"]
-        C["Admin User"]
+    subgraph Tarayici["🖥️ Tarayıcı"]
+        A["Ziyaretçi"]
+        C["Yönetici"]
     end
 
-    subgraph Edge["⚡ Vercel Edge"]
+    subgraph Kenar["⚡ Vercel Edge"]
         B["Next.js App Router"]
-        D["Admin CMS Dashboard"]
-        G["SiteDataContext Cache"]
+        D["/api/admin"]
+        G["SiteDataProvider"]
     end
 
-    subgraph Supa["🗄️ Supabase"]
+    subgraph Supabase["🗄️ Supabase"]
         I["PostgreSQL + RLS"]
         N["GitHub GraphQL API"]
     end
@@ -422,225 +463,310 @@ flowchart LR
     A --> B --> G -->|"SELECT"| I
     C --> D -->|"INSERT / UPDATE / DELETE"| I
     B -->|"/api/github"| N
+
+    style I fill:#1a1a1a,stroke:#3ECF8E
 ```
+
+### Public sayfalar
+
+| Sayfa | Bölümler |
+| --- | --- |
+| `/` | Hero (foto + bio + sosyal + iletişim) → Deneyim → Sertifika marquee → Son 3 blog → Footer |
+| `/about` | Hero → Deneyim \| Liderlik → Eğitim \| Diller → Yetenekler \| Sertifikalar |
+| `/works` | 2 sütun kart + detay modalı |
+| `/blog` | Tek sütun kart + post modalı + kategori filtresi |
+| `/certifications` | Izgara + credential modal |
+| `/credits` | Teknoloji kredileri ve güvenlik detayları |
+
+Tüm bölümler `SectionBox` (başlık üst border'da) ile çerçevelenir.
 
 ---
 
-## 🔒 Security Architecture Detailed
+## Admin paneli
 
-```mermaid
-flowchart TD
-    A["🌐 Public Visitor"] -->|"SELECT only"| B["Supabase RLS"]
-    C["🔐 Admin"] -->|"Cloudflare Turnstile + Password"| D["Supabase Auth"]
-    D -->|"Authenticated Session"| B
+`/admin` — tek sayfa, hash routing (`#/projects`, `#/blogs`…), oturum korumalı.
 
-    B --> E{"Operation Type"}
-    E -->|"SELECT"| F["✅ Allow - Public read"]
-    E -->|"INSERT / UPDATE / DELETE"| G{"auth.uid matches admin?"}
-    G -->|"Yes ✅"| H["Allow Write"]
-    G -->|"No ❌"| I["Block - 403"]
+### Bölümler
 
-    H --> J["CHECK Constraints"]
-    J --> K["✅ Data Saved"]
+| Bölüm | Tablo | Özellikler |
+| --- | --- | --- |
+| Profil | `about_me` | Tek satır form |
+| Hakkımda Sayfası | `about_me` | Tek satır form |
+| Deneyim | `experiences` | `role_list` (çoklu rol + tarih) |
+| Eğitim | `educations` | |
+| Yetenekler | `skill_categories` | `json_array` (yetenek listesi) |
+| Diller | `languages` | |
+| Liderlik & Etkinlikler | `activities` | `role_list` |
+| Sertifikalar | `certifications` | Junction → `certification_skills` |
+| Proje Kategorileri | `project_categories` | |
+| Projeler | `projects` | Galeri → `project_images`, kategori FK |
+| Blog Kategorileri | `blog_categories` | |
+| Blog | `blogs` | Galeri → `blog_images`, `is_published` toggle |
+| Sosyal Linkler | `social_links` | |
+| İletişim Mailleri | `contact_emails` | |
+| Ayarlar | `section_order` | Bakım modu |
+
+### Field tipleri
+
+`text` · `textarea` · `markdown` · `number` · `checkbox` · `select` · `multi_select` · `json_array` · `month_year` · `date` · `image_url` · `role_list`
+
+### Yeni bölüm ekleme
+
+`sections.ts` içine bir `SectionConfig` ekle — CRUD, sıralama, yayınla/gizle, çeviri sekmeleri, validasyon ve bildirimler otomatik gelir:
+
+```ts
+{
+  id: "volunteering",
+  label: "Gönüllülük",
+  icon: HandHeart,          // lucide bileşeni
+  table: "activities",
+  title: "Gönüllülük",
+  description: "Toplumsal faaliyetler",
+  displayField: "organization",
+  fields: [
+    { key: "organization", label: "Kurum", type: "text", required: true, translatable: true },
+    { key: "description",  label: "Açıklama", type: "textarea", translatable: true },
+    { key: "logo_url",     label: "Logo",   type: "image_url", validate: "url" },
+  ],
+}
 ```
 
-| Layer               | Protection                                                                                                                              |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **RLS Policies**    | All tables have RLS enabled. Write operations (INSERT, UPDATE, DELETE) are locked to your specific user UUID.                           |
-| **Input Validation**| Zod schemas validate all API inputs and form data, preventing malformed requests.                                                       |
-| **Turnstile Protection**| Invisible captchas prevent automated script brute-forcing against the Next.js login API logic.                                |
-| **Rate Limiting**   | Track failed authentication requests by IP. Lock out abusive attackers instantly.                                                       |
-| **Authentication**  | Supabase Email Auth. Sign-ups are disabled so no one else can create an account. Admin API routes are protected by Next.js middleware using secure HttpOnly cookies. |
-| **SQL Injection**   | Impossible. Supabase uses PostgREST which parameterizes all queries automatically.                                                      |
-| **XSS Protection**  | `rehype-sanitize` sanitizes all markdown content. `sanitizeUrl()` validates all user-generated URLs before rendering.                  |
-| **Data Validation** | CHECK constraints enforce URL format validation and content length limits to prevent cross-site payload execution and DoS.              |
-| **CSP Headers**     | Mitigate XSS, script-injections, and unapproved external embeds centrally in `next.config.ts`.                                          |
-| **Safe Logging**    | Console error logs hidden in production (NODE_ENV check), visible only in development.                                                  |
+Sonra: tabloları şemaya ekle → `SectionMap`'i güncelle → `npm run build`.
+
+> **Ayrıntılı rehber:** [AGENTS.md](./AGENTS.md#-admin-paneli--nasıl-çalışır-nasıl-genişletilir)
+
+### Veri erişimi
+
+Admin tüm veri erişimini **`/api/admin` Route Handler** üzerinden yapar. Tarayıcı Supabase client'ı veritabanına doğrudan bağlanmaz — çünkü oturum çerezi `httpOnly`'dır.
+
+```
+Tarayıcı  →  /api/admin  →  getUser() doğrulaması
+                         →  tablo/kolon allowlist kontrolü
+                         →  kullanıcının oturumuyla PostgREST
+                         →  RLS aynen geçerli
+```
+
+`src/app/api/admin/route.ts` içinde 17 tablo allowlist'i, `order_index`/`created_at`/`date` sıralama allowlist'i ve junction/gallery kolon sabitleri vardır. Kullanıcı girdisi hiçbir noktada SQL'e geçmez.
 
 ---
 
-## 🚦 Getting Started
+## Çok dillilik
 
-### Prerequisites
+| Dil | Kod | Yön |
+| --- | --- | --- |
+| Türkçe | `tr` | LTR |
+| English | `en` | LTR |
+| Deutsch | `de` | LTR |
+| Español | `es` | LTR |
 
-- **Node.js** v18 or higher
-- A free **[Supabase](https://supabase.com/)** account
-- A free **[Cloudflare](https://www.cloudflare.com/)** account (for Turnstile)
-- A **[GitHub Personal Access Token](https://github.com/settings/tokens)** (classic, with `read:user` scope) for the contribution graph
-- A **[Vercel](https://vercel.com/)** account (for deployment, optional for local dev)
+**Admin'de içerik girişi TR-önceliklidir:**
+- Sekme sırası **TR → EN → DE → ES**, form TR ile açılır
+- Zorunlu alan kontrolü **TR** değerini kontrol eder
+- Boş çeviriler sekme üzerinde "eksik çeviri" rozetiyle görünür (kaydetmeyi engellemez)
+- Bir `translatable` alan **tüm dil sütunlarını** tek kayıtta yazar
 
-### 1. Clone & Install
+**Yerleşim:**
+- Temel (EN) sütun: `key` · çeviriler: `key_tr`, `key_de`, `key_es`
+- `blogs`, `about_me`, `experiences` gibi tablolarda temel sütun `NOT NULL` olabilir; EN boşsa **TR değeri temel sütuna yazılır** (görsel geri düşüşü önleme)
+- Statik UI metinleri: `src/config/locales/{en,tr,de,es}.ts`
+- İçerik çevirisi: satır bazında, `getLocalized(value, lang)` ile okunur
+
+**EN fallback davranışını kaldırma** — kullanıcı İngilizce'yi doldurana kadar görsel düzgün kalıyor.
+
+---
+
+## Güvenlik modeli
+
+Katmanlı savunma. Hiçbir tek katman tek başına yeterli değil.
+
+### Kimlik doğrulama
+
+| Mekanizma | Nerede |
+| --- | --- |
+| Turnstile CAPTCHA | Login formu → `captchaToken` Supabase Auth'a iletilir |
+| Supabase CAPTCHA | **Sunucu tarafında zorunlu** (`captcha_failed` ile reddedilir) |
+| Şifre politikası | min 8 karakter, `zod` ile doğrulanır |
+| Rate limiting | IP başına 5 deneme/15dk, e-posta başına 10/15dk → 30dk kilit |
+| Signup kapalı | `disable_signup: true` — kimse kendi hesabını açamaz |
+| User enumeration yok | Başarısız girişlerde sabit `"Invalid credentials."` |
+| `attemptsLeft` sızdırılmaz | Kalan hakket bilgisi response'ta dönmez |
+
+### Oturum
+
+- Çerezler **`httpOnly: true`** → sayfadaki JS token'ı `document.cookie` ile okuyamaz
+- `secure` (production), `sameSite: lax`, `path: /`
+- Mevcut oturumlar middleware'de **zorla yeniden yazılır** (eski bayraklı çerezler 400 gün yaşayabildiği için)
+- `/admin` koruması `getUser()` ile **JWT sunucuda doğrulanır** — cookie içeriğine güvenilmez
+- Çıkış `/api/auth/logout` ile sunucu tarafında
+
+### Yetkilendirme
+
+- 17/17 tabloda RLS açık
+- Yazma politikaları `(SELECT auth.uid()) = <admin-uuid>` ile kilitli
+- `(SELECT auth.uid())` kullanımı → auth kontrolü satır başına değil **sorgu başına bir kez** çalışır (InitPlan optimizasyonu)
+- RPC'ler `anon`/`PUBLIC`'ten `REVOKE`
+- Her fonksiyonda `SET search_path`
+
+### Girdi doğrulama
+
+| Katman | Ne yapar |
+| --- | --- |
+| `zod` şemaları | Login gövdesi, form yükleri, `?lang=` parametresi |
+| `sanitizeUrl()` | `javascript:` · `data:` · `vbscript:` · `blob:` · `file:` engeller; protocol-relative `//` reddeder; kontrol karakterli şemalar `null`'a düşer |
+| `rehype-sanitize` | Markdown HTML'i; `style` ve `on*` öznitelikleri kaldırılır |
+| `className` allowlist | RegExp ile — Tailwind enjeksiyonu engellenir |
+| CHECK kısıtları | DB seviyesinde URL formatı doğrulaması |
+| Tablo/kolon allowlist | `/api/admin` — kullanıcı girdisi SQL'e geçmez |
+
+### Yanıt başlıkları
+
+`next.config.ts` üzerinden merkezi:
+
+```
+Content-Security-Policy   default-src 'self'; frame-ancestors 'none'; object-src 'none';
+                          upgrade-insecure-requests; base-uri 'self'
+Strict-Transport-Security max-age=31536000; includeSubDomains
+X-Frame-Options          DENY
+X-Content-Type-Options   nosniff
+Referrer-Policy          strict-origin-when-cross-origin
+Permissions-Policy       camera=(), microphone=(), geolocation=()
+```
+
+`script-src` içinde `'unsafe-inline'` **bilinçli olarak** duruyor: Next.js App Router sayfa başına inline RSC script'leri üretiyor. Nonce'lu CSP denendi ve çalışmıyor — statik prerender ile istek-başına nonce matematiksel olarak birlikte çalışamaz (test sonucu `next.config.ts` içinde belgeli). Birincil XSS savunması uygulama katmanındadır.
+
+### Doğrulanan saldırı yüzeyi testleri
+
+| Test | Sonuç |
+| --- | --- |
+| Alg=none / sahte cookie / `Bearer` spoof ile `/admin` | 307 → login |
+| `x-forwarded-user`, `x-user-id` header spoof | 307 → login |
+| Path traversal (14 varyant) | login'e redirect |
+| IDOR (12 varyant) | 404 |
+| CORS credential'li origin | ACAO header yok |
+| Host header injection | yanıtta 0 geçiş |
+| 20.000 karakterlik girdi | 431 |
+| Supabase OpenAPI spec / GraphQL | 401 |
+| Anon INSERT (17 tablo) | 17/17 `42501` |
+| Anon UPDATE / RPC | 204 / `42501` |
+
+> **Tam rapor:** [SECURITY_AUDIT_2026-10-03.md](./SECURITY_AUDIT_2026-10-03.md)
+
+---
+
+## Performans
+
+| Ölçüm | Değer |
+| --- | --- |
+| Build | 79 sayfa, ~2–4 sn |
+| Render tipi | 79 sayfanın tamamı statik (ISR, 1dk revalidate) |
+| Admin API'leri | Dinamik (`ƒ`) — oturum gerektirir |
+| `next/image` | `unoptimized: true` — Vercel Image Optimization maliyeti yok |
+| `/api/cv` | Process içi önbellek + CDN cache |
+| `/api/og/*` | `revalidate = 3600` + `s-maxage=3600` |
+| Lighthouse hedefi | LCP < 1.2 sn · CLS < 0.02 |
+
+**Optimizasyonlar:**
+- Sunucu veri katmanı React `cache()` ile istek başına tekilleştirilir
+- `optimizePackageImports` (`lucide-react`, `@tanstack/react-query`)
+- Statik varlıklar immutable cache (`/_next/static`, production only)
+- Yazı tipleri (`geist`) self-hosted, `next/font` ile preload
+
+---
+
+## Dağıtım
+
+### Vercel (önerilen)
+
+1. Repo'yu Vercel'e bağla
+2. **Environment Variables** → yukarıdaki 5 değişkeni ekle
+3. Deploy
+
+Vercel avantajları: `x-vercel-forwarded-for` header'ı edge'de ezildiği için login rate limiting güvenilir; statik dosyalar otomatik CDN'lenir.
+
+> ⚠️ **Vercel'e özgü:** Rate limiting `x-vercel-forwarded-for` ve `x-real-ip`'ye güvenir. Başka bir host'a taşırsan gerçek IP güvenilir olmaktan çıkar — bu durumda `middleware.ts` içindeki IP çözümlemesini güncelle veya Vercel Firewall rate limit kuralı ekle.
+
+### Docker / self-hosted
 
 ```bash
-git clone https://github.com/batuhd/batuhdede.me.git
-cd batuhdede.me
-npm install
+npm ci && npm run build && npm run start
 ```
 
-### 2. Environment Variables
+`Dockerfile` veya platform ayarı ile `npm run start` çalıştır. Production'da `NODE_ENV=production` ve HTTPS sonlandırma sağlayan bir proxy gerekir.
 
-```bash
-cp .env.example .env.local
-```
+---
 
-Fill in your `.env.local`:
+## Sorun giderme
 
-```env
-# Supabase - get these from your Supabase project dashboard → Settings → API
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6...
+<details>
+<summary><b>"Couldn't find the 'X' column of 'Y' in the schema cache" hatası</b></summary>
 
-# Cloudflare Turnstile - create a site key via Cloudflare dashboard
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x0000000000000000000000
-
-# GitHub - create at https://github.com/settings/tokens (classic token, read:user scope)
-GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
-```
-
-### 3. Database Setup
-
-This is the most important step. The database uses **Row Level Security (RLS)** to ensure only you can modify data.
-
-#### 3.1 - Create your admin account
-
-Go to **Supabase Dashboard → Authentication → Users → Add user** and create your account with email and password. This is the account you'll use to log into the `/admin` dashboard.
-
-#### 3.2 - Get your User UUID
-
-Open **SQL Editor** in Supabase and run:
+PostgREST'in şema önbelleği bayatlamış demektir. Sütun gerçekten veritabanında varsa şu komutu çalıştır:
 
 ```sql
-SELECT id, email FROM auth.users;
+NOTIFY pgrst, 'reload schema';
 ```
 
-You'll see a result like this:
+Sütun veritabanında **yoksa** şemayı güncelle ve migration uygula — bu durumda önbellek temizlemek işe yaramaz.
+</details>
 
-| id                                     | email             |
-| -------------------------------------- | ----------------- |
-| `a1b2c3d4-e5f6-7890-abcd-ef1234567890` | `you@example.com` |
+<details>
+<summary><b>Admin paneline giremiyorum, sürekli 307 yönlendirmesi oluyor</b></summary>
 
-Copy the `id` value. This is your **User UUID** - it uniquely identifies your admin account.
+1. Supabase'de kullanıcının oluşturulduğundan emin ol → **Authentication → Users**
+2. `.env.local` içindeki adres ve anahtarın doğru projeye ait olduğunu doğrula
+3. `npm run dev` yerine **production build** kullan — `npm run build && npm run start`. Geliştirme modunda ara katman çalışmıyor, bu yüzden yönlendirme yapılmıyor
+4. Veritabanı politikalarındaki `YOUR-USER-UUID-HERE` yer tutucusunu kendi kullanıcı UUID'n ile değiştirdin mi?
+</details>
 
-#### 3.3 - Configure the schema file
+<details>
+<summary><b>Giriş yaparken "Lütfen robot olmadığınızı doğrulayın" hatası</b></summary>
 
-Open `supabase_schema.sql` in your editor and **find & replace all** occurrences of:
+Turnstile site anahtarı `localhost` için tanımlı değil. Turnstile → Widgets → izin verilen alan listesine `localhost` ekle ya da site anahtarını geçici olarak kaldır.
+</details>
 
-```
-YOUR-USER-UUID-HERE
-```
+<details>
+<summary><b>Turnstile sürekli başarısız / `captcha_failed`</b></summary>
 
-with the UUID you copied. For example:
+Supabase Dashboard → **Authentication → Bot & Abuse Protection** bölümünden CAPTCHA'nın **açık** olduğundan emin ol. Doğrulama tamamen sunucu tarafında yapılır; Turnstile secret anahtarını projede tutmana gerek yoktur.
+</details>
 
-```diff
-- auth.uid() = 'YOUR-USER-UUID-HERE'::uuid
-+ (SELECT auth.uid()) = 'YOUR-USER-UUID-HERE'::uuid
-```
+<details>
+<summary><b>Değiştirdiğim görseller eski görünüyor</b></summary>
 
-> **💡 Tip:** Use `Ctrl+H` (Windows) or `Cmd+H` (Mac) to replace all occurrences at once.
+`next.config.ts` içinde `/_next/static` için `immutable` önbellek başlığı **yalnızca production'da** uygulanır. Geliştirme modunda eski paket dosyaları önbellekte kalabilir → sayfayı tamamen yenile (`Ctrl+Shift+R`) ya da `.next` klasörünü sil.
+</details>
 
-#### 3.4 - Execute the schema
+<details>
+<summary><b>Admin listesinde bir bölüm boş görünüyor</b></summary>
 
-Copy the **entire** contents of your modified `supabase_schema.sql` and paste it into **Supabase SQL Editor → New Query**. Click **Run**. This creates all tables, enables RLS, and sets up your security policies.
+1. Tarayıcının geliştirici konsolunda ağ isteğini incele → `/api/admin` **401** dönüyorsa oturum düşmüş demektir
+2. **403** ve `"Erişim reddedildi: bilinmeyen tablo"` → tablo `sections.ts` yapılandırmasında tanımlı değil
+3. **200** ama boş → veritabanındaki `SELECT` politikasını ve kaydın `is_published` değerini kontrol et
+4. Tarayıcıdaki `sb-...-auth-token` çerezi **httpOnly** olmalı; JavaScript'in bu çerezi okuyabilmesi beklenmez
+</details>
 
-> **✅ Idempotent:** The schema file uses `IF NOT EXISTS` / `DROP IF EXISTS` everywhere, so you can safely re-run it later to add missing columns or restore policies without errors.
+<details>
+<summary><b>Yeni ortam değişkeni ekledim ama Content-Security-Policy'de yok</b></summary>
 
-#### 3.5 - Import your data (optional)
+`connect-src` değeri `NEXT_PUBLIC_SUPABASE_URL` üzerinden otomatik üretilir. Yeni bir dış servis (örneğin bir API) ekliyorsan `next.config.ts` içindeki `connect-src` satırını elle güncelle ve yeniden derle.
+</details>
 
-If you have existing CSV backups, import them in this order to satisfy foreign-key constraints:
+<details>
+<summary><b>Markdown'da kod blokları renklendi ama sınıflar kayboldu</b></summary>
 
-1. `experiences`
-2. `educations`
-3. `languages`
-4. `activities`
-5. `certifications`
-6. `skill_categories`
-7. `projects`
-8. `blogs`
-9. `blog_images`
-10. `project_images`
-11. `certification_skills`
-12. `social_links`
-13. `contact_emails`
-14. `section_order`
-15. `about_me`
+`rehype-sanitize` şemasına dokunma. `hast-util-sanitize`, `className` değerini **tüm öznitelik metni olarak** test eder ve yalnızca düzenli ifade ya da tam eşleşme kabul eder — `language-*` gibi joker desenler çalışmaz. Şifreli sınıfların listesini `src/components/markdown/markdown-renderer.tsx` içindeki `ALLOWED_CLASS_NAME` sabitinde bulabilirsin.
+</details>
 
-#### 3.6 - Lock down sign-ups
+<details>
+<summary><b>Değişikliklerimi canlıda göremiyorum</b></summary>
 
-Go to **Authentication → Settings → Auth Providers → Email** and toggle off **"Allow new users to sign up"**.
-
-#### 3.7 - Enable Cloudflare Turnstile inside Supabase
-
-Go to **Authentication → Settings → Auth Providers → Email** and enable **"Cloudflare Turnstile"**. Paste your Secret Key there.
-
-> **⚠️ Critical:** Do NOT skip steps 3.3 and 3.6. Without them, anyone who discovers your Supabase URL could potentially create an account and modify your portfolio data.
->
-> **🌐 CSP Note:** The `Content-Security-Policy` in `next.config.ts` automatically reads `NEXT_PUBLIC_SUPABASE_URL` from your environment variables. If you change Supabase projects, just update `.env.local` and restart the dev server — no manual CSP editing required.
-
-### 4. Verify & Launch
-
-Run the automated checks before starting the dev server:
-
-```bash
-npm run lint
-npm run build
-```
-
-Then start the dev server:
-
-```bash
-npm run dev
-```
-
-| URL                              | Description            |
-| -------------------------------- | ---------------------- |
-| `http://localhost:3000`          | Your portfolio website |
-| `http://localhost:3000/admin`    | CMS admin dashboard    |
-| `http://localhost:3000/blog`     | Blog feed              |
-| `http://localhost:3000/works`           | Portfolio works feed          |
-| `http://localhost:3000/certifications`  | Certification detail page     |
-| `http://localhost:3000/credits`         | Tech credits page             |
-| `http://localhost:3000/feed.xml`        | RSS feed (TR)                   |
-| `http://localhost:3000/feed-en.xml`     | RSS feed (EN)                   |
-
-### 5. Deploy to Vercel
-
-1. Push your code to GitHub
-2. Import the repository in [Vercel](https://vercel.com/new)
-3. Add the same environment variables from `.env.local` to your Vercel project settings
-4. Deploy - Vercel will automatically build and serve your site
+Sayfalar 1 dakikalık önbellek yenileme (ISR) ile sunuluyor. Yeni deploy'dan sonra değişikliklerin görünmesi **en fazla 1 dakika** sürer. Veritabanı kaynaklı değişikliklerde ise önbellek anahtarı `fetchHomeData` / `fetchBlogData` gibi sunucu fonksiyonlarının React `cache()` sarmalayıcısı tarafından yönetilir.
+</details>
 
 ---
 
-## 🎨 Customization Guide
+## Lisans
 
-| What                 | Where                        | How                                       |
-| -------------------- | ---------------------------- | ----------------------------------------- |
-| **All content**      | `/admin` dashboard           | Log in and edit everything from the UI    |
-| **Colors & theme**   | `src/app/globals.css`        | Edit CSS tokens: `--brand`, `--background`, `--card`, `--color-maroon/brick/cream` |
-| **Static text**      | `src/config/translations.ts` | Edit/add translation keys                 |
-| **Navigation links** | Admin → Social Links         | Add/remove/reorder from the dashboard     |
-| **Section order**    | Admin → Page Layout          | Drag sections up/down or hide them        |
-| **Profile photo**    | Admin → About Me             | Toggle visibility on/off with checkbox    |
-| **Favorite quote**   | Admin → About Me             | Toggle visibility on/off with checkbox    |
-| **Maintenance mode** | Admin → Page Layout          | Toggle to temporarily block public access (displays dynamic random images) |
-| **Link content**     | Admin → Works/Blogs edit     | Use "Link Related Items" in the Links step  |
-| **Admin UI theme**   | `src/components/admin/components/ui/`   | Reusable Tailwind primitives - no external UI lib |
+[MIT](./LICENSE) © Batuhan Dede
 
----
-
-## 📜 License
-
-This project is licensed under the **[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** (Creative Commons Attribution-NonCommercial 4.0).
-
-**You can** freely use, modify, share, and deploy this project for personal or educational purposes.  
-**You cannot** sell it, monetize it, or use it for any commercial purpose.
-
-See the [LICENSE](./LICENSE) file for details.
-
----
-
-<p align="center">
-  Crafted with passion by <a href="https://github.com/batuhd">Batuhan</a>
-  <br />
-  <sub>If you found this useful, consider giving it a ⭐</sub>
-</p>
+Deploy etmeden önce `supabase_schema.sql` içindeki `YOUR-USER-UUID-HERE` placeholder'larını kendi UUID'nizle değiştirdiğinizden emin olun.
