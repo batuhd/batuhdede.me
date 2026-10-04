@@ -514,7 +514,7 @@ export const fetchHomeData = cache(async () => {
     supabase
       .from("blogs")
       .select(
-        "id, title, slug, title_tr, title_de, title_es, excerpt, excerpt_tr, excerpt_de, excerpt_es, date, read_time, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
+        "id, title, slug, title_tr, title_de, title_es, excerpt, excerpt_tr, excerpt_de, excerpt_es, date, read_time, image_url, linked_experience_id, linked_education_id, linked_activity_id, linked_certification_id",
       )
       .eq("is_published", true)
       .order("order_index", { ascending: true }),

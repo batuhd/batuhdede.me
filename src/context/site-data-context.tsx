@@ -149,7 +149,7 @@ export function SiteDataProvider({
         sb
           .from("blogs")
           .select(
-            "id, title, title_tr, title_de, title_es, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id",
+            "id, title, slug, title_tr, title_de, title_es, excerpt, excerpt_tr, excerpt_de, excerpt_es, date, read_time, image_url, is_published, linked_experience_id, linked_education_id, linked_skill_category_ids, linked_language_id, linked_activity_id, linked_certification_id",
           )
           .order("order_index", { ascending: true }),
         sb
