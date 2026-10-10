@@ -3,49 +3,49 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: 40 38% 96%;
-  --foreground: 25 22% 14%;
-  --card: 40 50% 99%;
-  --card-foreground: 25 22% 14%;
-  --popover: 40 50% 99%;
-  --popover-foreground: 25 22% 14%;
-  --primary: 25 22% 14%;
-  --primary-foreground: 40 50% 97%;
-  --secondary: 38 40% 92%;
-  --secondary-foreground: 25 22% 14%;
-  --muted: 38 40% 92%;
-  --muted-foreground: 30 12% 40%;
-  --accent: 38 40% 92%;
-  --accent-foreground: 25 22% 14%;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 4%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 4%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 4%;
+  --primary: 0 0% 4%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 4%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 4%;
   --destructive: 0 72% 51%;
-  --destructive-foreground: 40 50% 97%;
-  --border: 38 30% 85%;
-  --input: 38 30% 85%;
-  --ring: 25 22% 14%;
-  --radius: 0.5rem;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 0 0% 4%;
+  --radius: 0px;
   --brand: #bf8b67;
 }
 
 .dark {
-  --background: 10 33% 7%;
-  --foreground: 40 45% 94%;
-  --card: 10 26% 10%;
-  --card-foreground: 40 45% 94%;
-  --popover: 12 24% 12%;
-  --popover-foreground: 40 45% 94%;
-  --primary: 40 45% 94%;
-  --primary-foreground: 10 33% 7%;
-  --secondary: 12 23% 15%;
-  --secondary-foreground: 40 45% 94%;
-  --muted: 12 23% 15%;
-  --muted-foreground: 30 15% 62%;
-  --accent: 12 23% 15%;
-  --accent-foreground: 40 45% 94%;
-  --destructive: 0 62% 30%;
-  --destructive-foreground: 40 45% 94%;
-  --border: 12 24% 18%;
-  --input: 12 24% 18%;
-  --ring: 35 30% 72%;
+  --background: 0 0% 4%;
+  --foreground: 0 0% 96%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 96%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 96%;
+  --primary: 0 0% 96%;
+  --primary-foreground: 0 0% 4%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 0 0% 12%;
+  --accent-foreground: 0 0% 96%;
+  --destructive: 0 62% 40%;
+  --destructive-foreground: 0 0% 96%;
+  --border: 0 0% 16%;
+  --input: 0 0% 16%;
+  --ring: 0 0% 90%;
   --brand: #dacc96;
 }
 
@@ -73,10 +73,14 @@
   --color-maroon: #632626;
   --color-brick: #9d5353;
   --color-cream: #dacc96;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -87,12 +91,6 @@
 
 body {
   background-color: var(--color-background);
-  background-image: radial-gradient(
-    1100px 520px at 50% -12%,
-    hsl(0 40% 40% / 0.07),
-    transparent 70%
-  );
-  background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -111,7 +109,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -306,7 +304,7 @@ body {
 .prose :where(code):not(:where([class~="not-prose"] *)) {
   background: hsl(var(--muted));
   padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
+  border-radius: 0;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.875em;
   color: hsl(var(--foreground));
@@ -314,7 +312,7 @@ body {
 
 .prose :where(pre):not(:where([class~="not-prose"] *)) {
   background: hsl(var(--muted));
-  border-radius: 0.5rem;
+  border-radius: 0;
   padding: 1rem;
   overflow-x: auto;
   margin: 1.5rem 0;
@@ -352,7 +350,7 @@ body {
 }
 
 .prose :where(img):not(:where([class~="not-prose"] *)) {
-  border-radius: 0.5rem;
+  border-radius: 0;
   margin: 1.5rem 0;
   max-width: 100%;
   height: auto;
@@ -405,13 +403,13 @@ pre[class*="language-"] {
   padding: 1rem;
   margin: 0;
   overflow: auto;
-  border-radius: 0.5rem;
+  border-radius: 0;
   background: #1e1e2e;
 }
 
 :not(pre) > code[class*="language-"] {
   padding: 0.2em 0.4em;
-  border-radius: 0.25rem;
+  border-radius: 0;
   background: hsl(var(--muted));
   color: hsl(var(--foreground));
 }
@@ -493,7 +491,7 @@ pre[class*="language-"] {
 .code-block-wrapper {
   position: relative;
   margin: 1.5rem 0;
-  border-radius: 0.5rem;
+  border-radius: 0;
   overflow: hidden;
   background: #1e1e2e;
 }
@@ -524,7 +522,7 @@ pre[class*="language-"] {
   color: #cdd6f4;
   background: #313244;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -559,7 +557,7 @@ pre[class*="language-"] {
 .inline-code {
   background: hsl(var(--muted));
   padding: 0.2em 0.4em;
-  border-radius: 0.25rem;
+  border-radius: 0;
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.875em;
   color: hsl(var(--foreground));
@@ -602,7 +600,7 @@ pre[class*="language-"] {
   line-height: 1.6;
   background: hsl(var(--background));
   border: 1px solid hsl(var(--border));
-  border-radius: 0.5rem;
+  border-radius: 0;
   resize: vertical;
   outline: none;
   transition: border-color 0.2s;
@@ -616,7 +614,7 @@ pre[class*="language-"] {
   padding: 1rem;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
-  border-radius: 0.5rem;
+  border-radius: 0;
   overflow-y: auto;
   max-height: 500px;
 }
@@ -628,7 +626,7 @@ pre[class*="language-"] {
   padding: 0.5rem;
   background: hsl(var(--muted));
   border: 1px solid hsl(var(--border));
-  border-radius: 0.5rem;
+  border-radius: 0;
 }
 
 .markdown-toolbar-button {
@@ -643,7 +641,7 @@ pre[class*="language-"] {
   color: hsl(var(--foreground));
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 0.375rem;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -677,7 +675,7 @@ pre[class*="language-"] {
   font-size: 0.75rem;
   background: hsl(var(--background));
   border: 1px solid hsl(var(--border));
-  border-radius: 0.25rem;
+  border-radius: 0;
   cursor: pointer;
 }
 
@@ -687,7 +685,7 @@ pre[class*="language-"] {
   gap: 0.25rem;
   padding: 0.25rem;
   background: hsl(var(--muted));
-  border-radius: 0.5rem;
+  border-radius: 0;
   margin-bottom: 0.5rem;
 }
 
@@ -698,7 +696,7 @@ pre[class*="language-"] {
   color: hsl(var(--muted-foreground));
   background: transparent;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -721,7 +719,7 @@ pre[class*="language-"] {
 .markdown-help-content pre {
   background: hsl(var(--muted));
   padding: 0.75rem;
-  border-radius: 0.375rem;
+  border-radius: 0;
   font-family: var(--font-mono), monospace;
   font-size: 0.75rem;
   overflow-x: auto;
@@ -730,7 +728,7 @@ pre[class*="language-"] {
 .markdown-help-content code {
   background: hsl(var(--muted));
   padding: 0.2em 0.4em;
-  border-radius: 0.25rem;
+  border-radius: 0;
   font-family: var(--font-mono), monospace;
   font-size: 0.8em;
 }
@@ -758,7 +756,7 @@ pre[class*="language-"] {
 
 .markdown-editor-textarea::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .markdown-editor-textarea::-webkit-scrollbar-thumb:hover {

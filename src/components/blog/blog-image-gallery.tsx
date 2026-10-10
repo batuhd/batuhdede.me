@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import {
+  registerGallery,
+  updateGallery,
+  useGallery,
+} from "@/components/navigation/gallery-store";
+import { GalleryControls } from "@/components/navigation/gallery-controls";
 
 interface BlogImageGalleryProps {
   images: { image_url: string; caption?: string }[];
@@ -25,145 +31,116 @@ export function BlogImageGallery({
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
+  const { thumbs } = useGallery();
 
-  // Prevent body scroll when lightbox is open
-  useEffect(() => {
-    if (lightboxOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [lightboxOpen]);
-
-  // Main image + additional images
   const allImages = mainImage
     ? [{ image_url: mainImage, caption: undefined }, ...images]
     : images;
+  const count = allImages.length;
 
-  const handlePrev = useCallback((e?: { stopPropagation: () => void }) => {
-    e?.stopPropagation();
-    setCurrentIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
-  }, [allImages.length]);
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev === 0 ? count - 1 : prev - 1));
+  }, [count]);
 
-  const handleNext = useCallback((e?: { stopPropagation: () => void }) => {
-    e?.stopPropagation();
-    setCurrentIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
-  }, [allImages.length]);
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev === count - 1 ? 0 : prev + 1));
+  }, [count]);
 
-  const handleThumbnailClick = (index: number) => {
-    setCurrentIndex(index);
-  };
+  useEffect(() => registerGallery(), []);
 
-  // Keyboard navigation for the gallery and lightbox
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (allImages.length <= 1) return;
-      if (e.key === "ArrowLeft") {
-        handlePrev(e);
-      } else if (e.key === "ArrowRight") {
-        handleNext(e);
-      }
-    };
+    if (count === 0) return;
+    updateGallery({
+      hasPrev: count > 1,
+      hasNext: count > 1,
+      onPrev: handlePrev,
+      onNext: handleNext,
+    });
+  }, [count, handlePrev, handleNext]);
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [allImages.length, handlePrev, handleNext]);
-
-  // Close lightbox with Escape
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && lightboxOpen) {
-        e.stopPropagation();
-        setLightboxOpen(false);
-      }
+    if (!lightboxOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLightboxOpen(false);
+      if (count <= 1) return;
+      if (event.key === "ArrowLeft") handlePrev();
+      if (event.key === "ArrowRight") handleNext();
     };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [lightboxOpen, count, handlePrev, handleNext]);
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
   }, [lightboxOpen]);
 
-  if (allImages.length === 0) return null;
+  if (count === 0) return null;
+
+  const current = allImages[Math.min(currentIndex, count - 1)];
 
   return (
     <>
-      {/* Main Gallery Display */}
-      <div className="space-y-3">
-        {/* Main Image */}
-        <div
-          className="relative aspect-video w-full overflow-hidden rounded-xl bg-muted cursor-pointer group"
+      {thumbs && count > 1 ? (
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          {allImages.map((img, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setCurrentIndex(idx)}
+              aria-label={`${title} ${idx + 1}`}
+              className={cn(
+                "relative aspect-[3/2] w-full overflow-hidden bg-muted",
+                idx === currentIndex && "outline outline-2 outline-foreground",
+              )}
+            >
+              <Image
+                src={img.image_url}
+                alt={`${title} ${idx + 1}`}
+                fill
+                sizes="(max-width: 1024px) 50vw, 33vw"
+                className="object-cover"
+              />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <button
+          type="button"
           onClick={() => setLightboxOpen(true)}
+          className="group relative block aspect-[3/2] w-full overflow-hidden bg-muted"
+          aria-label={title}
         >
           <Image
-            src={allImages[currentIndex]?.image_url}
+            src={current.image_url}
             alt={`${title} - ${currentIndex + 1}`}
             fill
-            sizes="(max-width: 768px) 100vw, 80vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 1024px) 100vw, 1356px"
+            priority
+            className="object-cover"
           />
-
-          {/* Navigation Arrows (only if multiple images) */}
-          {allImages.length > 1 && (
-            <>
-              <button
-                onClick={handlePrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={handleNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 text-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-
-              {/* Image Counter */}
-              <div className="absolute bottom-2 right-2 rounded-full bg-background/80 px-3 py-1 text-xs font-medium">
-                {currentIndex + 1} / {allImages.length}
-              </div>
-            </>
+          {count > 1 && (
+            <span className="absolute bottom-3 right-3 text-[11px] uppercase tracking-[0.08em] text-white mix-blend-difference">
+              {currentIndex + 1} / {count}
+            </span>
           )}
-        </div>
+        </button>
+      )}
 
-        {/* Thumbnail Navigation (only if multiple images) */}
-        {allImages.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-            {allImages.map((img, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleThumbnailClick(idx)}
-                className={cn(
-                  "relative flex-shrink-0 h-20 w-32 overflow-hidden rounded-lg border-2 transition-all",
-                  idx === currentIndex
-                    ? "border-primary ring-2 ring-primary/20"
-                    : "border-transparent hover:border-muted-foreground/30",
-                )}
-              >
-                <Image
-                  src={img.image_url}
-                  alt={`Thumbnail ${idx + 1}`}
-                  fill
-                  sizes="128px"
-                  className="object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        )}
+      {current.caption && (
+        <p className="mt-2 text-center text-sm text-muted-foreground">
+          {current.caption}
+        </p>
+      )}
 
-        {/* Caption */}
-        {allImages[currentIndex]?.caption && (
-          <p className="text-sm text-muted-foreground text-center">
-            {allImages[currentIndex].caption}
-          </p>
-        )}
-      </div>
+      <GalleryControls variant="inline" />
 
-      {/* Lightbox Modal */}
       {isMounted &&
         createPortal(
           <AnimatePresence>
@@ -172,100 +149,65 @@ export function BlogImageGallery({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[200] flex flex-col bg-black/95 select-none"
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[200] flex flex-col bg-background select-none"
                 onClick={() => setLightboxOpen(false)}
               >
-                {/* Top bar (Close button & Counter/Title) */}
-                <div className="relative flex items-center justify-between p-4 z-[210] text-white">
-                  <div className="text-sm font-medium opacity-80 pl-2">
-                    {allImages.length > 1 && `${currentIndex + 1} / ${allImages.length}`}
-                  </div>
+                <div className="flex h-14 items-center justify-between border-b border-border px-5">
+                  <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                    {count > 1 ? `${currentIndex + 1} / ${count}` : ""}
+                  </span>
                   <button
+                    type="button"
                     onClick={() => setLightboxOpen(false)}
-                    className="rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors cursor-pointer"
+                    aria-label="Close"
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-end text-muted-foreground transition-colors duration-150 hover:text-foreground"
                   >
-                    <X className="h-6 w-6" />
+                    <X className="h-5 w-5" strokeWidth={1.5} />
                   </button>
                 </div>
 
-                {/* Main content (Image + Nav arrows) */}
-                <div className="relative flex-1 flex items-center justify-center px-4 md:px-16 min-h-0">
-                  <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    className="relative w-full h-full max-w-6xl max-h-[70vh]"
+                <div className="relative flex flex-1 items-center justify-center p-4">
+                  <Image
+                    src={current.image_url}
+                    alt={`${title} - ${currentIndex + 1}`}
+                    fill
+                    sizes="100vw"
+                    priority
+                    className="object-contain"
                     onClick={(e) => e.stopPropagation()}
-                  >
-                    <Image
-                      src={allImages[currentIndex]?.image_url}
-                      alt={`${title} - ${currentIndex + 1}`}
-                      fill
-                      sizes="90vw"
-                      className="object-contain rounded-lg select-none pointer-events-none"
-                      priority
-                    />
-                  </motion.div>
-
-                  {/* Navigation Arrows inside the main container but overlaying the image */}
-                  {allImages.length > 1 && (
+                  />
+                  {count > 1 && (
                     <>
                       <button
-                        onClick={handlePrev}
-                        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/80 transition-colors z-[210] cursor-pointer"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePrev();
+                        }}
+                        aria-label="Previous image"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-foreground transition-opacity duration-150 hover:opacity-60"
                       >
-                        <ChevronLeft className="h-6 w-6" />
+                        <ChevronLeft className="h-6 w-6" strokeWidth={1.5} />
                       </button>
                       <button
-                        onClick={handleNext}
-                        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-3 text-white hover:bg-black/80 transition-colors z-[210] cursor-pointer"
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNext();
+                        }}
+                        aria-label="Next image"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-foreground transition-opacity duration-150 hover:opacity-60"
                       >
-                        <ChevronRight className="h-6 w-6" />
+                        <ChevronRight className="h-6 w-6" strokeWidth={1.5} />
                       </button>
                     </>
-                  )}
-                </div>
-
-                {/* Bottom Bar (Caption + Thumbnails) */}
-                <div className="p-4 flex flex-col items-center gap-4 z-[210] bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                  {allImages[currentIndex]?.caption && (
-                    <p className="text-sm text-white/90 text-center max-w-2xl px-4 line-clamp-2">
-                      {allImages[currentIndex].caption}
-                    </p>
-                  )}
-
-                  {allImages.length > 1 && (
-                    <div
-                      className="flex gap-2 overflow-x-auto max-w-[85vw] pb-2 scrollbar-thin px-4 scrollbar-thumb-white/20 scrollbar-track-transparent"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {allImages.map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setCurrentIndex(idx)}
-                          className={cn(
-                            "relative flex-shrink-0 h-16 w-24 overflow-hidden rounded border-2 transition-all cursor-pointer",
-                            idx === currentIndex
-                              ? "border-white ring-2 ring-white/20"
-                              : "border-transparent hover:border-white/50",
-                          )}
-                        >
-                          <Image
-                            src={img.image_url}
-                            alt={`Thumbnail ${idx + 1}`}
-                            fill
-                            sizes="96px"
-                            className="object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
                   )}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>,
-          document.body
+          document.body,
         )}
     </>
   );

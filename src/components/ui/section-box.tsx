@@ -12,20 +12,18 @@ export function SectionBox({
   children: ReactNode;
 }) {
   return (
-    <div className="relative rounded-2xl border border-border px-4 py-6 sm:px-6 sm:py-8">
-      <div className="absolute left-4 top-0 flex -translate-y-1/2 items-center gap-2 bg-background pr-2 sm:left-6">
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
-        <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
-          {title}
-        </span>
-        {badge}
-      </div>
-      {actions && (
-        <div className="absolute right-4 top-0 -translate-y-1/2 bg-background pl-2 sm:right-6">
-          {actions}
+    <section className="border border-border">
+      <div className="flex items-center justify-between gap-4 bg-muted px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 shrink-0 bg-brand" aria-hidden="true" />
+          <span className="text-[11px] font-normal uppercase tracking-[0.12em] text-foreground">
+            {title}
+          </span>
+          {badge}
         </div>
-      )}
-      {children}
-    </div>
+        {actions}
+      </div>
+      <div className="px-4 py-5 sm:px-5">{children}</div>
+    </section>
   );
 }

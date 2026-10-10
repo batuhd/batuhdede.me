@@ -5,20 +5,17 @@ import { sanitizeUrl } from "@/lib/utils";
 import { SiteDataProvider } from "@/context/site-data-context";
 import type { Project, Blog } from "@/types";
 import { JsonLd, personJsonLd, websiteJsonLd } from "@/components/json-ld";
-import { Hero } from "@/components/home/hero";
-import { Certifications } from "@/components/home/profile-sections";
-import { RecentPosts } from "@/components/home/recent-posts";
-import { SiteFooter } from "@/components/home/site-footer";
+import { AboutContent } from "@/components/home/about-content";
 
 // ISR: 60 saniyede bir yenile
 export const revalidate = 60;
 
 // Metadata
 export const metadata = {
-  description: "Full Stack Developer & Software Engineer",
+  description: siteConfig.description,
 };
 
-// Server Component
+// Server Component — ana sayfa doğrudan Hakkımda içeriğini gösterir.
 export default async function Home() {
   // Server'da veriyi çek - cache'li
   const data = await fetchHomeData();
@@ -84,19 +81,7 @@ export default async function Home() {
   return (
     <SiteDataProvider initialData={siteData}>
       <JsonLd data={[websiteSchema, personSchema]} />
-      <Hero />
-
-      <div className="mt-20">
-        <Certifications variant="marquee" />
-      </div>
-
-      <div className="mx-auto mt-16 w-full max-w-7xl px-4 sm:px-6">
-        <RecentPosts />
-      </div>
-
-      <div className="mt-16">
-        <SiteFooter />
-      </div>
+      <AboutContent />
     </SiteDataProvider>
   );
 }

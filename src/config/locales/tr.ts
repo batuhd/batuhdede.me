@@ -3,44 +3,29 @@ export const tr: Record<string, string> = {
   "common.showLess": "Daha az",
   "common.minRead": "dk okuma",
   // Navigation
-  "nav.home": "Ana Sayfa",
   "nav.about": "Hakkımda",
   "nav.works": "Çalışmalar",
-  "nav.blog": "Blog",
   "nav.articles": "Blog",
-  "nav.certifications": "Sertifikalar",
-  "nav.credits": "Credits",
-  "nav.theme": "Tema",
-  "nav.language": "Dil",
   "nav.contact": "İletişim",
+  "nav.menu": "Menü",
+  "nav.close": "Kapat",
+  "nav.prev": "Önceki",
+  "nav.next": "Sonraki",
+  "nav.showThumbnails": "Küçük resimleri göster",
+  "nav.hideThumbnails": "Küçük resimleri gizle",
+  "nav.themeLight": "Açık",
+  "nav.themeDark": "Koyu",
+  "nav.cv": "Özgeçmiş",
+  "home.tab.experience": "Deneyim",
+  "home.tab.leadership": "Liderlik",
+  "home.tab.education": "Eğitim & Diller",
+  "home.tab.skills": "Yetenekler & Sertifikalar",
 
   // User / Hero
-  "user.heroTagline":
-    "Kod, sistemler ve görsel tasarımın kesişim noktasına odaklanıyor.",
-  "user.about":
-    "Frontend geliştirme ve görsel tasarıma odaklanan bir Yönetim Bilişim Sistemleri (YBS) öğrencisiyim. React ve Next.js kullanarak web uygulamaları geliştiriyor, aynı zamanda Python kodlama, Linux özelleştirme (ricing) ve oyun modlama gibi konularda deneyim kazanıyorum. Temiz, işlevsel ve iyi yapılandırılmış dijital projeler oluşturmaktan keyif alıyorum.",
-  "user.quote.text":
-    "Kendinden nefret edenler başkalarını sevemez ve onlara güvenemez.",
-  "user.quote.author": "Hideaki Anno",
-  "user.skill.frontend": "Frontend Geliştirme",
-  "user.skill.backend": "Backend Geliştirme",
-  "user.skill.systems": "Sistemler & Multimedya",
-  "user.stats.started": "Kodlamaya Başlangıç",
-  "user.stats.projects": "Tamamlanan Proje",
-  "user.stats.experience": "Yıllık Deneyim",
   "home.hello": "Ben",
-  "home.hi": "Merhaba!",
-  "home.resume": "Özgeçmişi İndir",
-  "home.work": "Deneyim",
-  "home.downloadResume": "Özgeçmişi İndir",
-  "home.workDetails": "Detayları gör",
-  "home.readMore": "Daha fazla",
-  "home.contactMe": "Benimle iletişime geçin",
 
   // About
   "about.hey": "Merhaba!",
-  "about.whatLed": "Yönettiğim İşler",
-  "about.follow": "Takip Et",
   "about.email": "E-posta",
 
   // Language Levels
@@ -53,19 +38,12 @@ export const tr: Record<string, string> = {
   "level.c2": "C2 - Yetkin",
 
   // Home
-  "home.about": "Hakkımda",
   "home.skills": "Yetenekler",
   "home.experience": "Deneyim",
   "home.education": "Eğitim",
   "home.languages": "Diller",
   "home.activities": "Liderlik & Etkinlikler",
   "home.certifications": "Sertifikalar",
-  "home.github": "GitHub Katkıları",
-  "home.github.contributions": "Son bir yılda {count} katkı",
-  "home.github.nodata":
-    "(Gerçek verileri görmek için .env'ye GITHUB_TOKEN ekleyin)",
-  "home.github.less": "Az",
-  "home.github.more": "Çok",
   "home.contact": "İletişime Geçin",
   "home.contact.name": "İsim",
   "home.contact.email": "E-posta",
@@ -80,10 +58,16 @@ export const tr: Record<string, string> = {
   "home.contact.errorEmailTooLong": "E-posta adresi çok uzun.",
   "home.contact.errorMessageTooShort": "Mesaj en az 10 karakter olmalıdır.",
   "home.contact.errorMessageTooLong": "Mesaj en fazla 5000 karakter olabilir.",
-  "home.contact.namePlaceholder": "Adınız",
   "home.contact.emailPlaceholder": "siz@ornek.com",
   "home.contact.messagePlaceholder": "Mesajınız...",
-  "home.footer": "Sinop'ta ❤️ ile yapıldı",
+  "home.contact.firstName": "Ad",
+  "home.contact.lastName": "Soyad",
+  "home.contact.subject": "Konu",
+  "home.contact.required": "(zorunlu)",
+  "home.contact.firstNamePlaceholder": "Adınız",
+  "home.contact.lastNamePlaceholder": "Soyadınız",
+  "home.contact.errorSubjectTooShort": "Konu en az 2 karakter olmalıdır.",
+  "home.contact.errorSubjectTooLong": "Konu en fazla 200 karakter olabilir.",
 
   // Works
   "works.title": "Seçilmiş İşler",
@@ -91,30 +75,19 @@ export const tr: Record<string, string> = {
   "works.empty": "Henüz proje yok",
   "works.emptyDesc": "Admin panelinden eklenen projeler burada görünecek.",
   "works.emptyFilter": "Bu kategoride henüz proje yok",
-  "works.loading": "Projeler yükleniyor...",
   "works.liveDemo": "Canlı Demo",
   "works.source": "Kaynak",
   "works.filterAll": "Tümü",
-  "works.filter.B2B": "B2B",
-  "works.filter.B2B2C": "B2B2C",
-  "works.filter.B2C": "B2C",
-  "works.filter.AI": "AI",
 
 
   // Uses
 
   // Blog
-  "blog.title": "Blog",
   "blog.editorialTitle": "Tasarım, Liderlik ve Yapay Zeka Üzerine",
-  "blog.recent": "Son Yazılar",
-  "blog.viewAll": "Tümünü gör",
   "blog.subtitle": "Düşünceler, öğrenmeler ve web geliştirme yazıları.",
   "blog.empty": "Henüz yazı yok",
   "blog.emptyDesc": "Admin panelinden eklenen yazılar burada görünecek.",
   "blog.emptyFilter": "Bu kategoride henüz yazı yok",
-  "blog.new": "Yeni",
-  "blog.latest": "En son paylaşılan",
-  "blog.loading": "Yazılar yükleniyor...",
   "blog.rss.title": "RSS Feed",
   "blog.rss.desc": "Hangi dildeki RSS akışını görmek istersiniz?",
   "blog.rss.tr": "Türkçe RSS",
@@ -137,9 +110,6 @@ export const tr: Record<string, string> = {
   "credits.tech.icons": "İkonlar",
   "credits.tech.security": "Güvenlik",
   "credits.typography": "Tipografi",
-  "credits.typo.sans": "Sans",
-  "credits.typo.mono": "Mono",
-  "credits.typo.logo": "Logo",
   "credits.typo.logoNote":
     "İntro videosunda kullanılan yazı tipi A Typography tarafından geliştirilen Epetri'dir. Ticari amaçla kullanılmamaktadır.",
   "credits.media": "Medya & Video",
@@ -172,13 +142,9 @@ export const tr: Record<string, string> = {
   // Works page
   "works.relatedBlogs": "İlgili Blog Yazıları",
   "works.back": "Çalışmalara dön",
-  "works.previous": "Önceki proje",
-  "works.next": "Sonraki proje",
 
   // Blog page
   "blog.related": "İlgili",
-  "blog.viewProjectDetails": "Proje Detaylarını Görüntüle",
-  "blog.linkedEntity": "Bağlantılı {type}",
   "blog.entityType.work": "Proje",
   "blog.entityType.experience": "Deneyim",
   "blog.entityType.education": "Eğitim",
@@ -189,13 +155,9 @@ export const tr: Record<string, string> = {
   "blog.share": "Paylaş",
   "blog.copyLink": "Link kopyala",
   "blog.linkCopied": "Link kopyalandı!",
-  "blog.shareOn": "Şurada paylaş:",
   "blog.back": "Bloga dön",
-  "blog.previous": "Önceki yazı",
-  "blog.next": "Sonraki yazı",
 
   // GitHub
-  "github.contributionsOn": "{date} tarihinde {count} katkı",
 
   // Accessibility
   "a11y.skipToContent": "Ana içeriğe atla",

@@ -34,9 +34,9 @@ export function BackButton({ href, label }: BackButtonProps) {
     <Link
       href={href}
       onClick={handleClick}
-      className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-brand/40 hover:text-foreground"
+      className="inline-flex min-h-[44px] items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground transition-colors duration-150 hover:text-foreground"
     >
-      <ArrowLeft className="h-4 w-4" />
+      <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
       <span>{label}</span>
     </Link>
   );

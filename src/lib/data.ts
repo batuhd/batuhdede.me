@@ -23,21 +23,9 @@ export interface AboutMe {
   role: string;
   hero_tagline: string;
   bio: string;
+  about_bio: string | null;
+  about_photo_url: string | null;
   profile_photo_url: string | null;
-  started_coding_year: number | null;
-  projects_count: number | null;
-  years_experience: number | null;
-  quote_text: string | null;
-  quote_author: string | null;
-  stat_1_value: string | null;
-  stat_1_label: string | null;
-  stat_2_value: string | null;
-  stat_2_label: string | null;
-  stat_3_value: string | null;
-  stat_3_label: string | null;
-  show_quote: boolean;
-  show_stats: boolean;
-  show_profile_photo: boolean;
   // Translations
   hero_tagline_tr?: string;
   hero_tagline_de?: string;
@@ -45,21 +33,12 @@ export interface AboutMe {
   bio_tr?: string;
   bio_de?: string;
   bio_es?: string;
+  about_bio_tr?: string;
+  about_bio_de?: string;
+  about_bio_es?: string;
   role_tr?: string;
   role_de?: string;
   role_es?: string;
-  quote_text_tr?: string;
-  quote_text_de?: string;
-  quote_text_es?: string;
-  stat_1_label_tr?: string;
-  stat_1_label_de?: string;
-  stat_1_label_es?: string;
-  stat_2_label_tr?: string;
-  stat_2_label_de?: string;
-  stat_2_label_es?: string;
-  stat_3_label_tr?: string;
-  stat_3_label_de?: string;
-  stat_3_label_es?: string;
 }
 
 export interface SkillCategory {
@@ -280,8 +259,6 @@ export interface SocialLink {
   id: string;
   platform: string;
   url: string;
-  icon?: string;
-  account_type?: string;
   order_index: number;
 }
 

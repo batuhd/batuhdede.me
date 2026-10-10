@@ -56,7 +56,7 @@ export function Skills() {
         <div className="space-y-5">
           {displayCategories.map((category) => (
             <div key={category.id}>
-              <h3 className="mb-2.5 text-sm font-semibold text-foreground">
+              <h3 className="mb-2.5 text-sm font-normal text-foreground">
                 {skillCategories.length > 0
                   ? getLocalized(category, "title")
                   : category.title}
@@ -65,7 +65,7 @@ export function Skills() {
                 {getLocalizedSkills(category).map((skill) => (
                   <span
                     key={skill}
-                    className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-brand/70 hover:bg-muted"
+                    className="border border-border px-2.5 py-1 text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
                   >
                     {skill}
                   </span>

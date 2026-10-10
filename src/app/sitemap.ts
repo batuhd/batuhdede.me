@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
-import { fetchHomeData, fetchBlogData, fetchWorksData } from "@/lib/data";
+import { fetchBlogData, fetchWorksData } from "@/lib/data";
 
 export const revalidate = 60;
 
@@ -34,10 +34,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/certifications`,
+      url: `${baseUrl}/contact`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.8,
+      changeFrequency: "monthly",
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/credits`,
@@ -48,8 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Dynamic content routes
-  const [homeData, blogData, worksData] = await Promise.all([
-    fetchHomeData(),
+  const [blogData, worksData] = await Promise.all([
     fetchBlogData(),
     fetchWorksData(),
   ]);
@@ -70,12 +69,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const certifications = homeData.certifications.map((cert) => ({
-    url: `${baseUrl}/certifications/${cert.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "monthly" as const,
-    priority: 0.6,
-  }));
-
-  return [...staticRoutes, ...blogPosts, ...projects, ...certifications];
+  return [...staticRoutes, ...blogPosts, ...projects];
 }

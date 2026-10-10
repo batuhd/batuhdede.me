@@ -3,10 +3,10 @@
 import { motion } from "motion/react";
 import { ReactNode } from "react";
 
+/** Yalnızca opacity fade; kayma/zıplama yok. */
 export function FadeIn({
   children,
   delay = 0,
-  direction = "up",
   fullWidth = false,
   className = "",
 }: {
@@ -16,23 +16,11 @@ export function FadeIn({
   fullWidth?: boolean;
   className?: string;
 }) {
-  const directions = {
-    up: { y: 24 },
-    down: { y: -24 },
-    left: { x: 24 },
-    right: { x: -24 },
-    none: { x: 0, y: 0 },
-  };
-
   return (
     <motion.div
-      initial={{ opacity: 0, ...directions[direction] }}
-      animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{
-        duration: 0.6,
-        delay,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.25, delay, ease: "easeOut" }}
       className={fullWidth ? "w-full" : className}
     >
       {children}

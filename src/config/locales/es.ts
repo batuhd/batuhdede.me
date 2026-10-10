@@ -3,28 +3,25 @@ export const es: Record<string, string> = {
   "common.showLess": "Mostrar menos",
   "common.minRead": "min de lectura",
   // Navigation
-  "nav.home": "Inicio",
   "nav.about": "Sobre mí",
   "nav.works": "Trabajo",
-  "nav.blog": "Blog",
   "nav.articles": "Blog",
-  "nav.certifications": "Certificaciones",
-  "nav.credits": "Créditos",
-  "nav.theme": "Tema",
-  "nav.language": "Idioma",
   "nav.contact": "Contacto",
+  "nav.menu": "Menú",
+  "nav.close": "Cerrar",
+  "nav.prev": "Anterior",
+  "nav.next": "Siguiente",
+  "nav.showThumbnails": "Mostrar miniaturas",
+  "nav.hideThumbnails": "Ocultar miniaturas",
+  "nav.themeLight": "Claro",
+  "nav.themeDark": "Oscuro",
+  "nav.cv": "Currículum",
+  "home.tab.experience": "Experiencia",
+  "home.tab.leadership": "Liderazgo",
+  "home.tab.education": "Educación e Idiomas",
+  "home.tab.skills": "Habilidades y Certificaciones",
 
   // User / Hero
-  "user.heroTagline":
-    "Enfocado en la intersección del código, los sistemas y el diseño visual.",
-  "user.about":
-    "Soy un estudiante de MIS con enfoque en desarrollo frontend y diseño visual. Mi trabajo consiste en crear aplicaciones web con React y Next.js, además de explorar scripting en Python y personalización de sistemas mediante ricing de Linux y modding de juegos. Disfruto creando proyectos digitales limpios, funcionales y bien estructurados.",
-  "user.quote.text":
-    "Quienes se odian a sí mismos no pueden amar ni confiar en los demás.",
-  "user.quote.author": "Hideaki Anno",
-  "user.skill.frontend": "Excelencia Frontend",
-  "user.skill.backend": "Desarrollo Backend",
-  "user.skill.systems": "Sistemas y Multimedia",
 
   // Language Levels
   "level.native": "Nativo",
@@ -36,31 +33,16 @@ export const es: Record<string, string> = {
   "level.c2": "C2 - Proficiente",
 
   // Home
-  "home.about": "Sobre mí",
   "home.skills": "Habilidades",
   "home.experience": "Experiencia",
   "home.education": "Educación",
   "home.languages": "Idiomas",
   "home.activities": "Liderazgo y Actividades",
   "home.certifications": "Certificaciones",
-  "home.github": "Contribuciones en GitHub",
-  "home.github.contributions": "{count} contribuciones en el último año",
-  "home.github.nodata": "(Añade GITHUB_TOKEN a .env para ver datos reales)",
-  "home.github.less": "Menos",
-  "home.github.more": "Más",
   "home.hello": "Soy",
-  "home.hi": "¡Hola!",
-  "home.resume": "Descargar CV",
-  "home.work": "Trabajo",
-  "home.downloadResume": "Descargar CV",
-  "home.workDetails": "Ver detalles",
-  "home.readMore": "Más sobre mí",
-  "home.contactMe": "Contáctame",
 
   // About
   "about.hey": "¡Hola!",
-  "about.whatLed": "Lo que he liderado",
-  "about.follow": "Seguir en",
   "about.email": "Correo",
 
   "home.contact": "Contacto",
@@ -78,10 +60,16 @@ export const es: Record<string, string> = {
   "home.contact.errorEmailTooLong": "La dirección de correo electrónico es demasiado larga.",
   "home.contact.errorMessageTooShort": "El mensaje debe tener al menos 10 caracteres.",
   "home.contact.errorMessageTooLong": "El mensaje debe tener como máximo 5000 caracteres.",
-  "home.contact.namePlaceholder": "Tu nombre",
   "home.contact.emailPlaceholder": "tu@ejemplo.com",
   "home.contact.messagePlaceholder": "Tu mensaje...",
-  "home.footer": "Hecho en Sinop con ❤️",
+  "home.contact.firstName": "Nombre",
+  "home.contact.lastName": "Apellido",
+  "home.contact.subject": "Asunto",
+  "home.contact.required": "(obligatorio)",
+  "home.contact.firstNamePlaceholder": "Nombre",
+  "home.contact.lastNamePlaceholder": "Apellido",
+  "home.contact.errorSubjectTooShort": "El asunto debe tener al menos 2 caracteres.",
+  "home.contact.errorSubjectTooLong": "El asunto debe tener como máximo 200 caracteres.",
 
   // Works
   "works.title": "Trabajo seleccionado",
@@ -90,32 +78,21 @@ export const es: Record<string, string> = {
   "works.emptyDesc":
     "Los proyectos añadidos desde el panel de administración aparecerán aquí.",
   "works.emptyFilter": "Aún no hay proyectos en esta categoría",
-  "works.loading": "Cargando proyectos...",
   "works.liveDemo": "Demo en vivo",
   "works.source": "Código fuente",
   "works.filterAll": "Todos",
-  "works.filter.B2B": "B2B",
-  "works.filter.B2B2C": "B2B2C",
-  "works.filter.B2C": "B2C",
-  "works.filter.AI": "IA",
 
 
   // Uses
 
   // Blog
-  "blog.title": "Blog",
   "blog.editorialTitle": "Sobre Diseño, Liderazgo e IA",
-  "blog.recent": "Últimas publicaciones",
-  "blog.viewAll": "Ver todas",
   "blog.subtitle":
     "Pensamientos, aprendizajes y artículos sobre desarrollo web.",
   "blog.empty": "Aún no hay publicaciones",
   "blog.emptyDesc":
     "Las publicaciones del blog añadidas desde el panel de administración aparecerán aquí.",
   "blog.emptyFilter": "Aún no hay publicaciones en esta categoría",
-  "blog.new": "Nuevo",
-  "blog.latest": "Publicación más reciente",
-  "blog.loading": "Cargando publicaciones...",
   "blog.rss.title": "Feed RSS",
   "blog.rss.desc": "¿Qué feed RSS quieres?",
   "blog.rss.tr": "RSS turco",
@@ -138,9 +115,6 @@ export const es: Record<string, string> = {
   "credits.tech.icons": "Iconos",
   "credits.tech.security": "Seguridad",
   "credits.typography": "Tipografía",
-  "credits.typo.sans": "Sans",
-  "credits.typo.mono": "Mono",
-  "credits.typo.logo": "Logo",
   "credits.typo.logoNote":
     "La fuente utilizada en el video de introducción es Epetri de A Typography. No se utiliza con fines comerciales.",
   "credits.media": "Medios y Video",
@@ -172,13 +146,9 @@ export const es: Record<string, string> = {
   // Works page
   "works.relatedBlogs": "Publicaciones de Blog Relacionadas",
   "works.back": "Volver a trabajos",
-  "works.previous": "Proyecto anterior",
-  "works.next": "Proyecto siguiente",
 
   // Blog page
   "blog.related": "Relacionado",
-  "blog.viewProjectDetails": "Ver Detalles del Proyecto",
-  "blog.linkedEntity": "Vinculado: {type}",
   "blog.entityType.work": "Proyecto",
   "blog.entityType.experience": "Experiencia",
   "blog.entityType.education": "Educación",
@@ -189,13 +159,9 @@ export const es: Record<string, string> = {
   "blog.share": "Compartir",
   "blog.copyLink": "Copiar enlace",
   "blog.linkCopied": "¡Enlace copiado!",
-  "blog.shareOn": "Compartir en:",
   "blog.back": "Volver al blog",
-  "blog.previous": "Artículo anterior",
-  "blog.next": "Artículo siguiente",
 
   // GitHub
-  "github.contributionsOn": "{count} contribuciones el {date}",
 
   // Accessibility
   "a11y.skipToContent": "Saltar al contenido principal",

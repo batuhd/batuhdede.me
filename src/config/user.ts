@@ -1,9 +1,6 @@
 export const userConfig = {
   name: "Batuhan Dede",
-  role: "Frontend Developer & MIS Student",
-  field: "Web Development / Digital Design",
-  heroTagline:
-    "Focusing on the intersection of code, systems, and visual design.",
+  role: "Sistem, Tasarım ve Operasyon | YBS",
 
   about: `I am an MIS student with a focus on frontend development and visual design. My work involves building web applications using React and Next.js, alongside exploring Python scripting and system customization through Linux ricing and game modding. I enjoy creating clean, functional, and well-structured digital projects.`,
 
@@ -39,18 +36,12 @@ export const userConfig = {
     },
   ],
 
-  favoriteQuote: {
-    text: "Those who hate themselves, cannot love or trust others.",
-    author: "Hideaki Anno",
-  },
-
   contact: {
     email: "batuhdede@gmail.com",
     formspree: "https://formspree.io/f/xdalyqan",
   },
 
   links: {
-    resume: "/api/cv?lang=en&download=1",
     github: "https://github.com/batuhd",
     instagram: "https://www.instagram.com/batuhdede/",
     linkedin: "https://www.linkedin.com/in/batuhdede/",

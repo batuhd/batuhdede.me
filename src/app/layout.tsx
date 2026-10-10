@@ -8,10 +8,9 @@ import { LanguageProvider } from "@/context/language-context";
 import { SiteDataProvider } from "@/context/site-data-context";
 import { ReactQueryProvider } from "@/components/react-query-provider";
 import { MaintenanceGuard } from "@/components/maintenance-guard";
-import { TopNav } from "@/components/navigation/top-nav";
+import { SiteChrome } from "@/components/site-chrome";
 import { Intro } from "@/components/home/intro";
 import { HtmlLangUpdater } from "@/components/html-lang-updater";
-import { SkipLink } from "@/components/skip-link";
 import { siteConfig } from "@/config/site";
 import { fetchMaintenanceMode } from "@/lib/data";
 import "./globals.css";
@@ -19,7 +18,7 @@ import "./globals.css";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#632626",
+  themeColor: "#ffffff",
 };
 
 export const metadata: Metadata = {
@@ -111,20 +110,18 @@ export default async function RootLayout({
         <ReactQueryProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
           >
             <LanguageProvider>
-              <SkipLink />
               <HtmlLangUpdater />
               <SiteDataProvider>
-                <MaintenanceGuard isMaintenance={isMaintenance}>
-                  <TopNav />
-                  <main id="main-content" className="relative mx-auto w-full px-4 pb-16 sm:px-6">
+                <SiteChrome>
+                  <MaintenanceGuard isMaintenance={isMaintenance}>
                     {children}
-                  </main>
-                </MaintenanceGuard>
+                  </MaintenanceGuard>
+                </SiteChrome>
               </SiteDataProvider>
             </LanguageProvider>
           </ThemeProvider>

@@ -14,10 +14,7 @@ export function HttpCat({ status, title, className }: HttpCatProps) {
       width={640}
       height={480}
       loading="eager"
-      className={cn(
-        "h-auto w-full max-w-md rounded-2xl border border-border shadow-lg",
-        className,
-      )}
+      className={cn("h-auto w-full max-w-md border border-border", className)}
     />
   );
 }

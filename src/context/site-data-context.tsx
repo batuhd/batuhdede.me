@@ -109,6 +109,8 @@ export function SiteDataProvider({
         blogsRes,
         projectCategoriesRes,
         blogCategoriesRes,
+        socialLinksRes,
+        contactEmailsRes,
       ] = await Promise.all([
         sb.from("about_me").select("*").limit(1),
         sb
@@ -160,6 +162,14 @@ export function SiteDataProvider({
           .from("blog_categories")
           .select("*")
           .order("order_index", { ascending: true }),
+        sb
+          .from("social_links")
+          .select("*")
+          .order("order_index", { ascending: true }),
+        sb
+          .from("contact_emails")
+          .select("*")
+          .order("order_index", { ascending: true }),
       ]);
 
       if (cancelled) return;
@@ -176,8 +186,8 @@ export function SiteDataProvider({
         sectionOrder: sectionRes?.data || [],
         projects: (projectsRes?.data || []) as unknown as Project[],
         blogs: (blogsRes?.data || []) as unknown as Blog[],
-        socialLinks: [],
-        contactEmails: [],
+        socialLinks: (socialLinksRes?.data || []) as unknown as SocialLink[],
+        contactEmails: (contactEmailsRes?.data || []) as unknown as ContactEmail[],
         projectCategories: (projectCategoriesRes?.data || []) as unknown as ProjectCategory[],
         blogCategories: (blogCategoriesRes?.data || []) as unknown as BlogCategory[],
         loaded: true,

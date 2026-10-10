@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.section_order (
     order_index integer DEFAULT 0
 );
 
--- About Me (profile info, bio, stats, quote)
+-- About Me (profile info, bio, photos)
 CREATE TABLE IF NOT EXISTS public.about_me (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     name text,
@@ -27,20 +27,6 @@ CREATE TABLE IF NOT EXISTS public.about_me (
     about_bio_es text,
     about_photo_url text,
     profile_photo_url text,
-    started_coding_year integer,
-    projects_count integer,
-    years_experience integer,
-    quote_text text,
-    quote_author text,
-    stat_1_value text,
-    stat_1_label text,
-    stat_2_value text,
-    stat_2_label text,
-    stat_3_value text,
-    stat_3_label text,
-    show_quote boolean DEFAULT true,
-    show_stats boolean DEFAULT true,
-    show_profile_photo boolean DEFAULT true,
     -- Translations
     hero_tagline_tr text,
     hero_tagline_de text,
@@ -51,18 +37,6 @@ CREATE TABLE IF NOT EXISTS public.about_me (
     role_tr text,
     role_de text,
     role_es text,
-    quote_text_tr text,
-    quote_text_de text,
-    quote_text_es text,
-    stat_1_label_tr text,
-    stat_1_label_de text,
-    stat_1_label_es text,
-    stat_2_label_tr text,
-    stat_2_label_de text,
-    stat_2_label_es text,
-    stat_3_label_tr text,
-    stat_3_label_de text,
-    stat_3_label_es text,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -410,8 +384,6 @@ CREATE TABLE IF NOT EXISTS public.social_links (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     platform text NOT NULL,
     url text NOT NULL,
-    icon text,
-    account_type text,
     order_index integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -646,11 +618,38 @@ BEGIN
         END IF;
     END IF;
 
-    -- social_links
+    -- Cleanup: artık kullanılmayan kolonlar (idempotent)
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'social_links') THEN
-        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'social_links' AND column_name = 'account_type') THEN
-            ALTER TABLE public.social_links ADD COLUMN account_type text;
-        END IF;
+        ALTER TABLE public.social_links DROP COLUMN IF EXISTS icon;
+        ALTER TABLE public.social_links DROP COLUMN IF EXISTS account_type;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'about_me') THEN
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS started_coding_year;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS projects_count;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS years_experience;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS quote_text;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS quote_author;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS quote_text_tr;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS quote_text_de;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS quote_text_es;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_1_value;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_1_label;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_2_value;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_2_label;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_3_value;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_3_label;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_1_label_tr;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_1_label_de;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_1_label_es;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_2_label_tr;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_2_label_de;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_2_label_es;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_3_label_tr;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_3_label_de;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS stat_3_label_es;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS show_quote;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS show_stats;
+        ALTER TABLE public.about_me DROP COLUMN IF EXISTS show_profile_photo;
     END IF;
 END $$;
 

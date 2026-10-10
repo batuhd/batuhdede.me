@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 import { siteConfig } from "@/config/site";
-import { fetchHomeData, fetchBlogData, fetchWorksData } from "@/lib/data";
+import { fetchBlogData, fetchWorksData } from "@/lib/data";
 
 export const revalidate = 60;
 
 export async function GET() {
   const baseUrl = siteConfig.url;
 
-  const [homeData, blogData, worksData] = await Promise.all([
-    fetchHomeData(),
+  const [blogData, worksData] = await Promise.all([
     fetchBlogData(),
     fetchWorksData(),
   ]);
@@ -26,10 +25,9 @@ export async function GET() {
     "",
     "## Important Pages",
     "",
-    `- ${baseUrl}/ - Homepage`,
+    `- ${baseUrl}/ - Homepage (About & Certifications)`,
     `- ${baseUrl}/works - Portfolio works`,
     `- ${baseUrl}/blog - Blog posts`,
-    `- ${baseUrl}/certifications - Certifications`,
     `- ${baseUrl}/credits - Tech credits and security details`,
     "",
   ];
@@ -48,15 +46,6 @@ export async function GET() {
     worksData.projects.slice(0, 10).forEach((project) => {
       const title = project.title || "Untitled Project";
       lines.push(`- ${baseUrl}/works/${project.slug} - ${title}`);
-    });
-    lines.push("");
-  }
-
-  if (homeData.certifications.length > 0) {
-    lines.push("## Certifications", "");
-    homeData.certifications.slice(0, 10).forEach((cert) => {
-      const name = cert.name || "Untitled Certification";
-      lines.push(`- ${baseUrl}/certifications/${cert.slug} - ${name}`);
     });
     lines.push("");
   }
